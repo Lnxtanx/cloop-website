@@ -3,16 +3,54 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
 import cloopLogo from "@/assets/cloop-logo.png";
 
 const Login = () => {
-  const [showPassword, setShowPassword] = useState(false);
+  const [identifier, setIdentifier] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/dashboard");
+    setError("");
+
+    const value = identifier.trim();
+    if (!value) {
+      setError("Please enter your email or phone number.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ emailOrPhone: value }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const message = data?.error || `Login failed (${response.status})`;
+        setError(message);
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await response.json();
+      localStorage.setItem("cloop_token", result.token);
+      localStorage.setItem("cloop_user", JSON.stringify(result.user));
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error", err);
+      setError("Could not connect to server. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -38,25 +76,23 @@ const Login = () => {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="email">Email</Label>
-              <Input id="email" type="email" placeholder="you@example.com" className="mt-1.5" />
+              <Label htmlFor="emailOrPhone">Email or Phone</Label>
+              <Input
+                id="emailOrPhone"
+                type="text"
+                placeholder="you@example.com or +1234567890"
+                value={identifier}
+                onChange={(e) => setIdentifier(e.target.value)}
+                className="mt-1.5"
+                disabled={isLoading}
+              />
             </div>
-            <div>
-              <Label htmlFor="password">Password</Label>
-              <div className="relative mt-1.5">
-                <Input id="password" type={showPassword ? "text" : "password"} placeholder="••••••••" />
-                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
-                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                </button>
-              </div>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 text-muted-foreground">
-                <input type="checkbox" className="rounded border-border" /> Remember me
-              </label>
-              <a href="#" className="text-primary hover:underline">Forgot password?</a>
-            </div>
-            <Button type="submit" className="w-full hero-gradient border-0">Log in</Button>
+
+            {error && <p className="text-sm text-red-500">{error}</p>}
+
+            <Button type="submit" className="w-full hero-gradient border-0" disabled={isLoading}>
+              {isLoading ? "Logging in..." : "Log in"}
+            </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground mt-6">
