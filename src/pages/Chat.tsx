@@ -67,7 +67,7 @@ const Chat = () => {
     <DashboardLayout title="AI Chat">
       <div className="animate-fade-in h-[calc(100vh-5rem)] flex flex-col max-w-3xl mx-auto">
         {/* Messages area */}
-        <div className="flex-1 overflow-y-auto px-4 py-6 space-y-6">
+        <div className="flex-1 min-h-0 overflow-y-auto px-4 py-6 space-y-6" style={{ background: "#f7f9fc" }}>
           {messages.map((m) => (
             <div key={m.id} className={`flex gap-3 ${m.sender === "user" ? "justify-end" : ""}`}>
               {m.sender === "ai" && (
@@ -117,8 +117,8 @@ const Chat = () => {
         </div>
 
         {/* Input area */}
-        <div className="px-4 pb-4 pt-2">
-          <div className="relative flex items-end border border-border rounded-2xl bg-muted/30 focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/20 transition-all">
+        <div className="sticky bottom-0 z-10 bg-white border-t border-border px-4 py-3">
+          <div className="relative flex items-end border border-border rounded-2xl bg-white/90 shadow-sm focus-within:ring-2 focus-within:ring-primary/25 transition-all">
             <textarea
               ref={textareaRef}
               value={input}
