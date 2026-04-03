@@ -10,8 +10,8 @@ export interface TopicChatMessage {
   sender: "user" | "ai";
   message_type?: string;
   options?: Array<{ text: string; value: string }>;
-  diff_html?: string;
-  emoji?: string;
+  diff_html?: string | null;
+  emoji?: string | null;
   is_correct?: boolean;
   feedback?: {
     type?: string;
@@ -19,8 +19,8 @@ export interface TopicChatMessage {
     is_correct?: boolean;
     score_percent?: number;
     bubble_color?: string;
-    error_type?: string;
-  };
+    error_type?: string | null;
+  } | null;
   session_summary?: SessionSummaryData;
   score_prediction?: ScorePrediction;
   score_percent?: number;
@@ -117,9 +117,16 @@ export interface SendMessageResponse {
   };
   userCorrection?: {
     message_type: string;
-    diff_html?: string;
-    correction?: string;
-    emoji?: string;
+    diff_html?: string | null;
+    correction?: string | null;
+    complete_answer?: string | null;
+    emoji?: string | null;
+    feedback?: {
+      is_correct?: boolean;
+      score_percent?: number;
+      bubble_color?: string;
+      error_type?: string | null;
+    } | null;
   };
   session_summary?: SessionSummaryData;
   score_prediction?: ScorePrediction;

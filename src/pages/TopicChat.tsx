@@ -141,7 +141,7 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
         <div style={{
           background: "#fff",
-          border: `1.5px solid ${isCorrect ? "#a7f3d0" : score !== null && score >= 60 ? "#fde68a" : "#fecaca"}`,
+          border: `1.5px solid ${score === null ? "#e5e7eb" : isCorrect ? "#a7f3d0" : score >= 60 ? "#fde68a" : "#fecaca"}`,
           borderRadius: 16, padding: 14, minWidth: 220,
         }}>
           {msg.diff_html ? <DiffText html={msg.diff_html} /> : <span style={{ fontSize: 14 }}>{msg.message}</span>}
@@ -483,7 +483,14 @@ export default function TopicChat() {
       const corr = res.userCorrection;
       if (corr) {
         setMessages((p) => p.map((m) => m.id === tid
-          ? { ...m, message_type: "user_correction", diff_html: corr.diff_html ?? corr.correction, emoji: corr.emoji }
+          ? {
+              ...m,
+              message_type: "user_correction",
+              diff_html: corr.diff_html ?? corr.correction ?? null,
+              emoji: corr.emoji ?? null,
+              complete_answer: corr.complete_answer ?? null,
+              feedback: corr.feedback ?? null,
+            }
           : m
         ));
       }
