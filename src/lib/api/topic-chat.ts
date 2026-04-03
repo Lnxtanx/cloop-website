@@ -16,8 +16,20 @@ export interface TopicChatMessage {
   feedback?: {
     type?: string;
     content?: string;
+    is_correct?: boolean;
+    score_percent?: number;
+    bubble_color?: string;
+    error_type?: string;
   };
   session_summary?: SessionSummaryData;
+  score_prediction?: ScorePrediction;
+  score_percent?: number;
+  overall_score_percent?: number;
+  performance_percent?: number;
+  predicted_score?: number;
+  top_error_types?: Array<{ type: string }>;
+  weak_goals?: Array<{ goal_title: string }>;
+  has_weak_areas?: boolean;
   complete_answer?: string;
   completeAnswer?: string;
   created_at: string;
@@ -30,6 +42,7 @@ export interface SessionSummaryData {
   score_percent?: number;
   overall_score_percent?: number;
   performance_percent?: number;
+  predicted_score?: number;
   top_error_types?: Array<{ type: string }>;
   weak_goals?: Array<{ goal_title: string }>;
   has_weak_areas?: boolean;
@@ -49,6 +62,12 @@ export interface TopicGoal {
   description: string;
   order: number;
   is_completed: boolean;
+  chat_goal_progress?: Array<{
+    is_completed?: boolean;
+    num_questions?: number;
+    num_correct?: number;
+    score_percent?: number;
+  }>;
 }
 
 export interface TopicChatDetails {
@@ -78,6 +97,14 @@ export interface TopicChatResponse {
   };
 }
 
+export interface ScorePrediction {
+  goal_id: number;
+  goal_title?: string;
+  concept_score: number;
+  exam_score: number;
+  predicted_score: number;
+}
+
 export interface SendMessageResponse {
   userMessage?: TopicChatMessage;
   messages: TopicChatMessage[];
@@ -95,6 +122,7 @@ export interface SendMessageResponse {
     emoji?: string;
   };
   session_summary?: SessionSummaryData;
+  score_prediction?: ScorePrediction;
   all_goals_completed?: boolean;
 }
 

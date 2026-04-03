@@ -7,6 +7,7 @@ export default defineConfig(() => ({
   server: {
     host: "::",
     port: 19002,
+    allowedHosts: ["learn.cloopapp.com"],
     hmr: {
       overlay: false,
     },

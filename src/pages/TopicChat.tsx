@@ -8,7 +8,7 @@ import {
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
   TopicChatMessage, TopicGoal, TopicChatResponse,
-  SendMessageResponse, SessionSummaryData,
+  SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
 
 // ─── Sidebar nav ──────────────────────────────────────────────────────────────
@@ -108,16 +108,44 @@ function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: stri
 }
 
 function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
-  const answer = (msg as any).complete_answer ?? (msg as any).completeAnswer ?? msg.feedback?.content ?? null;
+  const answer = msg.complete_answer ?? msg.completeAnswer ?? msg.feedback?.content ?? null;
+  const feedback = msg.feedback ?? null;
+  const isCorrect = feedback?.is_correct ?? false;
+  const score = feedback?.score_percent ?? null;
+  const errorType = feedback?.error_type ?? null;
+
   return (
-    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
+    <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
       <div style={{ position: "relative", maxWidth: "68%" }}>
+
+        {/* Score pill — sits above the bubble */}
+        {score !== null && (
+          <div style={{
+            display: "flex", alignItems: "center", gap: 6,
+            justifyContent: "flex-end", marginBottom: 4,
+          }}>
+            {errorType && !isCorrect && (
+              <span style={{ fontSize: 10, color: "#9ca3af", background: "#f3f4f6", borderRadius: 8, padding: "2px 7px" }}>
+                {errorType}
+              </span>
+            )}
+            <span style={{
+              fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "3px 10px",
+              background: isCorrect ? "#d1fae5" : score >= 60 ? "#fef9c3" : "#fee2e2",
+              color: isCorrect ? "#059669" : score >= 60 ? "#b45309" : "#dc2626",
+            }}>
+              {isCorrect ? "✓" : "✗"} {score}%
+            </span>
+          </div>
+        )}
+
         <div style={{
-          background: "#fff", border: "1px solid #e5e7eb", borderRadius: 16,
-          padding: 14, minWidth: 220,
+          background: "#fff",
+          border: `1.5px solid ${isCorrect ? "#a7f3d0" : score !== null && score >= 60 ? "#fde68a" : "#fecaca"}`,
+          borderRadius: 16, padding: 14, minWidth: 220,
         }}>
           {msg.diff_html ? <DiffText html={msg.diff_html} /> : <span style={{ fontSize: 14 }}>{msg.message}</span>}
-          {answer && (
+          {answer && !isCorrect && (
             <div style={{
               marginTop: 10, padding: 10, background: "#ecfdf5",
               border: "1px solid #a7f3d0", borderRadius: 10,
@@ -127,6 +155,7 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
             </div>
           )}
         </div>
+
         {msg.emoji && (
           <span style={{
             position: "absolute", bottom: -10, right: 14,
@@ -143,7 +172,10 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
 function SummaryCard({ data }: { data: SessionSummaryData }) {
   const score = Number(data.score_percent ?? data.overall_score_percent ?? data.performance_percent ?? 0);
-  const predicted = Math.min(100, Math.round(score + 15));
+  // Use real predicted_score from backend if available, otherwise estimate
+  const predicted = data.predicted_score != null
+    ? Math.round(Number(data.predicted_score))
+    : Math.min(100, Math.round(score + 15));
   const low = score < 35;
   return (
     <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
@@ -185,12 +217,53 @@ function SummaryCard({ data }: { data: SessionSummaryData }) {
   );
 }
 
+// ─── Score prediction card (mid-session, per-goal) ───────────────────────────
+
+function ScorePredictionCard({ data }: { data: ScorePrediction }) {
+  const pred = Math.round(data.predicted_score);
+  const concept = Math.round((data.concept_score ?? 0) * 100);
+  const exam = Math.round((data.exam_score ?? 0) * 100);
+  const color = pred >= 75 ? "#059669" : pred >= 50 ? "#d97706" : "#dc2626";
+  const bg = pred >= 75 ? "#f0fdf4" : pred >= 50 ? "#fffbeb" : "#fef2f2";
+  const border = pred >= 75 ? "#a7f3d0" : pred >= 50 ? "#fde68a" : "#fecaca";
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+      <div style={{
+        borderRadius: 16, padding: 16, minWidth: 240, maxWidth: 300,
+        background: bg, border: `1.5px solid ${border}`,
+      }}>
+        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
+          <Trophy style={{ width: 18, height: 18, color }} />
+          <span style={{ fontSize: 13, fontWeight: 700, color: "hsl(210,20%,12%)" }}>
+            {data.goal_title ? `Goal: ${data.goal_title}` : "Goal Complete"}
+          </span>
+        </div>
+        <div style={{ textAlign: "center", marginBottom: 12 }}>
+          <span style={{ fontSize: 30, fontWeight: 800, color }}>{pred}%</span>
+          <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Predicted Score</p>
+        </div>
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+          {[
+            { label: "Concept", val: concept, bg2: "#eff6ff", c2: "#2563eb" },
+            { label: "Exam",    val: exam,    bg2: "#f5f3ff", c2: "#7c3aed" },
+          ].map(({ label, val, bg2, c2 }) => (
+            <div key={label} style={{ background: bg2, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
+              <p style={{ fontSize: 16, fontWeight: 800, color: c2 }}>{val}%</p>
+              <p style={{ fontSize: 10, color: "#6b7280" }}>{label}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ─── Goals bar ────────────────────────────────────────────────────────────────
 
 function goalIsCompleted(g: TopicGoal): boolean {
   // Backend returns goals with chat_goal_progress array (same as mobile)
   // Fall back to top-level is_completed if present
-  return (g as any).chat_goal_progress?.[0]?.is_completed ?? g.is_completed ?? false;
+  return g.chat_goal_progress?.[0]?.is_completed ?? g.is_completed ?? false;
 }
 
 function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean; onToggle: () => void }) {
@@ -216,31 +289,51 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
             {goals.map((g, i) => {
               const completed = goalIsCompleted(g);
               const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
-              const progress = (g as any).chat_goal_progress?.[0];
+              const progress = g.chat_goal_progress?.[0];
+              const numQ: number = progress?.num_questions ?? 0;
+              const numC: number = progress?.num_correct ?? 0;
               const score = progress?.score_percent
-                ?? (progress?.num_questions ? Math.round(((progress.num_correct || 0) / progress.num_questions) * 100) : 0);
+                ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
+              // Phase heuristic: if goal has ≥2 questions and not yet complete, likely in exam phase
+              const phase: "concept" | "exam" | null = active
+                ? numQ >= 2 ? "exam" : "concept"
+                : null;
+
               return (
                 <div key={g.id} style={{
-                  width: 108, borderRadius: 12, padding: 10, border: `2px solid ${completed ? "#34d399" : active ? "hsl(174,58%,42%)" : "#d1d5db"}`,
+                  width: 116, borderRadius: 12, padding: 10,
+                  border: `2px solid ${completed ? "#34d399" : active ? "hsl(174,58%,42%)" : "#d1d5db"}`,
                   background: completed ? "#ecfdf5" : active ? "#fff" : "hsl(174,40%,90%)",
                   boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
                 }}>
-                  <div style={{ display: "flex", alignItems: "center", gap: 4, marginBottom: 6 }}>
-                    {completed
-                      ? <div style={{ width: 18, height: 18, borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 10 }}>✓</span></div>
-                      : active
-                        ? <div style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid hsl(174,58%,42%)", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 8, height: 8, borderRadius: "50%", background: "hsl(174,58%,42%)" }} /></div>
-                        : <div style={{ width: 18, height: 18, borderRadius: "50%", border: "2px solid #d1d5db" }} />
-                    }
-                    <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#059669" : active ? "hsl(174,58%,42%)" : "#9ca3af" }}>{i + 1}</span>
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
+                      {completed
+                        ? <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
+                        : active
+                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid hsl(174,58%,42%)", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "hsl(174,58%,42%)" }} /></div>
+                          : <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #d1d5db" }} />
+                      }
+                      <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#059669" : active ? "hsl(174,58%,42%)" : "#9ca3af" }}>{i + 1}</span>
+                    </div>
+                    {/* Phase badge — only on active goal */}
+                    {phase && (
+                      <span style={{
+                        fontSize: 9, fontWeight: 700, borderRadius: 6, padding: "2px 5px",
+                        background: phase === "exam" ? "#eff6ff" : "#f0fdf4",
+                        color: phase === "exam" ? "#2563eb" : "#16a34a",
+                      }}>
+                        {phase === "exam" ? "EXAM" : "CONCEPT"}
+                      </span>
+                    )}
                   </div>
                   <p style={{ fontSize: 10, fontWeight: 600, color: "#374151", lineHeight: 1.35, display: "-webkit-box", WebkitLineClamp: 2, WebkitBoxOrient: "vertical", overflow: "hidden" }}>
                     {g.title || g.description}
                   </p>
                   {score > 0 && (
                     <div style={{ marginTop: 6 }}>
-                      <div style={{ height: 4, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#10b981" : "hsl(174,58%,42%)", borderRadius: 2 }} />
+                      <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#10b981" : "hsl(174,58%,42%)", borderRadius: 2, transition: "width 0.4s ease" }} />
                       </div>
                       <span style={{ fontSize: 10, color: "#6b7280" }}>{score}%</span>
                     </div>
@@ -301,6 +394,19 @@ export default function TopicChat() {
   const [baseTime,  setBaseTime]  = useState(0);
   const [elapsed,   setElapsed]   = useState(0);
 
+  // Derive user initials from JWT token
+  const userInitials = (() => {
+    try {
+      const token = localStorage.getItem("cloop_token");
+      if (!token) return "?";
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      const name: string = payload.name ?? payload.email ?? "";
+      const parts = name.trim().split(/\s+/);
+      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return name.slice(0, 2).toUpperCase() || "?";
+    } catch { return "?"; }
+  })();
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
@@ -344,6 +450,7 @@ export default function TopicChat() {
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
+      setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [topicId]);
 
@@ -381,10 +488,30 @@ export default function TopicChat() {
         ));
       }
 
+      // Handle score_prediction from new phase-based pipeline
+      // When AI signals next_step_type = "predict_score", backend returns res.score_prediction
+      if (res.score_prediction) {
+        const sp: ScorePrediction = res.score_prediction;
+        // Enrich with goal title if missing
+        const goalTitle = sp.goal_title ?? goals.find((g) => g.id === sp.goal_id)?.title;
+        const syntheticPred: TopicChatMessage = {
+          id: Date.now() + 8888,
+          sender: "ai",
+          message: "score_prediction",
+          message_type: "score_prediction",
+          created_at: new Date().toISOString(),
+          score_prediction: { ...sp, goal_title: goalTitle },
+        };
+        setMessages((p) => {
+          const seen = new Set(p.map((m) => m.id));
+          return seen.has(syntheticPred.id) ? p : [...p, syntheticPred];
+        });
+      }
+
       // Patch AI messages: if a session_summary message exists but lacks the data field,
       // attach res.session_summary to it (backend puts data at top level, not inside message)
-      const rawAiMsgs = (res.messages ?? res.aiMessages ?? []).filter((m: any) => m.sender === "ai");
-      const aiMsgs = rawAiMsgs.map((m: any) => {
+      const rawAiMsgs = (res.messages ?? res.aiMessages ?? []).filter((m): m is TopicChatMessage => m.sender === "ai");
+      const aiMsgs = rawAiMsgs.map((m) => {
         if (m.message_type === "session_summary" && !m.session_summary && res.session_summary) {
           return { ...m, session_summary: res.session_summary };
         }
@@ -392,7 +519,7 @@ export default function TopicChat() {
       });
 
       const extras: TopicChatMessage[] = [];
-      const hasSummaryMsg = aiMsgs.some((m: any) => m.message_type === "session_summary");
+      const hasSummaryMsg = aiMsgs.some((m: TopicChatMessage) => m.message_type === "session_summary");
       if (res.session_summary && !hasSummaryMsg) {
         extras.push({
           id: Date.now() + 9999, sender: "ai", message: "Session Summary",
@@ -402,7 +529,7 @@ export default function TopicChat() {
       }
 
       setMessages((p) => {
-        const merged = [...p, ...aiMsgs.map((m: any) => ({ ...m, id: m.id ?? Date.now() + Math.random() })), ...extras];
+        const merged = [...p, ...aiMsgs.map((m: TopicChatMessage) => ({ ...m, id: m.id ?? Date.now() + Math.random() })), ...extras];
         const seen = new Set<number>();
         return merged.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
       });
@@ -412,16 +539,24 @@ export default function TopicChat() {
       setInput(msg);
     } finally {
       setSending(false);
+      // Always restore focus to input so user can type immediately
+      setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
 
   const renderMsg = (msg: TopicChatMessage) => {
+    if (msg.message_type === "score_prediction") {
+      const sp = msg.score_prediction;
+      if (!sp) return null;
+      return <ScorePredictionCard key={msg.id} data={sp} />;
+    }
     if (msg.message_type === "session_summary") {
       // Data can live in msg.session_summary (preferred), msg itself, or parsed from diff_html
+      const summaryCandidate: SessionSummaryData = msg;
       const data: SessionSummaryData =
-        (msg as any).session_summary ??
-        (typeof (msg as any).score_percent !== "undefined" ? (msg as any) : null) ??
-        (() => { try { return JSON.parse((msg as any).diff_html ?? "{}"); } catch { return {}; } })();
+        msg.session_summary ??
+        (typeof msg.score_percent !== "undefined" ? summaryCandidate : null) ??
+        (() => { try { return JSON.parse(msg.diff_html ?? "{}"); } catch { return {}; } })();
       return <SummaryCard key={msg.id} data={data} />;
     }
     if (msg.message_type === "user_correction" || msg.diff_html)
@@ -576,7 +711,7 @@ export default function TopicChat() {
               background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
               display: "flex", alignItems: "center", justifyContent: "center",
               color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
-            }}>JD</div>
+            }}>{userInitials}</div>
           </div>
         </div>
 
@@ -639,6 +774,7 @@ export default function TopicChat() {
                 <input
                   ref={inputRef}
                   type="text"
+                  autoFocus
                   placeholder="Type your answer…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
