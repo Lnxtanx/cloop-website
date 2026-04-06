@@ -112,10 +112,6 @@ function stripTags(html: string) {
 }
 
 function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
-  const feedback = msg.feedback ?? null;
-  const isCorrect = feedback?.is_correct ?? false;
-  const score = feedback?.score_percent ?? null;
-  const errorType = feedback?.error_type ?? null;
 
   const originalText = msg.message ?? "";
   const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
@@ -129,30 +125,9 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
       <div style={{ position: "relative", maxWidth: "68%" }}>
 
-        {/* Score pill — sits above the bubble */}
-        {score !== null && (
-          <div style={{
-            display: "flex", alignItems: "center", gap: 6,
-            justifyContent: "flex-end", marginBottom: 4,
-          }}>
-            {errorType && !isCorrect && (
-              <span style={{ fontSize: 10, color: "#9ca3af", background: "#f3f4f6", borderRadius: 8, padding: "2px 7px" }}>
-                {errorType}
-              </span>
-            )}
-            <span style={{
-              fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "3px 10px",
-              background: isCorrect ? "#d1fae5" : score !== null && score >= 60 ? "#fef9c3" : "#fee2e2",
-              color: isCorrect ? "#059669" : score !== null && score >= 60 ? "#b45309" : "#dc2626",
-            }}>
-              {isCorrect ? "✓" : "✗"} {score}%
-            </span>
-          </div>
-        )}
-
         <div style={{
           background: "#fff",
-          border: `1.5px solid ${score === null ? "#e5e7eb" : isCorrect ? "#a7f3d0" : score >= 60 ? "#fde68a" : "#fecaca"}`,
+          border: "1.5px solid #e5e7eb",
           borderRadius: 16, padding: 14, minWidth: 220,
         }}>
           {/* Primary text: full diff if it covers the whole answer, else raw answer text */}
