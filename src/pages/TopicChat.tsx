@@ -107,12 +107,23 @@ function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: stri
   );
 }
 
+function stripTags(html: string) {
+  return html.replace(/<[^>]+>/g, "");
+}
+
 function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
-  const answer = msg.complete_answer ?? msg.completeAnswer ?? msg.feedback?.content ?? null;
   const feedback = msg.feedback ?? null;
   const isCorrect = feedback?.is_correct ?? false;
   const score = feedback?.score_percent ?? null;
   const errorType = feedback?.error_type ?? null;
+
+  const originalText = msg.message ?? "";
+  const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
+  const diffPlain = hasDiff ? stripTags(msg.diff_html!) : "";
+  // Only use diff as primary display if it covers ≥60% of the original answer length
+  const diffCoversFullText = hasDiff && originalText.length > 0
+    ? diffPlain.length >= originalText.length * 0.6
+    : hasDiff;
 
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
@@ -131,8 +142,8 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
             )}
             <span style={{
               fontSize: 11, fontWeight: 700, borderRadius: 20, padding: "3px 10px",
-              background: isCorrect ? "#d1fae5" : score >= 60 ? "#fef9c3" : "#fee2e2",
-              color: isCorrect ? "#059669" : score >= 60 ? "#b45309" : "#dc2626",
+              background: isCorrect ? "#d1fae5" : score !== null && score >= 60 ? "#fef9c3" : "#fee2e2",
+              color: isCorrect ? "#059669" : score !== null && score >= 60 ? "#b45309" : "#dc2626",
             }}>
               {isCorrect ? "✓" : "✗"} {score}%
             </span>
@@ -144,16 +155,26 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
           border: `1.5px solid ${score === null ? "#e5e7eb" : isCorrect ? "#a7f3d0" : score >= 60 ? "#fde68a" : "#fecaca"}`,
           borderRadius: 16, padding: 14, minWidth: 220,
         }}>
-          {msg.diff_html ? <DiffText html={msg.diff_html} /> : <span style={{ fontSize: 14 }}>{msg.message}</span>}
-          {answer && !isCorrect && (
+          {/* Primary text: full diff if it covers the whole answer, else raw answer text */}
+          {diffCoversFullText
+            ? <DiffText html={msg.diff_html!} />
+            : <span style={{ fontSize: 14 }}>{originalText}</span>
+          }
+
+          {/* If diff is a fragment (only changed words), show it as an annotation */}
+          {hasDiff && !diffCoversFullText && (
             <div style={{
-              marginTop: 10, padding: 10, background: "#ecfdf5",
-              border: "1px solid #a7f3d0", borderRadius: 10,
+              marginTop: 8, padding: "6px 10px",
+              background: "#fafafa", border: "1px solid #e5e7eb",
+              borderRadius: 8,
             }}>
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#065f46", marginBottom: 4 }}>Correct Answer:</p>
-              <p style={{ fontSize: 13, color: "#047857" }}>{answer}</p>
+              <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Corrections:
+              </p>
+              <DiffText html={msg.diff_html!} />
             </div>
           )}
+
         </div>
 
         {msg.emoji && (
@@ -495,26 +516,6 @@ export default function TopicChat() {
         ));
       }
 
-      // Handle score_prediction from new phase-based pipeline
-      // When AI signals next_step_type = "predict_score", backend returns res.score_prediction
-      if (res.score_prediction) {
-        const sp: ScorePrediction = res.score_prediction;
-        // Enrich with goal title if missing
-        const goalTitle = sp.goal_title ?? goals.find((g) => g.id === sp.goal_id)?.title;
-        const syntheticPred: TopicChatMessage = {
-          id: Date.now() + 8888,
-          sender: "ai",
-          message: "score_prediction",
-          message_type: "score_prediction",
-          created_at: new Date().toISOString(),
-          score_prediction: { ...sp, goal_title: goalTitle },
-        };
-        setMessages((p) => {
-          const seen = new Set(p.map((m) => m.id));
-          return seen.has(syntheticPred.id) ? p : [...p, syntheticPred];
-        });
-      }
-
       // Patch AI messages: if a session_summary message exists but lacks the data field,
       // attach res.session_summary to it (backend puts data at top level, not inside message)
       const rawAiMsgs = (res.messages ?? res.aiMessages ?? []).filter((m): m is TopicChatMessage => m.sender === "ai");
@@ -552,11 +553,7 @@ export default function TopicChat() {
   };
 
   const renderMsg = (msg: TopicChatMessage) => {
-    if (msg.message_type === "score_prediction") {
-      const sp = msg.score_prediction;
-      if (!sp) return null;
-      return <ScorePredictionCard key={msg.id} data={sp} />;
-    }
+    if (msg.message_type === "score_prediction") return null; // shown only in final summary
     if (msg.message_type === "session_summary") {
       // Data can live in msg.session_summary (preferred), msg itself, or parsed from diff_html
       const summaryCandidate: SessionSummaryData = msg;
