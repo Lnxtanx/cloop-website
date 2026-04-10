@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
 import { Bell, Star, Info, Trash2, CheckCheck, Loader2, BellOff } from "lucide-react";
 
 const API = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
@@ -84,7 +84,7 @@ export default function Notifications() {
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Bell style={{ width: 22, height: 22, color: "hsl(174,58%,42%)" }} />
+            <Bell style={{ width: 22, height: 22, color: "#7c3aed" }} />
             <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1F2937", margin: 0 }}>Notifications</h2>
             {unread > 0 && (
               <span style={{
@@ -101,8 +101,8 @@ export default function Notifications() {
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 10,
-                border: "1px solid hsl(174,58%,42%)",
-                background: "#fff", color: "hsl(174,58%,42%)",
+                border: "1.5px solid #7c3aed",
+                background: "#fff", color: "#7c3aed",
                 fontSize: 13, fontWeight: 600, cursor: "pointer",
               }}
             >
@@ -114,7 +114,7 @@ export default function Notifications() {
         {/* Content */}
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
-            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "hsl(174,58%,42%)" }} />
+            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
           </div>
         ) : notifications.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 0" }}>
@@ -125,14 +125,14 @@ export default function Notifications() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {notifications.map((n) => {
               const isWelcome = n.type === "welcome";
-              const bg = n.is_read ? "#fff" : "hsl(174,40%,96%)";
+              const bg = n.is_read ? "#fff" : "#f3e8ff";
               return (
                 <div key={n.id}
                   style={{
                     background: bg, borderRadius: 16,
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                     display: "flex", alignItems: "flex-start",
-                    border: n.is_read ? "1px solid #F3F4F6" : "1px solid hsl(174,40%,88%)",
+                    border: n.is_read ? "1px solid #F3F4F6" : "1.5px solid #c4b5fd",
                     overflow: "hidden",
                   }}
                 >
@@ -144,12 +144,12 @@ export default function Notifications() {
                     {/* Icon */}
                     <div style={{
                       width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                      background: isWelcome ? "#FEF3C7" : "hsl(174,40%,90%)",
+                      background: isWelcome ? "#FEF3C7" : "#ede9fe",
                       display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       {isWelcome
                         ? <Star style={{ width: 20, height: 20, color: "#F59E0B" }} />
-                        : <Info style={{ width: 20, height: 20, color: "hsl(174,58%,42%)" }} />
+                        : <Info style={{ width: 20, height: 20, color: "#7c3aed" }} />
                       }
                     </div>
                     {/* Text */}
@@ -174,7 +174,7 @@ export default function Notifications() {
                         {n.message}
                       </p>
                       {n.message.length > 100 && (
-                        <span style={{ fontSize: 12, color: "hsl(174,58%,42%)", fontWeight: 600 }}>Read more...</span>
+                        <span style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600 }}>Read more...</span>
                       )}
                       {!n.is_read && (
                         <span style={{
@@ -225,12 +225,12 @@ export default function Notifications() {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
-                background: selected.type === "welcome" ? "#FEF3C7" : "hsl(174,40%,90%)",
+                background: selected.type === "welcome" ? "#FEF3C7" : "#ede9fe",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {selected.type === "welcome"
                   ? <Star style={{ width: 28, height: 28, color: "#F59E0B" }} />
-                  : <Info style={{ width: 28, height: 28, color: "hsl(174,58%,42%)" }} />
+                  : <Info style={{ width: 28, height: 28, color: "#7c3aed" }} />
                 }
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function Notifications() {
               onClick={() => setSelected(null)}
               style={{
                 width: "100%", marginTop: 24,
-                background: "hsl(174,58%,42%)", color: "#fff",
+                background: "#7c3aed", color: "#fff",
                 border: "none", borderRadius: 12, padding: "14px 0",
                 fontSize: 15, fontWeight: 600, cursor: "pointer",
               }}

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
@@ -19,8 +19,8 @@ interface Chapter {
 }
 
 const statusConfig = {
-  completed: { label: "Completed", icon: CheckCircle, color: "bg-success/10 text-success" },
-  "in-progress": { label: "In Progress", icon: Play, color: "bg-primary/10 text-primary" },
+  completed: { label: "Completed", icon: CheckCircle, color: "bg-purple-100 text-purple-700" },
+  "in-progress": { label: "In Progress", icon: Play, color: "bg-purple-50 text-purple-600" },
 };
 
 const Chapters = () => {
@@ -103,7 +103,7 @@ const Chapters = () => {
           </Button>
           <div>
             <h2 className="text-2xl font-bold flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-primary" /> {subjectName}
+              <BookOpen className="w-6 h-6 text-purple-600" /> {subjectName}
             </h2>
             <p className="text-muted-foreground mt-1">{totalTopics} topics · {chapters.length} chapters</p>
           </div>
@@ -113,7 +113,7 @@ const Chapters = () => {
         <div className="space-y-3">
           <div className="flex items-center justify-between">
             <span className="font-semibold text-sm">Progress</span>
-            <span className="text-sm font-bold text-primary">{Math.round(overallProgress)}%</span>
+            <span className="text-sm font-bold text-purple-600">{Math.round(overallProgress)}%</span>
           </div>
           <Progress value={overallProgress} className="h-2" />
           <p className="text-sm text-muted-foreground">{completedTopics} of {totalTopics} topics completed</p>
@@ -141,8 +141,8 @@ const Chapters = () => {
                   onClick={() => handleChapterClick(ch)}
                 >
                   <CardContent className="p-5 flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "hero-gradient" : status === "completed" ? "bg-success/10" : "bg-muted"}`}>
-                      <span className={`text-sm font-bold ${status === "in-progress" ? "text-primary-foreground" : status === "completed" ? "text-success" : "text-muted-foreground"}`}>
+                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "bg-purple-100" : status === "completed" ? "bg-purple-200" : "bg-gray-100"}`}>
+                      <span className={`text-sm font-bold ${status === "in-progress" ? "text-purple-700" : status === "completed" ? "text-purple-800" : "text-gray-500"}`}>
                         {i + 1}
                       </span>
                     </div>
@@ -161,8 +161,8 @@ const Chapters = () => {
                         </span>
                       </div>
                     </div>
-                    {status === "in-progress" && <Button size="sm" className="hero-gradient border-0 shrink-0">Continue</Button>}
-                    {status === "completed" && <Button size="sm" variant="outline" className="shrink-0">Review</Button>}
+                    {status === "in-progress" && <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-0 shrink-0">Continue</Button>}
+                    {status === "completed" && <Button size="sm" variant="outline" className="shrink-0 border-purple-300 text-purple-700 hover:bg-purple-50">Review</Button>}
                   </CardContent>
                 </Card>
               );

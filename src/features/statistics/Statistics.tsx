@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import { CardContent } from "@/components/ui/card";
 import {
   ArrowLeft, CheckCircle2, XCircle, HelpCircle,
-  TrendingUp, Clock, RefreshCw, CheckCheck, AlertCircle, ArrowRight, Loader2,
+  TrendingUp, Clock, RefreshCw, CheckCheck, AlertCircle, ArrowRight, ChevronRight, Loader2,
 } from "lucide-react";
 
 const API = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
@@ -23,10 +24,10 @@ const fmtTime = (s: number) => {
 };
 
 const scoreColor = (n: number) =>
-  n >= 80 ? "#10B981" : n >= 60 ? "#F59E0B" : "#EF4444";
+  n >= 80 ? "#8B5CF6" : n >= 60 ? "#A78BFA" : "#C4B5FD";
 
 const scoreBg = (n: number) =>
-  n >= 70 ? "#D1FAE5" : "#FEE2E2";
+  n >= 70 ? "#EDE9FE" : "#F3E8FF";
 
 // ─── tiny components ──────────────────────────────────────────────────────────
 
@@ -39,9 +40,10 @@ function Section({ title, subtitle }: { title: string; subtitle?: string }) {
   );
 }
 
-function Card({ children, style, onClick }: { children: React.ReactNode; style?: React.CSSProperties; onClick?: () => void }) {
+function CardContainer({ children, style, className, onClick }: { children: React.ReactNode; style?: React.CSSProperties; className?: string; onClick?: () => void }) {
   return (
     <div
+      className={className}
       style={{
         background: "#fff", borderRadius: 14, padding: 16,
         boxShadow: "0 1px 4px rgba(0,0,0,0.06)", ...style,
@@ -88,7 +90,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
-        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "hsl(174,58%,42%)" }} />
+        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
       </div>
     );
   }
@@ -128,7 +130,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
       ) : (
         <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
           {reports.map((r: any) => (
-            <Card key={r.id} style={{ cursor: "pointer" }}
+            <CardContainer key={r.id} style={{ cursor: "pointer" }}
               onClick={() => r.topics?.subjects?.id && onSelectSubject(r.topics.subjects.id, r.topics.subjects.name)}>
               <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
                 <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
@@ -148,7 +150,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
               </div>
               <div style={{ display: "flex", gap: 16 }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}>
-                  <CheckCircle2 style={{ width: 14, height: 14, color: "#059669" }} />{r.correct_answers} Correct
+                  <CheckCircle2 style={{ width: 14, height: 14, color: "#8B5CF6" }} />{r.correct_answers} Correct
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}>
                   <XCircle style={{ width: 14, height: 14, color: "#DC2626" }} />{r.incorrect_answers} Incorrect
@@ -157,7 +159,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
                   <HelpCircle style={{ width: 14, height: 14, color: "#6B7280" }} />{r.total_questions} Questions
                 </span>
               </div>
-            </Card>
+            </CardContainer>
           ))}
         </div>
       )}
@@ -167,26 +169,26 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
       {subjects.length === 0 ? (
         <p style={{ color: "#6B7280", textAlign: "center", padding: 20 }}>No enrolled subjects found.</p>
       ) : (
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
           {subjects.map((s: any) => {
             const score = subjectScore(s.id);
             return (
-              <Card key={s.id}
-                style={{ cursor: "pointer", textAlign: "center", padding: 16, transition: "transform 0.15s, box-shadow 0.15s" }}
+              <CardContainer key={s.id}
+                className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
                 onClick={() => onSelectSubject(s.id, s.name)}>
-                {/* Subject initial circle */}
-                <div style={{
-                  width: 48, height: 48, borderRadius: "50%", margin: "0 auto 8px",
-                  background: "hsl(174,40%,90%)", display: "flex", alignItems: "center",
-                  justifyContent: "center", fontSize: 18, fontWeight: 800, color: "hsl(174,58%,35%)",
-                }}>
-                  {s.name?.[0]?.toUpperCase() ?? "?"}
-                </div>
-                <p style={{ fontWeight: 600, fontSize: 13, color: "#374151", margin: "0 0 4px" }}>{s.name}</p>
-                <p style={{ fontSize: 11, fontWeight: 700, color: scoreColor(score), margin: 0 }}>
-                  Predicted Score: {score}
-                </p>
-              </Card>
+                <CardContent className="p-5">
+                  <h4 className="font-semibold mt-1 mb-2">{s.name}</h4>
+                  <p style={{ fontSize: 12, fontWeight: 700, color: scoreColor(score), margin: "0 0 8px" }}>
+                    Predicted Score: {score}%
+                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <span className="text-xs text-gray-600">
+                      Click to analyze
+                    </span>
+                    <ChevronRight style={{ width: 16, height: 16, color: "#7c3aed" }} />
+                  </div>
+                </CardContent>
+              </CardContainer>
             );
           })}
         </div>
@@ -220,7 +222,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
-        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "hsl(174,58%,42%)" }} />
+        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
       </div>
     );
   }
@@ -277,7 +279,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
 
       {/* Predicted Score */}
       <Section title="Predicted Score" />
-      <Card style={{ marginBottom: 24 }}>
+      <CardContainer style={{ marginBottom: 24 }}>
         <div style={{ height: 32, background: "#F3F4F6", borderRadius: 16, position: "relative", overflow: "hidden", marginBottom: 8 }}>
           {/* Current score bar (red) */}
           <div style={{
@@ -303,7 +305,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
           <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Current Level</span>
           <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Best Possible</span>
         </div>
-      </Card>
+      </CardContainer>
 
       {/* Learning Time */}
       <Section title="Total Learning Time" subtitle="This shows how smartly you're studying, not just how long." />
@@ -313,11 +315,11 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
           { label: "Weekly",  val: time_analytics?.weekly_seconds  ?? 0 },
           { label: "Monthly", val: time_analytics?.monthly_seconds ?? 0 },
         ].map(({ label, val }) => (
-          <Card key={label} style={{ textAlign: "center", padding: 16 }}>
+          <CardContainer key={label} style={{ textAlign: "center", padding: 16 }}>
             <p style={{ fontSize: 20, fontWeight: 700, color: "#8B5CF6", margin: "0 0 4px" }}>{fmtTime(val)}</p>
             <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: "0 0 2px" }}>{label}</p>
             <p style={{ fontSize: 10, color: "#9CA3AF", margin: 0 }}>Focused Time</p>
-          </Card>
+          </CardContainer>
         ))}
       </div>
 
@@ -326,14 +328,14 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
         {[
           { icon: <HelpCircle style={{ width: 20, height: 20, color: "#6B7280" }} />, val: summary?.total_questions ?? 0, label: "Questions", color: "#8B5CF6" },
-          { icon: <CheckCircle2 style={{ width: 20, height: 20, color: "#10B981" }} />, val: summary?.correct_answers ?? 0, label: "Correct", color: "#10B981" },
+          { icon: <CheckCircle2 style={{ width: 20, height: 20, color: "#8B5CF6" }} />, val: summary?.correct_answers ?? 0, label: "Correct", color: "#8B5CF6" },
           { icon: <TrendingUp style={{ width: 20, height: 20, color: "#8B5CF6" }} />, val: "+5%", label: "Improved", color: "#8B5CF6" },
         ].map(({ icon, val, label, color }) => (
-          <Card key={label} style={{ textAlign: "center", padding: 16 }}>
+          <CardContainer key={label} style={{ textAlign: "center", padding: 16 }}>
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>{icon}</div>
             <p style={{ fontSize: 24, fontWeight: 700, color, margin: "0 0 2px" }}>{val}</p>
             <p style={{ fontSize: 12, color: "#6B7280", margin: 0 }}>{label}</p>
-          </Card>
+          </CardContainer>
         ))}
       </div>
 
@@ -345,7 +347,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
           { icon: <Clock style={{ width: 18, height: 18, color: "#9333EA" }} />, bg: "#F3E8FF",  title: "Still Learning", desc: "Keep practicing these", count: concepts_mastery?.learning ?? 0, badge: "#A855F7" },
           { icon: <RefreshCw style={{ width: 18, height: 18, color: "#D946EF" }} />, bg: "#FAE8FF", title: "Not Started", desc: "New topics ahead", count: concepts_mastery?.not_started ?? 0, badge: "#C084FC" },
         ].map(({ icon, bg, title, desc, count, badge }) => (
-          <Card key={title} style={{ padding: "12px 16px" }}>
+          <CardContainer key={title} style={{ padding: "12px 16px" }}>
             <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
               <div style={{ width: 40, height: 40, borderRadius: "50%", background: bg, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
                 {icon}
@@ -358,7 +360,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
                 <span style={{ color: "#fff", fontWeight: 700, fontSize: 15 }}>{count}</span>
               </div>
             </div>
-          </Card>
+          </CardContainer>
         ))}
       </div>
 
@@ -370,13 +372,13 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
           const total = summary?.incorrect_answers || 1;
           const pct = Math.min(100, Math.round((count / total) * 100));
           return (
-            <Card key={key} style={{ padding: 12 }}>
+            <CardContainer key={key} style={{ padding: 12 }}>
               <p style={{ fontSize: 12, fontWeight: 700, color: "#1F2937", margin: "0 0 3px" }}>{label}</p>
               <p style={{ fontSize: 11, color: "#6B7280", margin: "0 0 8px" }}>{count > 0 ? `${count} mistakes` : "No errors"}</p>
               <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3 }}>
                 <div style={{ height: "100%", width: `${pct}%`, background: color, borderRadius: 3 }} />
               </div>
-            </Card>
+            </CardContainer>
           );
         })}
       </div>
@@ -475,7 +477,7 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
               {[
                 { label: "Score", val: `${modalReport.score_percent ?? 0}%`, color: scoreColor(modalReport.score_percent) },
                 { label: "Rating", val: `${modalReport.star_rating ?? 0} ⭐`, color: "#374151" },
-                { label: "Correct", val: modalReport.correct_answers ?? 0, color: "#10B981" },
+                { label: "Correct", val: modalReport.correct_answers ?? 0, color: "#8B5CF6" },
                 { label: "Incorrect", val: modalReport.incorrect_answers ?? 0, color: "#EF4444" },
                 { label: "Questions", val: modalReport.total_questions ?? 0, color: "#8B5CF6" },
                 { label: "Level", val: modalReport.performance_level ?? "—", color: "#374151" },

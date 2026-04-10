@@ -15,7 +15,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 210 20% 12%;
 
-    --primary: 174 58% 42%;
+    --primary: 271 70% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 20% 96%;
@@ -32,18 +32,18 @@
 
     --border: 210 15% 92%;
     --input: 210 15% 92%;
-    --ring: 174 58% 42%;
+    --ring: 271 70% 50%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 210 10% 40%;
-    --sidebar-primary: 174 58% 42%;
+    --sidebar-primary: 271 70% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 174 40% 96%;
-    --sidebar-accent-foreground: 174 58% 30%;
+    --sidebar-accent: 271 40% 94%;
+    --sidebar-accent-foreground: 271 58% 30%;
     --sidebar-border: 210 15% 94%;
-    --sidebar-ring: 174 58% 42%;
+    --sidebar-ring: 271 70% 50%;
 
     --nav-dark: 210 30% 15%;
     --nav-dark-foreground: 0 0% 100%;
@@ -68,7 +68,7 @@
 
 @layer utilities {
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(174, 58%, 42%) 0%, hsl(200, 60%, 50%) 100%);
+    background: linear-gradient(135deg, hsl(271, 70%, 50%) 0%, hsl(260, 65%, 55%) 100%);
   }
 
   .glass-card {
@@ -78,7 +78,7 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(174, 58%, 42%) 0%, hsl(200, 60%, 50%) 100%);
+    background: linear-gradient(135deg, hsl(271, 70%, 50%) 0%, hsl(260, 65%, 55%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;

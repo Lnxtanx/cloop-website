@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -144,9 +144,9 @@ const Topics = () => {
   };
 
   const getCompletionColor = (percent: number) => {
-    if (percent >= 80) return "text-green-600";
-    if (percent >= 50) return "text-amber-600";
-    return "text-purple-600";
+    if (percent >= 80) return "text-purple-700";
+    if (percent >= 50) return "text-purple-600";
+    return "text-purple-500";
   };
 
   const user = localStorage.getItem("cloop_user") ? JSON.parse(localStorage.getItem("cloop_user")!) : null;
@@ -188,12 +188,12 @@ const Topics = () => {
           const totalCount = topics.length || chapter.total_topics;
           const computedPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
           return (
-            <Card className="border-border bg-gradient-to-r from-primary/5 to-primary/10">
+            <Card className="border-purple-200 bg-gradient-to-r from-purple-100 to-purple-50">
               <CardContent className="p-5">
                 <div className="space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-medium">Chapter Progress</span>
-                    <span className="text-lg font-bold text-primary">{computedPercent}%</span>
+                    <span className="text-lg font-bold text-purple-700">{computedPercent}%</span>
                   </div>
                   <Progress value={computedPercent} className="h-2" />
                   <p className="text-xs text-muted-foreground">
@@ -210,8 +210,8 @@ const Topics = () => {
           {topics.map((topic, index) => (
             <Card
               key={topic.id}
-              className={`border-border transition-all hover:shadow-md cursor-pointer ${
-                topic.is_completed ? "bg-muted/30" : ""
+              className={`border-gray-200 hover:border-purple-300 transition-all hover:shadow-md cursor-pointer ${
+                topic.is_completed ? "bg-purple-50/50" : "bg-white"
               }`}
               onClick={() => handleTopicPress(topic)}
             >
@@ -219,10 +219,10 @@ const Topics = () => {
                 {/* Status Icon */}
                 <div
                   className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-                    topic.is_completed ? "bg-green-100" : "bg-primary/10"
+                    topic.is_completed ? "bg-purple-100" : "bg-purple-50"
                   }`}
                 >
-                  <span className={`text-sm font-bold ${topic.is_completed ? "text-green-600" : "text-primary"}`}>
+                  <span className={`text-sm font-bold ${topic.is_completed ? "text-purple-700" : "text-purple-600"}`}>
                     {index + 1}
                   </span>
                 </div>
@@ -230,10 +230,10 @@ const Topics = () => {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-1">
-                    <h4 className={`font-semibold text-sm ${topic.is_completed ? "line-through text-muted-foreground" : ""}`}>
+                    <h4 className={`font-semibold text-sm ${topic.is_completed ? "text-purple-700" : ""}`}>
                       {topic.title}
                     </h4>
-                    {topic.is_completed && <span className="px-2 py-0.5 text-[10px] bg-green-100 text-green-700 rounded-full">Completed</span>}
+                    {topic.is_completed && <span className="px-2 py-0.5 text-[10px] bg-purple-100 text-purple-700 rounded-full">Completed</span>}
                   </div>
 
                   {/* Metrics */}
@@ -279,7 +279,7 @@ const Topics = () => {
                   <Button
                     variant="default"
                     size="sm"
-                    className="hero-gradient border-0"
+                    className="bg-purple-600 hover:bg-purple-700 text-white border-0"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTopicPress(topic);

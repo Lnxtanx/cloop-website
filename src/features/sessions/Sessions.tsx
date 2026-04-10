@@ -1,6 +1,9 @@
 import { useEffect, useState, useCallback } from "react";
-import DashboardLayout from "@/components/DashboardLayout";
-import { Search, Bookmark, CheckCircle2, Clock, ChevronRight, Loader2, FolderOpen, X } from "lucide-react";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import { Search, Bookmark, CheckCircle2, Clock, ChevronRight, Loader2, FolderOpen, X, Play } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { Button } from "@/components/ui/button";
 
 const API = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
 
@@ -46,7 +49,7 @@ interface SavedTopic {
   };
 }
 
-const scoreColor = (n: number) => (n >= 80 ? "#10B981" : n >= 60 ? "#F59E0B" : "#EF4444");
+const scoreColor = (n: number) => (n >= 80 ? "#8B5CF6" : n >= 60 ? "#A78BFA" : "#C4B5FD");
 
 export default function Sessions() {
   const [filter, setFilter] = useState<FilterType>("saved");
@@ -178,9 +181,9 @@ export default function Sessions() {
         <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
           {(["saved", "completed", "incomplete"] as FilterType[]).map((f) => (
             <button key={f} onClick={() => setFilter(f)} style={{
-              padding: "8px 20px", borderRadius: 20, border: "1px solid",
-              borderColor: filter === f ? "hsl(174,58%,42%)" : "#E5E7EB",
-              background: filter === f ? "hsl(174,58%,42%)" : "#fff",
+              padding: "8px 20px", borderRadius: 20, border: "1.5px solid",
+              borderColor: filter === f ? "#7c3aed" : "#E5E7EB",
+              background: filter === f ? "#7c3aed" : "#fff",
               color: filter === f ? "#fff" : "#6B7280",
               fontWeight: 500, fontSize: 14, cursor: "pointer",
             }}>
@@ -195,7 +198,7 @@ export default function Sessions() {
         {/* Session cards */}
         {loading || (filter === "saved" && savedLoading) ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
-            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "hsl(174,58%,42%)" }} />
+            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
           </div>
         ) : filtered.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "48px 0", marginBottom: 32 }}>
@@ -206,84 +209,68 @@ export default function Sessions() {
             <p style={{ fontSize: 13, color: "#9CA3AF" }}>Your {filter} sessions will appear here.</p>
           </div>
         ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 32 }}>
-            {filtered.map((session) =>
-              filter === "saved" ? (
-                /* Saved card */
-                <div key={session.topic_id}
-                  style={{
-                    background: "#fff", borderRadius: 16, padding: "14px 16px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.06)", cursor: "pointer",
-                    display: "flex", alignItems: "center", gap: 12,
-                  }}
-                  onClick={() => navigateToTopic(session.topic_id)}
-                >
+          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40 }}>
+            {filtered.map((session) => (
+              <div key={session.topic_id}
+                style={{
+                  background: session._saved ? "#fff" : session.is_completed ? "#f3e8ff" : "#fff",
+                  borderRadius: 16, padding: "14px 16px",
+                  boxShadow: "0 2px 6px rgba(0,0,0,0.06)", cursor: "pointer",
+                  border: session._saved ? "1px solid #E5E7EB" : "1.5px solid #c4b5fd",
+                  display: "flex", alignItems: "center", gap: 12,
+                  transition: "all 0.2s",
+                }}
+                onClick={() => navigateToTopic(session.topic_id)}
+              >
+                <div style={{
+                  width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
+                  background: session._saved ? "#ede9fe" : session.is_completed ? "#7c3aed" : "#f3e8ff",
+                  display: "flex", alignItems: "center", justifyContent: "center",
+                }}>
+                  {session._saved ? (
+                    <Bookmark style={{ width: 20, height: 20, color: "#7c3aed", fill: "#7c3aed" }} />
+                  ) : session.is_completed ? (
+                    <CheckCircle2 style={{ width: 22, height: 22, color: "#fff" }} />
+                  ) : (
+                    <Clock style={{ width: 22, height: 22, color: "#7c3aed" }} />
+                  )}
+                </div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <p style={{ fontWeight: 600, fontSize: 15, color: "#1F2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {session.title}
+                  </p>
+                  <p style={{ fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>
+                    {session.subject}{session.chapter ? ` — ${session.chapter}` : ""}
+                  </p>
+                </div>
+                {!session.is_completed && !session._saved && (
+                  <div style={{ flexShrink: 0, width: 120 }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
+                      <span style={{ fontSize: 11, color: "#6B7280" }}>{Math.round(session.completion_percent || 0)}%</span>
+                    </div>
+                    <div style={{ height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
+                      <div style={{
+                        height: "100%", borderRadius: 3,
+                        width: `${session.completion_percent || 0}%`,
+                        background: "linear-gradient(90deg, #8B5CF6, #7c3aed)",
+                        transition: "width 0.3s ease",
+                      }} />
+                    </div>
+                  </div>
+                )}
+                {session._saved && (
                   <button
                     onClick={(e) => { e.stopPropagation(); handleUnsave(session.topic_id); }}
                     style={{
-                      width: 44, height: 44, borderRadius: "50%", background: "#F3F4F6",
-                      border: "none", cursor: "pointer", display: "flex", alignItems: "center",
-                      justifyContent: "center", flexShrink: 0,
+                      background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0,
                     }}
                   >
-                    <Bookmark style={{ width: 20, height: 20, color: "hsl(174,58%,42%)", fill: "hsl(174,58%,42%)" }} />
+                    <X style={{ width: 18, height: 18, color: "#9CA3AF" }} />
                   </button>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <p style={{ fontWeight: 600, fontSize: 15, color: "#1F2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                      {session.title}
-                    </p>
-                    <p style={{ fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>{session.subject}</p>
-                  </div>
-                  <ChevronRight style={{ width: 18, height: 18, color: "#9CA3AF", flexShrink: 0 }} />
-                </div>
-              ) : (
-                /* Completed / Incomplete card */
-                <div key={session.topic_id}
-                  style={{
-                    background: "#fff", borderRadius: 16, padding: 16,
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.06)", cursor: "pointer",
-                  }}
-                  onClick={() => navigateToTopic(session.topic_id)}
-                >
-                  <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: session.is_completed ? 0 : 10 }}>
-                    <div style={{
-                      width: 44, height: 44, borderRadius: "50%", background: "#F3F4F6",
-                      display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0,
-                    }}>
-                      {session.is_completed ? (
-                        <CheckCircle2 style={{ width: 22, height: 22, color: "#10B981" }} />
-                      ) : (
-                        <Clock style={{ width: 22, height: 22, color: "hsl(174,58%,42%)" }} />
-                      )}
-                    </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <p style={{ fontWeight: 600, fontSize: 15, color: "#1F2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {session.title}
-                      </p>
-                      <p style={{ fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>
-                        {session.subject}{session.chapter ? ` — ${session.chapter}` : ""}
-                      </p>
-                    </div>
-                    <ChevronRight style={{ width: 18, height: 18, color: "#9CA3AF", flexShrink: 0 }} />
-                  </div>
-                  {!session.is_completed && (
-                    <div>
-                      <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 6 }}>
-                        <span style={{ fontSize: 12, color: "#6B7280" }}>In progress: {Math.round(session.completion_percent || 0)}%</span>
-                        <span style={{ fontSize: 12, color: "#6B7280" }}>{session.chat_count || 0} sessions</span>
-                      </div>
-                      <div style={{ height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
-                        <div style={{
-                          height: "100%", borderRadius: 3,
-                          width: `${session.completion_percent || 0}%`,
-                          background: "hsl(174,58%,42%)",
-                        }} />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            )}
+                )}
+                <ChevronRight style={{ width: 18, height: 18, color: "#9CA3AF", flexShrink: 0 }} />
+              </div>
+            ))}
           </div>
         )}
 
@@ -292,30 +279,30 @@ export default function Sessions() {
         {subjects.length === 0 ? (
           <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", padding: "20px 0" }}>No subjects enrolled</p>
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(130px, 1fr))", gap: 12 }}>
+          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {subjects.map((s: any) => {
               const score = subjectScore(s.id);
               return (
-                <div key={s.id}
+                <Card
+                  key={s.id}
+                  className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
                   onClick={() => window.location.href = `/chapters?subjectId=${s.id}&subjectName=${encodeURIComponent(s.name)}`}
-                  style={{
-                    background: "#fff", borderRadius: 16, padding: "14px 10px",
-                    boxShadow: "0 2px 6px rgba(0,0,0,0.06)", cursor: "pointer",
-                    textAlign: "center",
-                  }}
                 >
-                  <div style={{
-                    width: 52, height: 52, borderRadius: "50%", margin: "0 auto 8px",
-                    background: "hsl(174,40%,90%)", display: "flex", alignItems: "center",
-                    justifyContent: "center", fontSize: 20, fontWeight: 800, color: "hsl(174,58%,35%)",
-                  }}>
-                    {s.name?.[0]?.toUpperCase() ?? "?"}
-                  </div>
-                  <p style={{ fontWeight: 700, fontSize: 13, color: "#1F2937", margin: "0 0 4px" }}>{s.name}</p>
-                  <p style={{ fontSize: 10, fontWeight: 700, color: scoreColor(score), margin: 0 }}>
-                    Predicted Score: {score}
-                  </p>
-                </div>
+                  <CardContent className="p-5">
+                    <h4 className="font-semibold mt-1 mb-2">{s.name}</h4>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: scoreColor(score), margin: "0 0 8px" }}>
+                      Predicted Score: {score}%
+                    </p>
+                    <div className="flex items-center justify-between mt-2">
+                      <span className="text-xs text-gray-600">
+                        Click to view chapters
+                      </span>
+                      <Button size="sm" variant="ghost" className="h-7 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 p-1">
+                        <Play className="w-3 h-3" /> Open
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
               );
             })}
           </div>

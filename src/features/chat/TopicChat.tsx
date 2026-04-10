@@ -1,25 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  ArrowLeft, Bell, BarChart2, ChevronDown, ChevronUp,
-  Clock, Home, Loader2, LogOut, MessageCircle, Send,
-  Trophy, User, Video,
+  ArrowLeft, ChevronDown, ChevronUp,
+  Clock, Loader2, Send, Home, Video, BarChart3, MessageCircle, User, Bell,
+  Trophy,
 } from "lucide-react";
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
   TopicChatMessage, TopicGoal, TopicChatResponse,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
-
-// ─── Sidebar nav ──────────────────────────────────────────────────────────────
-
-const NAV = [
-  { icon: Home,         label: "Home",       path: "/dashboard" },
-  { icon: Video,        label: "Sessions",   path: "/dashboard/sessions" },
-  { icon: BarChart2,    label: "Statistics", path: "/dashboard/statistics" },
-  { icon: MessageCircle,label: "Chat",       path: "/dashboard/chat" },
-  { icon: User,         label: "Profile",    path: "/dashboard/profile" },
-];
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
@@ -45,7 +35,7 @@ function DiffText({ html }: { html: string }) {
         if (p.startsWith("<del>"))
           return <span key={i} style={{ textDecoration: "line-through", color: "#ef4444" }}>{p.replace(/<\/?del>/g, "")}</span>;
         if (p.startsWith("<ins>"))
-          return <span key={i} style={{ fontWeight: 600, color: "#10b981" }}>{p.replace(/<\/?ins>/g, "")}</span>;
+          return <span key={i} style={{ fontWeight: 600, color: "#8b5cf6" }}>{p.replace(/<\/?ins>/g, "")}</span>;
         return <span key={i}>{p}</span>;
       })}
     </span>
@@ -59,7 +49,7 @@ function UserBubble({ msg }: { msg: TopicChatMessage }) {
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
       <div style={{
         maxWidth: "65%", padding: "10px 16px", borderRadius: "18px 18px 4px 18px",
-        background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
+        background: "linear-gradient(135deg, #7c3aed, #a855f7)",
         color: "#fff", fontSize: 14, lineHeight: 1.55,
       }}>
         {msg.message}
@@ -74,14 +64,14 @@ function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: stri
       {/* Avatar */}
       <div style={{
         width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-        background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
+        background: "linear-gradient(135deg, #7c3aed, #a855f7)",
         display: "flex", alignItems: "center", justifyContent: "center",
         color: "#fff", fontSize: 10, fontWeight: 700,
       }}>C.</div>
       <div style={{ maxWidth: "65%" }}>
         <div style={{
           padding: "10px 16px", borderRadius: "18px 18px 18px 4px",
-          background: "hsl(174,40%,94%)", color: "hsl(210,20%,12%)",
+          background: "#f3f4f6", color: "#111827",
           fontSize: 14, lineHeight: 1.55,
         }}>
           {msg.message}
@@ -91,10 +81,10 @@ function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: stri
             {msg.options.map((o) => (
               <button key={o.value} onClick={() => onOption(o.value)} style={{
                 textAlign: "left", padding: "8px 14px", borderRadius: 12,
-                border: "1.5px solid hsl(174,40%,80%)", background: "#fff",
-                fontSize: 13, color: "hsl(210,20%,12%)", cursor: "pointer",
+                border: "1.5px solid #e5e7eb", background: "#fff",
+                fontSize: 13, color: "#111827", cursor: "pointer",
               }}
-              onMouseEnter={e => (e.currentTarget.style.background = "hsl(174,40%,94%)")}
+              onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
               onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
               >
                 {o.text}
@@ -168,44 +158,38 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
 function SummaryCard({ data }: { data: SessionSummaryData }) {
   const score = Number(data.score_percent ?? data.overall_score_percent ?? data.performance_percent ?? 0);
-  // Use real predicted_score from backend if available, otherwise estimate
-  const predicted = data.predicted_score != null
-    ? Math.round(Number(data.predicted_score))
-    : Math.min(100, Math.round(score + 15));
+  const predicted = data.predicted_score != null ? Math.round(Number(data.predicted_score)) : Math.min(100, Math.round(score + 15));
   const low = score < 35;
   return (
-    <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-      <div style={{
-        borderRadius: 18, padding: 18, width: 280,
-        background: low ? "#fef2f2" : "#f0fdf4",
-      }}>
-        <div style={{ textAlign: "center", marginBottom: 14 }}>
-          <Trophy style={{ width: 36, height: 36, color: low ? "#ef4444" : "#10b981", margin: "0 auto 6px" }} />
-          <p style={{ fontSize: 26, fontWeight: 800, color: low ? "#ef4444" : "#059669" }}>Score — {score}</p>
-          <p style={{ fontSize: 13, fontWeight: 600, color: low ? "#f87171" : "#34d399" }}>Predicted — {predicted}</p>
+    <div className="flex justify-start mb-4">
+      <div className={`rounded-2xl p-5 w-72 ${low ? "bg-red-50" : "bg-green-50"}`}>
+        <div className="text-center mb-4">
+          <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${low ? "text-red-500" : "text-purple-600"}`} />
+          <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-purple-700"}`}>Score — {score}</p>
+          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-purple-500"}`}>Predicted — {predicted}</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 12 }}>
+        <div className="grid grid-cols-3 gap-2 mb-3">
           {[
-            { label: "Total",   val: data.total_questions   ?? 0, bg: "#f3e8ff", c: "#7c3aed" },
-            { label: "Correct", val: data.correct_answers   ?? 0, bg: "#d1fae5", c: "#059669" },
-            { label: "Wrong",   val: data.incorrect_answers ?? 0, bg: "#fee2e2", c: "#dc2626" },
+            { label: "Total", val: data.total_questions ?? 0, bg: "bg-purple-100", c: "text-purple-700" },
+            { label: "Correct", val: data.correct_answers ?? 0, bg: "bg-green-100", c: "text-green-700" },
+            { label: "Wrong", val: data.incorrect_answers ?? 0, bg: "bg-red-100", c: "text-red-600" },
           ].map(({ label, val, bg, c }) => (
-            <div key={label} style={{ background: bg, borderRadius: 10, padding: "10px 4px", textAlign: "center" }}>
-              <p style={{ fontSize: 20, fontWeight: 800, color: c }}>{val}</p>
-              <p style={{ fontSize: 10, color: "#6b7280" }}>{label}</p>
+            <div key={label} className={`${bg} rounded-xl py-2.5 text-center`}>
+              <p className={`text-lg font-extrabold ${c}`}>{val}</p>
+              <p className="text-xs text-gray-500">{label}</p>
             </div>
           ))}
         </div>
         {(data.top_error_types?.length ?? 0) > 0 && (
-          <div style={{ marginBottom: 8 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 4 }}>🚀 Common Mistakes</p>
-            {data.top_error_types!.slice(0, 3).map((e, i) => <p key={i} style={{ fontSize: 12, color: "#6b7280" }}>• {e.type}</p>)}
+          <div className="mb-2">
+            <p className="text-xs font-bold text-gray-700 mb-1">🚀 Common Mistakes</p>
+            {data.top_error_types!.slice(0, 3).map((e, i) => <p key={i} className="text-xs text-gray-500">• {e.type}</p>)}
           </div>
         )}
         {data.has_weak_areas && (data.weak_goals?.length ?? 0) > 0 && (
           <div>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#374151", marginBottom: 4 }}>💡 Areas to Improve</p>
-            {data.weak_goals!.map((g, i) => <p key={i} style={{ fontSize: 12, color: "#6b7280" }}>• {g.goal_title}</p>)}
+            <p className="text-xs font-bold text-gray-700 mb-1">💡 Areas to Improve</p>
+            {data.weak_goals!.map((g, i) => <p key={i} className="text-xs text-gray-500">• {g.goal_title}</p>)}
           </div>
         )}
       </div>
@@ -219,33 +203,27 @@ function ScorePredictionCard({ data }: { data: ScorePrediction }) {
   const pred = Math.round(data.predicted_score);
   const concept = Math.round((data.concept_score ?? 0) * 100);
   const exam = Math.round((data.exam_score ?? 0) * 100);
-  const color = pred >= 75 ? "#059669" : pred >= 50 ? "#d97706" : "#dc2626";
-  const bg = pred >= 75 ? "#f0fdf4" : pred >= 50 ? "#fffbeb" : "#fef2f2";
-  const border = pred >= 75 ? "#a7f3d0" : pred >= 50 ? "#fde68a" : "#fecaca";
+  const color = pred >= 75 ? "text-purple-700" : pred >= 50 ? "text-amber-600" : "text-red-600";
+  const bg = pred >= 75 ? "bg-purple-50 border-purple-200" : pred >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
   return (
-    <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
-      <div style={{
-        borderRadius: 16, padding: 16, minWidth: 240, maxWidth: 300,
-        background: bg, border: `1.5px solid ${border}`,
-      }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <Trophy style={{ width: 18, height: 18, color }} />
-          <span style={{ fontSize: 13, fontWeight: 700, color: "hsl(210,20%,12%)" }}>
-            {data.goal_title ? `Goal: ${data.goal_title}` : "Goal Complete"}
-          </span>
+    <div className="flex justify-start mb-4">
+      <div className={`rounded-2xl p-4 min-w-[240px] max-w-[300px] border ${bg}`}>
+        <div className="flex items-center gap-2 mb-3">
+          <Trophy className={`w-4 h-4 ${color}`} />
+          <span className="text-sm font-bold text-gray-800">{data.goal_title ? `Goal: ${data.goal_title}` : "Goal Complete"}</span>
         </div>
-        <div style={{ textAlign: "center", marginBottom: 12 }}>
-          <span style={{ fontSize: 30, fontWeight: 800, color }}>{pred}%</span>
-          <p style={{ fontSize: 11, color: "#6b7280", marginTop: 2 }}>Predicted Score</p>
+        <div className="text-center mb-3">
+          <span className={`text-3xl font-extrabold ${color}`}>{pred}%</span>
+          <p className="text-xs text-gray-500 mt-1">Predicted Score</p>
         </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 8 }}>
+        <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Concept", val: concept, bg2: "#eff6ff", c2: "#2563eb" },
-            { label: "Exam",    val: exam,    bg2: "#f5f3ff", c2: "#7c3aed" },
+            { label: "Concept", val: concept, bg2: "bg-blue-50", c2: "text-blue-700" },
+            { label: "Exam", val: exam, bg2: "bg-purple-50", c2: "text-purple-700" },
           ].map(({ label, val, bg2, c2 }) => (
-            <div key={label} style={{ background: bg2, borderRadius: 10, padding: "8px 4px", textAlign: "center" }}>
-              <p style={{ fontSize: 16, fontWeight: 800, color: c2 }}>{val}%</p>
-              <p style={{ fontSize: 10, color: "#6b7280" }}>{label}</p>
+            <div key={label} className={`${bg2} rounded-xl py-2 text-center`}>
+              <p className={`text-base font-extrabold ${c2}`}>{val}%</p>
+              <p className="text-xs text-gray-500">{label}</p>
             </div>
           ))}
         </div>
@@ -265,19 +243,19 @@ function goalIsCompleted(g: TopicGoal): boolean {
 function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean; onToggle: () => void }) {
   const doneCount = goals.filter(goalIsCompleted).length;
   return (
-    <div style={{ background: "hsl(174,40%,94%)", borderBottom: "1px solid hsl(174,40%,85%)", flexShrink: 0 }}>
+    <div style={{ background: "#f3e8ff", borderBottom: "1px solid #e9d5ff", flexShrink: 0 }}>
       <button onClick={onToggle} style={{
         width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 16px", height: 40, border: "none", background: "transparent", cursor: "pointer",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Trophy style={{ width: 15, height: 15, color: "hsl(174,58%,42%)" }} />
-          <span style={{ fontSize: 13, fontWeight: 600, color: "hsl(210,20%,12%)" }}>Learning Goals</span>
+          <Trophy style={{ width: 15, height: 15, color: "#7c3aed" }} />
+          <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Learning Goals</span>
           <span style={{ fontSize: 12, color: "#9ca3af" }}>{doneCount}/{goals.length}</span>
         </div>
         {open
-          ? <ChevronUp style={{ width: 15, height: 15, color: "hsl(174,58%,42%)" }} />
-          : <ChevronDown style={{ width: 15, height: 15, color: "hsl(174,58%,42%)" }} />}
+          ? <ChevronUp style={{ width: 15, height: 15, color: "#7c3aed" }} />
+          : <ChevronDown style={{ width: 15, height: 15, color: "#7c3aed" }} />}
       </button>
       {open && (
         <div style={{ overflowX: "auto", paddingBottom: 12 }}>
@@ -298,19 +276,19 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
               return (
                 <div key={g.id} style={{
                   width: 116, borderRadius: 12, padding: 10,
-                  border: `2px solid ${completed ? "#34d399" : active ? "hsl(174,58%,42%)" : "#d1d5db"}`,
-                  background: completed ? "#ecfdf5" : active ? "#fff" : "hsl(174,40%,90%)",
+                  border: `2px solid ${completed ? "#a78bfa" : active ? "#7c3aed" : "#d1d5db"}`,
+                  background: completed ? "#f3e8ff" : active ? "#fafafa" : "#f9fafb",
                   boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
                 }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       {completed
-                        ? <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
+                        ? <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
                         : active
-                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid hsl(174,58%,42%)", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "hsl(174,58%,42%)" }} /></div>
+                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "#7c3aed" }} /></div>
                           : <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #d1d5db" }} />
                       }
-                      <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#059669" : active ? "hsl(174,58%,42%)" : "#9ca3af" }}>{i + 1}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#7c3aed" : active ? "#7c3aed" : "#9ca3af" }}>{i + 1}</span>
                     </div>
                     {/* Phase badge — only on active goal */}
                     {phase && (
@@ -329,7 +307,7 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
                   {score > 0 && (
                     <div style={{ marginTop: 6 }}>
                       <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#10b981" : "hsl(174,58%,42%)", borderRadius: 2, transition: "width 0.4s ease" }} />
+                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#a78bfa" : "#7c3aed", borderRadius: 2, transition: "width 0.4s ease" }} />
                       </div>
                       <span style={{ fontSize: 10, color: "#6b7280" }}>{score}%</span>
                     </div>
@@ -348,20 +326,12 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
 
 function TypingDots() {
   return (
-    <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 16 }}>
-      <div style={{
-        width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-        background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        color: "#fff", fontSize: 10, fontWeight: 700,
-      }}>C.</div>
-      <div style={{ padding: "12px 16px", borderRadius: "18px 18px 18px 4px", background: "hsl(174,40%,94%)" }}>
-        <div style={{ display: "flex", gap: 4 }}>
+    <div className="flex items-end gap-2.5 mb-5">
+      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">C</div>
+      <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm border border-gray-100">
+        <div className="flex gap-1.5">
           {[0, 150, 300].map((d, i) => (
-            <div key={i} className="animate-bounce" style={{
-              width: 7, height: 7, borderRadius: "50%",
-              background: "hsl(174,58%,42%)", animationDelay: `${d}ms`,
-            }} />
+            <div key={i} className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
           ))}
         </div>
       </div>
@@ -528,9 +498,8 @@ export default function TopicChat() {
   };
 
   const renderMsg = (msg: TopicChatMessage) => {
-    if (msg.message_type === "score_prediction") return null; // shown only in final summary
+    if (msg.message_type === "score_prediction") return null;
     if (msg.message_type === "session_summary") {
-      // Data can live in msg.session_summary (preferred), msg itself, or parsed from diff_html
       const summaryCandidate: SessionSummaryData = msg;
       const data: SessionSummaryData =
         msg.session_summary ??
@@ -545,152 +514,109 @@ export default function TopicChat() {
     return <AIBubble key={msg.id} msg={msg} onOption={(v) => send(v)} />;
   };
 
-  const logout = () => {
-    localStorage.removeItem("cloop_token");
-    localStorage.removeItem("cloop_user");
-    navigate("/login");
-  };
-
   // ── Render ──
-  // position:fixed + inset:0 = ALWAYS exactly the viewport.
-  // No parent height issues, no SidebarProvider min-h-svh conflict.
-  // Sidebar is a plain flex column. Chat panel is a flex column.
-  // The messages div gets flex:1 + overflowY:auto — it ALWAYS works
-  // because its parent has a definite pixel height from the fixed container.
+  const NAV = [
+    { icon: Home, label: "Home", path: "/dashboard" },
+    { icon: Video, label: "Sessions", path: "/dashboard/sessions" },
+    { icon: BarChart3, label: "Statistics", path: "/dashboard/statistics" },
+    { icon: MessageCircle, label: "Chat", path: "/dashboard/chat" },
+    { icon: User, label: "Profile", path: "/dashboard/profile" },
+    { icon: Bell, label: "Notifications", path: "/dashboard/notifications" },
+  ];
 
   return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", fontFamily: "Inter,system-ui,sans-serif", background: "#f9fafb" }}>
-
-      {/* ── LEFT SIDEBAR ─────────────────────────────────────────────── */}
-      <div style={{
-        width: 240, flexShrink: 0, display: "flex", flexDirection: "column",
-        background: "#fff", borderRight: "1px solid #e5e7eb",
-      }}>
-        {/* Logo */}
-        <div style={{ padding: "14px 16px", borderBottom: "1px solid #e5e7eb", display: "flex", alignItems: "center", gap: 8 }}>
-          <div style={{
-            width: 28, height: 28, borderRadius: 8,
-            background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <span style={{ color: "#fff", fontSize: 13, fontWeight: 800 }}>C</span>
+    <div style={{ position: "fixed", inset: 0, display: "flex", fontFamily: "Inter,system-ui,sans-serif", background: "#fff" }}>
+      {/* LEFT SIDEBAR */}
+      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid #e5e7eb" }}>
+        {/* Logo Header - Purple gradient */}
+        <div style={{ height: 56, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
+          <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <span style={{ color: "#7c3aed", fontSize: 14, fontWeight: 800 }}>C</span>
           </div>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "hsl(174,58%,42%)" }}>Cloop</span>
+          <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Cloop</span>
         </div>
 
         {/* Nav */}
-        <nav style={{ flex: 1, padding: "10px 8px", display: "flex", flexDirection: "column", gap: 2 }}>
+        <nav style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
           {NAV.map(({ icon: Icon, label, path }) => {
             const active = location.pathname === path;
             return (
-              <button key={path} onClick={() => navigate(path)} style={{
-                display: "flex", alignItems: "center", gap: 10,
-                padding: "9px 12px", borderRadius: 10, border: "none", cursor: "pointer",
-                background: active ? "hsl(174,40%,94%)" : "transparent",
-                color: active ? "hsl(174,58%,42%)" : "#6b7280",
-                fontSize: 14, fontWeight: active ? 600 : 400,
-                width: "100%", textAlign: "left",
-                transition: "background 0.15s, color 0.15s",
-              }}
-              onMouseEnter={e => { if (!active) e.currentTarget.style.background = "#f9fafb"; }}
-              onMouseLeave={e => { if (!active) e.currentTarget.style.background = "transparent"; }}
+              <button
+                key={path}
+                onClick={() => navigate(path)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 12,
+                  padding: "12px 16px",
+                  borderRadius: 8,
+                  border: "none",
+                  cursor: "pointer",
+                  background: active ? "#f3e8ff" : "transparent",
+                  color: active ? "#6b2d8f" : "#111827",
+                  fontSize: 14,
+                  fontWeight: active ? 600 : 500,
+                  width: "100%",
+                  textAlign: "left",
+                  transition: "all 0.15s",
+                }}
+                onMouseEnter={(e) => {
+                  if (!active) (e.currentTarget as any).style.background = "#f3f4f6";
+                }}
+                onMouseLeave={(e) => {
+                  if (!active) (e.currentTarget as any).style.background = "transparent";
+                }}
               >
-                <Icon style={{ width: 17, height: 17 }} />
+                <Icon style={{ width: 20, height: 20 }} />
                 {label}
               </button>
             );
           })}
         </nav>
-
-        {/* Logout */}
-        <div style={{ borderTop: "1px solid #e5e7eb", padding: "10px 8px" }}>
-          <button onClick={logout} style={{
-            display: "flex", alignItems: "center", gap: 10,
-            padding: "9px 12px", borderRadius: 10, border: "none",
-            cursor: "pointer", background: "transparent",
-            color: "#9ca3af", fontSize: 14, width: "100%", textAlign: "left",
-          }}
-          onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-          onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-          >
-            <LogOut style={{ width: 17, height: 17 }} />
-            Log out
-          </button>
-        </div>
       </div>
 
-      {/* ── RIGHT CHAT PANEL ─────────────────────────────────────────── */}
-      {/* display:flex + flexDirection:column. This div has a definite height
-          because its parent (position:fixed + inset:0) is always viewport height.
-          So flex children below can use flex:1 reliably. */}
+      {/* RIGHT MAIN PANEL */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
-
-        {/* Header */}
-        <div style={{
-          flexShrink: 0, height: 52, display: "flex", alignItems: "center",
-          justifyContent: "space-between", padding: "0 20px",
-          borderBottom: "1px solid #e5e7eb", background: "#fff",
-        }}>
-          {/* Left: back + title */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, minWidth: 0 }}>
-            <button onClick={() => navigate(-1)} style={{
-              width: 32, height: 32, borderRadius: 8, border: "none",
-              background: "transparent", cursor: "pointer", display: "flex",
-              alignItems: "center", justifyContent: "center", flexShrink: 0,
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
+        {/* Header: back + title + timer + done */}
+        <div style={{ flexShrink: 0, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
+            <button
+              onClick={() => navigate(-1)}
+              style={{
+                width: 32, height: 32, borderRadius: 8, border: "none",
+                background: "rgba(255,255,255,0.2)", cursor: "pointer", display: "flex",
+                alignItems: "center", justifyContent: "center", flexShrink: 0,
+              }}
+              onMouseEnter={(e) => ((e.currentTarget as any).style.background = "rgba(255,255,255,0.3)")}
+              onMouseLeave={(e) => ((e.currentTarget as any).style.background = "rgba(255,255,255,0.2)")}
             >
-              <ArrowLeft style={{ width: 16, height: 16, color: "#374151" }} />
+              <ArrowLeft style={{ width: 18, height: 18, color: "#fff" }} />
             </button>
             <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#111827", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              <p style={{ fontSize: 14, fontWeight: 600, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                 {loading ? "Loading…" : topicTitle}
               </p>
               {(subjectName || chapterTitle) && (
-                <p style={{ fontSize: 11, color: "#9ca3af", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
                   {subjectName}{chapterTitle ? ` → ${chapterTitle}` : ""}
                 </p>
               )}
             </div>
           </div>
 
-          {/* Right: timer + done badge + bell + avatar */}
-          <div style={{ display: "flex", alignItems: "center", gap: 10, flexShrink: 0 }}>
-            <div style={{
-              display: "flex", alignItems: "center", gap: 5,
-              background: "hsl(174,40%,94%)", borderRadius: 20, padding: "4px 12px",
-            }}>
-              <Clock style={{ width: 12, height: 12, color: "hsl(174,58%,42%)" }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: "hsl(174,58%,42%)", fontVariantNumeric: "tabular-nums" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.2)", borderRadius: 20, padding: "6px 12px" }}>
+              <Clock style={{ width: 14, height: 14, color: "#fff" }} />
+              <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", fontVariantNumeric: "tabular-nums" }}>
                 {fmt(baseTime + elapsed)}
               </span>
             </div>
 
             {done && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#059669", background: "#d1fae5", borderRadius: 20, padding: "4px 10px" }}>
-                ✓ Completed
+              <span style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", background: "#fff", borderRadius: 20, padding: "6px 10px" }}>
+                ✓ Done
               </span>
             )}
-
-            <button style={{
-              position: "relative", width: 32, height: 32, borderRadius: 8,
-              border: "none", background: "transparent", cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center",
-            }}
-            onMouseEnter={e => (e.currentTarget.style.background = "#f3f4f6")}
-            onMouseLeave={e => (e.currentTarget.style.background = "transparent")}
-            >
-              <Bell style={{ width: 16, height: 16, color: "#9ca3af" }} />
-              <span style={{ position: "absolute", top: 6, right: 6, width: 7, height: 7, borderRadius: "50%", background: "#ef4444", border: "1.5px solid #fff" }} />
-            </button>
-
-            <div style={{
-              width: 30, height: 30, borderRadius: "50%",
-              background: "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#fff", fontSize: 11, fontWeight: 700, flexShrink: 0,
-            }}>{userInitials}</div>
           </div>
         </div>
 
@@ -699,57 +625,62 @@ export default function TopicChat() {
           <GoalsBar goals={goals} open={goalsOpen} onToggle={() => setGoalsOpen((p) => !p)} />
         )}
 
-        {/* Messages — flex:1 fills remaining height, overflowY:auto scrolls */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 20px 12px" }}>
+        {/* Messages */}
+        <div style={{ flex: 1, overflowY: "auto", background: "#f9fafb", padding: "24px 20px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
-
             {loading && (
               <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, padding: "80px 0", color: "#9ca3af", fontSize: 14 }}>
-                <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: "hsl(174,58%,42%)" }} />
+                <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: "#7c3aed" }} />
                 Loading topic…
               </div>
             )}
-
             {!loading && messages.length === 0 && (
               <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 14, padding: "80px 0" }}>
                 Starting your session…
               </p>
             )}
-
             {error && (
               <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#b91c1c", fontSize: 13, marginBottom: 16 }}>
                 {error}
               </div>
             )}
-
             {messages.map((m) => renderMsg(m))}
             {sending && <TypingDots />}
             <div ref={bottomRef} />
           </div>
         </div>
 
-        {/* Input bar — flexShrink:0 always sticks to bottom */}
-        <div style={{ flexShrink: 0, borderTop: "1px solid #e5e7eb", background: "#fff", padding: "14px 20px" }}>
+        {/* Input */}
+        <div style={{ flexShrink: 0, borderTop: "1px solid #e5e7eb", background: "#fff", padding: "16px 20px" }}>
           <div style={{ maxWidth: 720, margin: "0 auto" }}>
             {done ? (
               <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 13, fontWeight: 600, color: "hsl(174,58%,42%)", marginBottom: 10 }}>
+                <p style={{ fontSize: 14, fontWeight: 600, color: "#7c3aed", marginBottom: 12 }}>
                   🎉 You've completed this topic!
                 </p>
-                <button onClick={() => navigate(-1)} style={{
-                  width: "100%", padding: "10px 0", borderRadius: 12,
-                  border: "1.5px solid #e5e7eb", background: "#fff",
-                  fontSize: 13, cursor: "pointer", color: "#374151",
-                }}
-                onMouseEnter={e => (e.currentTarget.style.background = "#f9fafb")}
-                onMouseLeave={e => (e.currentTarget.style.background = "#fff")}
+                <button
+                  onClick={() => navigate(-1)}
+                  style={{
+                    width: "100%",
+                    padding: "10px 0",
+                    borderRadius: 12,
+                    border: "1.5px solid #e5e7eb",
+                    background: "#fff",
+                    fontSize: 13,
+                    cursor: "pointer",
+                    color: "#374151",
+                  }}
+                  onMouseEnter={(e) => ((e.currentTarget as any).style.background = "#f9fafb")}
+                  onMouseLeave={(e) => ((e.currentTarget as any).style.background = "#fff")}
                 >
                   ← Back to Topics
                 </button>
               </div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); void send(); }}
-                style={{ display: "flex", gap: 10, alignItems: "center" }}>
+              <form
+                onSubmit={(e) => { e.preventDefault(); void send(); }}
+                style={{ display: "flex", gap: 10, alignItems: "center" }}
+              >
                 <input
                   ref={inputRef}
                   type="text"
@@ -757,37 +688,59 @@ export default function TopicChat() {
                   placeholder="Type your answer…"
                   value={input}
                   onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey && !sending) { e.preventDefault(); void send(); } }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey && !sending) {
+                      e.preventDefault();
+                      void send();
+                    }
+                  }}
                   disabled={sending}
                   style={{
-                    flex: 1, borderRadius: 26, border: "1.5px solid #e5e7eb",
-                    background: "#f9fafb", padding: "11px 20px",
-                    fontSize: 14, outline: "none", color: "#111827",
+                    flex: 1,
+                    borderRadius: 12,
+                    border: "1.5px solid #e5e7eb",
+                    background: "#f9fafb",
+                    padding: "10px 14px",
+                    fontSize: 13,
+                    outline: "none",
+                    color: "#111827",
+                    fontFamily: "Inter, system-ui, sans-serif",
                     opacity: sending ? 0.6 : 1,
-                    transition: "border-color 0.15s, box-shadow 0.15s",
                   }}
-                  onFocus={e => { e.currentTarget.style.borderColor = "hsl(174,58%,42%)"; e.currentTarget.style.boxShadow = "0 0 0 3px hsl(174,58%,85%)"; }}
-                  onBlur={e => { e.currentTarget.style.borderColor = "#e5e7eb"; e.currentTarget.style.boxShadow = "none"; }}
+                  onFocus={(e) => {
+                    (e.currentTarget as any).style.borderColor = "#7c3aed";
+                    (e.currentTarget as any).style.boxShadow = "0 0 0 3px #f3e8ff";
+                  }}
+                  onBlur={(e) => {
+                    (e.currentTarget as any).style.borderColor = "#e5e7eb";
+                    (e.currentTarget as any).style.boxShadow = "none";
+                  }}
                 />
-                <button type="submit" disabled={sending || !input.trim()} style={{
-                  width: 42, height: 42, borderRadius: "50%", border: "none",
-                  background: sending || !input.trim()
-                    ? "#d1d5db"
-                    : "linear-gradient(135deg,hsl(174,58%,42%),hsl(200,60%,50%))",
-                  color: "#fff", display: "flex", alignItems: "center",
-                  justifyContent: "center", cursor: sending || !input.trim() ? "not-allowed" : "pointer",
-                  flexShrink: 0, transition: "background 0.15s",
-                }}>
-                  {sending
-                    ? <Loader2 className="animate-spin" style={{ width: 16, height: 16 }} />
-                    : <Send style={{ width: 16, height: 16 }} />}
+                <button
+                  type="submit"
+                  disabled={sending || !input.trim()}
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: "50%",
+                    border: "none",
+                    background: sending || !input.trim() ? "#e5e7eb" : "linear-gradient(to right, #7c3aed, #a855f7)",
+                    color: "#fff",
+                    cursor: sending || !input.trim() ? "not-allowed" : "pointer",
+                    opacity: sending || !input.trim() ? 0.5 : 1,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    flexShrink: 0,
+                  }}
+                >
+                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                 </button>
               </form>
             )}
           </div>
         </div>
-
       </div>
     </div>
   );
-}
+};

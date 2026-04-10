@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import DashboardLayout from "@/components/DashboardLayout";
+import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { BookOpen, Play } from "lucide-react";
@@ -104,7 +104,7 @@ const Dashboard = () => {
         {/* Enrolled Subjects */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <BookOpen className="w-5 h-5 text-primary" />
+            <BookOpen className="w-5 h-5 text-purple-600" />
             <h3 className="text-lg font-semibold">Enrolled Subjects</h3>
             <span className="text-sm text-muted-foreground">({subjects.length})</span>
           </div>
@@ -120,7 +120,7 @@ const Dashboard = () => {
                 return (
                   <Card
                     key={item.subject_id}
-                    className="border-border hover:shadow-md transition-shadow cursor-pointer"
+                    className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
                     onClick={() =>
                       navigate(
                         `/chapters?subjectId=${encodeURIComponent(safeSubjectId)}&subjectName=${encodeURIComponent(item.subject?.name || "Untitled")}`
@@ -128,19 +128,19 @@ const Dashboard = () => {
                     }
                   >
                     <CardContent className="p-5">
-                      <span className="text-xs font-medium text-primary bg-accent rounded-full px-2.5 py-0.5">
+                      <span className="text-xs font-semibold text-purple-800 bg-purple-200 rounded-full px-2.5 py-0.5">
                         {item.subject?.category || "General"}
                       </span>
                       <h4 className="font-semibold mt-3 mb-1">{item.subject?.name || "Untitled"}</h4>
-                      <p className="text-xs text-muted-foreground mb-3">
+                      <p className="text-xs text-gray-600 mb-3">
                         {item.completed_chapters || 0} / {item.total_chapters || 0} chapters
                       </p>
                       <Progress value={item.completion_percent || 0} className="h-1.5" />
                       <div className="flex items-center justify-between mt-3">
-                        <span className="text-xs text-muted-foreground">
+                        <span className="text-xs text-gray-600">
                           {Math.round(item.completion_percent || 0)}% complete
                         </span>
-                        <Button size="sm" variant="ghost" className="h-7 text-xs text-primary gap-1 p-1">
+                        <Button size="sm" variant="ghost" className="h-7 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 p-1">
                           <Play className="w-3 h-3" /> Start
                         </Button>
                       </div>
