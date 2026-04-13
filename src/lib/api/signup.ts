@@ -7,12 +7,12 @@ export interface SignupResponse {
     num_chats: number;
     num_lessons: number;
   };
+  guestId?: string;
 }
 
 export interface SignupData {
   name: string;
-  email: string;
-  phone?: string;
+  guestId?: string;
   grade_level?: string;
   board?: string;
   subjects?: string[];

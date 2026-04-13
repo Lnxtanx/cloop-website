@@ -35,9 +35,7 @@ type ChatMessage = {
 
 const getQuestionsTemplate = (): Question[] => [
   { key: "name", bot: "Welcome! To get started, what is your full name?", required: true, type: "text" },
-  { key: "email", bot: "Great! What email address should we use?", required: true, type: "text" },
-  { key: "phone", bot: "Enter your phone number (required for account verification).", required: true, type: "text" },
-  { key: "grade_level", bot: "Which class/grade are you studying in?", required: true, type: "single-choice" },
+  { key: "grade_level", bot: "Great! Which class/grade are you studying in?", required: true, type: "single-choice" },
   { key: "board", bot: "Select the board/school system you follow.", required: true, type: "single-choice" },
   { key: "subjects", bot: "Pick your subjects (choose one or more).", required: false, type: "multi-choice" },
   { key: "preferred_language", bot: "Preferred language for lessons?", required: false, type: "single-choice" },
@@ -61,6 +59,7 @@ const Signup = () => {
   const [isTyping, setIsTyping] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [hasCompleted, setHasCompleted] = useState(false);
+  const [generatedGuestId, setGeneratedGuestId] = useState("");
   const [error, setError] = useState("");
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -183,11 +182,13 @@ const Signup = () => {
     };
 
     try {
-      await signupUser(payload);
+      const result = await signupUser(payload);
+      const guestId = result?.guestId || `GUEST-${Math.floor(10000 + Math.random() * 90000)}`;
+      setGeneratedGuestId(guestId);
       setHasCompleted(true);
       setIsTyping(false);
-      addMessage({ id: Date.now() + 2, sender: "bot", text: "🎉 Signup successful! Redirecting to login..." });
-      setTimeout(() => navigate("/login"), 1800);
+      addMessage({ id: Date.now() + 2, sender: "bot", text: `🎉 Signup successful! Your User ID is: ${guestId}` });
+      addMessage({ id: Date.now() + 3, sender: "bot", text: "⚠️ Save this ID! You'll need it to login next time." });
     } catch (err: unknown) {
       const message = err instanceof Error ? err.message : "Signup failed. Please try again.";
       console.error(err);
@@ -246,7 +247,26 @@ const Signup = () => {
 
           <div className="border-t border-border bg-white p-4">
             {!currentQuestion && hasCompleted && (
-              <p className="text-sm text-success">Signup complete! Redirecting shortly...</p>
+              <div className="text-center py-4">
+                <p className="text-lg font-semibold text-success mb-4">🎉 Signup Complete!</p>
+                <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4 mb-4">
+                  <p className="text-sm text-gray-600 mb-2">Your User ID:</p>
+                  <p className="text-2xl font-bold text-purple-700 mb-3">{generatedGuestId}</p>
+                  <button
+                    onClick={() => navigator.clipboard.writeText(generatedGuestId)}
+                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
+                  >
+                    📋 Copy to Clipboard
+                  </button>
+                </div>
+                <p className="text-sm text-gray-600 mb-4">⚠️ Save this ID! You'll need it to login next time.</p>
+                <button
+                  onClick={() => navigate("/login")}
+                  className="px-6 py-2 hero-gradient text-white rounded-lg"
+                >
+                  Go to Login →
+                </button>
+              </div>
             )}
 
             {!currentQuestion && !hasCompleted && (

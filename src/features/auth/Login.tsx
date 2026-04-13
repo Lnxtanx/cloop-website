@@ -3,10 +3,10 @@ import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import cloopLogo from "@/assets/cloop-logo.png";
+import favicon from "/favicon.ico";
 
 const Login = () => {
-  const [identifier, setIdentifier] = useState("");
+  const [guestId, setGuestId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const navigate = useNavigate();
@@ -15,9 +15,9 @@ const Login = () => {
     e.preventDefault();
     setError("");
 
-    const value = identifier.trim();
+    const value = guestId.trim();
     if (!value) {
-      setError("Please enter your email or phone number.");
+      setError("Please enter your User ID.");
       return;
     }
 
@@ -55,7 +55,6 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-secondary/30 flex">
-      {/* Left side */}
       <div className="hidden lg:flex flex-1 hero-gradient items-center justify-center p-12">
         <div className="text-primary-foreground max-w-md">
           <h1 className="text-4xl font-bold mb-4">Welcome back!</h1>
@@ -63,26 +62,25 @@ const Login = () => {
         </div>
       </div>
 
-      {/* Right side */}
       <div className="flex-1 flex items-center justify-center p-6">
         <div className="w-full max-w-md">
           <Link to="/" className="flex items-center gap-2 mb-8">
-            <img src={cloopLogo} alt="Cloop" width={36} height={36} />
+            <img src={favicon} alt="Cloop" width={36} height={36} />
             <span className="text-xl font-bold">Cloop</span>
           </Link>
 
-          <h2 className="text-2xl font-bold mb-2">Log in to your account</h2>
-          <p className="text-muted-foreground mb-8">Enter your credentials to continue</p>
+          <h2 className="text-2xl font-bold mb-2">Enter your User ID</h2>
+          <p className="text-muted-foreground mb-8">Type your User ID to continue</p>
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label htmlFor="emailOrPhone">Email or Phone</Label>
+              <Label htmlFor="guestId">User ID</Label>
               <Input
-                id="emailOrPhone"
+                id="guestId"
                 type="text"
-                placeholder="you@example.com or +1234567890"
-                value={identifier}
-                onChange={(e) => setIdentifier(e.target.value)}
+                placeholder="GUEST-12345"
+                value={guestId}
+                onChange={(e) => setGuestId(e.target.value.toUpperCase())}
                 className="mt-1.5"
                 disabled={isLoading}
               />

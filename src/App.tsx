@@ -15,6 +15,7 @@ import Statistics from "./features/statistics/Statistics";
 import Chat from "./features/chat/Chat";
 import Profile from "./features/profile/Profile";
 import Notifications from "./features/notifications/Notifications";
+import Feedback from "./features/feedback/Feedback";
 import NotFound from "./features/common/NotFound";
 
 const queryClient = new QueryClient();
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/dashboard/chat" element={<Chat />} />
           <Route path="/dashboard/profile" element={<Profile />} />
           <Route path="/dashboard/notifications" element={<Notifications />} />
+          <Route path="/feedback" element={<Feedback />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </BrowserRouter>

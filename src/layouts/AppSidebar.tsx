@@ -1,4 +1,4 @@
-import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen, MessageSquare } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import favicon from "/favicon.ico";
@@ -21,6 +21,7 @@ const navItems = [
   { title: "Chat", url: "/dashboard/chat", icon: MessageCircle },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
+  { title: "Feedback", url: "/feedback", icon: MessageSquare },
 ];
 
 export function AppSidebar() {
