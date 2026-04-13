@@ -18,8 +18,23 @@ function fmt(s: number) {
 }
 
 function mergeMessages(a: TopicChatMessage[], b: TopicChatMessage[]) {
-  const m = new Map<number, TopicChatMessage>();
-  [...a, ...b].forEach((x) => m.set(x.id, x));
+  const m = new Map<string, TopicChatMessage>();
+  const all = [...a, ...b];
+  
+  all.forEach((x) => {
+    // Use composite key to avoid collisions between user/AI messages with same ID
+    const key = `${x.id}-${x.sender ?? 'unknown'}-${x.message_type ?? 'none'}`;
+    if (!m.has(key)) {
+      m.set(key, x);
+    } else {
+      // If duplicate, keep the one with more data
+      const existing = m.get(key)!;
+      if (x.diff_html || x.options?.length || x.session_summary) {
+        m.set(key, x);
+      }
+    }
+  });
+  
   return [...m.values()].sort(
     (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime()
   );
@@ -405,14 +420,53 @@ export default function TopicChat() {
     try {
       const data: TopicChatResponse = await fetchTopicChatMessages(Number(topicId));
       const loadedGoals = data.goals ?? [];
-      setMessages(mergeMessages(data.messages ?? [], data.aiMessages ?? []));
+      const rawMessages = mergeMessages(data.messages ?? [], data.aiMessages ?? []);
+
+      // Normalize messages for consistent rendering
+      const normalized = rawMessages.map((msg) => {
+        // Fix missing sender
+        const sender = msg.sender || 
+          (msg.message_type === "user_correction" ? "user" : "ai");
+        
+        // Fix missing message_type
+        let messageType = msg.message_type;
+        if (!messageType && msg.diff_html) {
+          messageType = "user_correction";
+        }
+        if (!messageType && msg.score_percent != null) {
+          messageType = "session_summary";
+        }
+
+        return { ...msg, sender, message_type: messageType };
+      });
+
+      // DEBUG: Log loaded messages
+      console.log("📦 Loaded messages:", normalized.map(m => ({
+        id: m.id,
+        sender: m.sender,
+        type: m.message_type,
+        messagePreview: m.message?.slice(0, 60),
+        hasDiff: !!m.diff_html,
+        hasOptions: !!m.options?.length,
+      })));
+
+      setMessages(normalized);
       setGoals(loadedGoals);
       // Topic is done if the topic flag is set OR all goals are completed
       const allGoalsDone = loadedGoals.length > 0 && loadedGoals.every(goalIsCompleted);
       setDone(data.topic.is_completed ?? allGoalsDone);
       setBaseTime(data.topic.time_spent_seconds ?? 0);
       setElapsed(0);
+
+      console.log("✅ Session loaded:", {
+        messageCount: normalized.length,
+        goalsCount: loadedGoals.length,
+        isCompleted: data.topic.is_completed,
+        allGoalsDone,
+        baseTime: data.topic.time_spent_seconds,
+      });
     } catch (e: unknown) {
+      console.error("❌ Failed to load topic chat:", e);
       setError(e instanceof Error ? e.message : "Failed to load");
     } finally {
       setLoading(false);
@@ -433,12 +487,23 @@ export default function TopicChat() {
     setInput("");
     setSending(true);
     const tid = Date.now();
+    
+    console.log("📤 Sending message:", msg.slice(0, 80));
     setMessages((p) => [...p, { id: tid, message: msg, sender: "user", created_at: new Date().toISOString() }]);
+    
     try {
       const res: SendMessageResponse = await sendTopicChatMessage(
         Number(topicId!),
         { message: msg, session_time_seconds: baseTime + elapsed }
       );
+
+      console.log("📥 Received response:", {
+        aiMessageCount: res.messages?.length ?? res.aiMessages?.length ?? 0,
+        hasCorrection: !!res.userCorrection,
+        hasSummary: !!res.session_summary,
+        goalsCount: res.goals?.length,
+      });
+
       if (res.goals) {
         setGoals(res.goals);
         // Also set done if all goals are now completed (use chat_goal_progress)
@@ -448,6 +513,7 @@ export default function TopicChat() {
 
       const corr = res.userCorrection;
       if (corr) {
+        console.log("✏️ Applying correction:", corr);
         setMessages((p) => p.map((m) => m.id === tid
           ? {
               ...m,
@@ -481,13 +547,19 @@ export default function TopicChat() {
         });
       }
 
+      console.log("🔄 Adding messages:", {
+        aiMessages: aiMsgs.length,
+        extras: extras.length,
+      });
+
       setMessages((p) => {
         const merged = [...p, ...aiMsgs.map((m: TopicChatMessage) => ({ ...m, id: m.id ?? Date.now() + Math.random() })), ...extras];
         const seen = new Set<number>();
         return merged.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
       });
       inputRef.current?.focus();
-    } catch {
+    } catch (err) {
+      console.error("❌ Failed to send message:", err);
       setMessages((p) => p.filter((m) => m.id !== tid));
       setInput(msg);
     } finally {
@@ -498,19 +570,40 @@ export default function TopicChat() {
   };
 
   const renderMsg = (msg: TopicChatMessage) => {
+    // DEBUG: Log rendering
+    if (msg.message_type !== "score_prediction") {
+      console.log("🎨 Rendering message:", {
+        id: msg.id,
+        sender: msg.sender,
+        type: msg.message_type,
+        preview: msg.message?.slice(0, 40),
+      });
+    }
+
     if (msg.message_type === "score_prediction") return null;
+    
     if (msg.message_type === "session_summary") {
       const summaryCandidate: SessionSummaryData = msg;
       const data: SessionSummaryData =
         msg.session_summary ??
         (typeof msg.score_percent !== "undefined" ? summaryCandidate : null) ??
         (() => { try { return JSON.parse(msg.diff_html ?? "{}"); } catch { return {}; } })();
+      
+      if (!data.score_percent && !data.total_questions) {
+        console.warn("⚠️ Session summary has no valid data:", msg);
+      }
       return <SummaryCard key={msg.id} data={data} />;
     }
-    if (msg.message_type === "user_correction" || msg.diff_html)
+    
+    if (msg.message_type === "user_correction" || msg.diff_html) {
       return <CorrectionBubble key={msg.id} msg={msg} />;
-    if (msg.sender === "user")
+    }
+    
+    if (msg.sender === "user") {
       return <UserBubble key={msg.id} msg={msg} />;
+    }
+    
+    // Default to AI for safety (handles missing sender)
     return <AIBubble key={msg.id} msg={msg} onOption={(v) => send(v)} />;
   };
 

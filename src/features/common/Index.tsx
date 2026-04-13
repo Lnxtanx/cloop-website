@@ -1,7 +1,8 @@
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { BookOpen, MessageCircle, Brain, TrendingUp, ArrowRight, Star } from "lucide-react";
-import cloopLogo from "@/assets/cloop-logo.png";
+import favicon from "/favicon.ico";
 import heroImg from "@/assets/hero-illustration.jpg";
 
 const steps = [
@@ -19,13 +20,23 @@ const stats = [
 ];
 
 const Index = () => {
+  const navigate = useNavigate();
+
+  // Redirect logged-in users to dashboard
+  useEffect(() => {
+    const token = localStorage.getItem("cloop_token");
+    if (token) {
+      navigate("/dashboard", { replace: true });
+    }
+  }, [navigate]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navbar */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-card">
         <div className="container mx-auto flex items-center justify-between h-16 px-6">
           <Link to="/" className="flex items-center gap-2">
-            <img src={cloopLogo} alt="Cloop" width={36} height={36} />
+            <img src={favicon} alt="Cloop" width={36} height={36} />
             <span className="text-xl font-bold text-foreground">Cloop</span>
           </Link>
           <div className="hidden md:flex items-center gap-8">
@@ -157,7 +168,7 @@ const Index = () => {
       <footer className="border-t border-border py-12 px-6">
         <div className="container mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-2">
-            <img src={cloopLogo} alt="Cloop" width={28} height={28} />
+            <img src={favicon} alt="Cloop" width={28} height={28} />
             <span className="font-semibold">Cloop</span>
           </div>
           <p className="text-sm text-muted-foreground">© 2026 Cloop. All rights reserved.</p>

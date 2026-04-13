@@ -1,7 +1,7 @@
 import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
-import cloopLogo from "@/assets/cloop-logo.png";
+import favicon from "/favicon.ico";
 import {
   Sidebar,
   SidebarContent,
@@ -48,7 +48,7 @@ export function AppSidebar() {
             className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
             title="Go to Dashboard"
           >
-            <img src={cloopLogo} alt="Cloop" width={28} height={28} className="shrink-0 brightness-0 invert" />
+            <img src={favicon} alt="Cloop" width={28} height={28} className="shrink-0" />
             {!collapsed && <span className="text-lg font-bold text-white">Cloop</span>}
           </button>
           <SidebarTrigger className="text-purple-200 hover:text-white hover:bg-purple-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
