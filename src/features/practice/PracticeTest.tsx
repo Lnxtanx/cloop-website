@@ -162,8 +162,8 @@ const PracticeTest = () => {
       <DashboardLayout title="Test Your Self">
         <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-10">
           <div className="text-center space-y-2">
-            <h2 className="text-3xl font-bold text-purple-900">Practice Dashboard</h2>
-            <p className="text-muted-foreground text-lg">Challenge yourself with exam-style questions or review past performance.</p>
+            <h2 className="text-2xl font-bold text-purple-900">Practice Dashboard</h2>
+            <p className="text-muted-foreground text-base">Challenge yourself with exam-style questions or review past performance.</p>
           </div>
 
           {/* Tabs */}
@@ -193,7 +193,7 @@ const PracticeTest = () => {
               <div className="grid md:grid-cols-2 gap-8">
                 {/* NEET SECTION */}
                 <Card className="border-2 border-purple-100 hover:border-purple-300 transition-all overflow-hidden shadow-sm">
-                  <div className="bg-purple-600 p-4 text-white text-center font-bold text-xl">NEET (UG)</div>
+                  <div className="bg-purple-600 p-4 text-white text-center font-bold text-lg">NEET (UG)</div>
                   <CardContent className="p-6 space-y-4">
                     <p className="text-sm text-gray-600">Practice Biology, Physics, and Chemistry questions at NEET difficulty level.</p>
                     <div className="grid grid-cols-1 gap-2">
@@ -213,7 +213,7 @@ const PracticeTest = () => {
 
                 {/* IIT-JEE SECTION */}
                 <Card className="border-2 border-blue-100 hover:border-blue-300 transition-all overflow-hidden shadow-sm">
-                  <div className="bg-blue-600 p-4 text-white text-center font-bold text-xl">IIT-JEE (Main)</div>
+                  <div className="bg-blue-600 p-4 text-white text-center font-bold text-lg">IIT-JEE (Main)</div>
                   <CardContent className="p-6 space-y-4">
                     <p className="text-sm text-gray-600">Prepare for Engineering with high-difficulty Physics, Chemistry, and Math questions.</p>
                     <div className="grid grid-cols-1 gap-2">
@@ -339,19 +339,19 @@ const PracticeTest = () => {
                   <Timer className={`w-5 h-5 ${timeLeft < 60 ? 'text-red-600 animate-pulse' : 'text-purple-600'}`} />
                 </div>
                 <div>
-                  <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Time Remaining</p>
-                  <p className={`text-xl font-mono font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-gray-900'}`}>{formatTime(timeLeft)}</p>
+                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Time Remaining</p>
+                  <p className={`text-lg font-mono font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-gray-900'}`}>{formatTime(timeLeft)}</p>
                 </div>
               </div>
               <div className="text-right">
-                <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">Progress</p>
-                <p className="text-xl font-bold text-purple-600">{currentIndex + 1} <span className="text-gray-400 font-normal">/ {questions.length}</span></p>
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Progress</p>
+                <p className="text-lg font-bold text-purple-600">{currentIndex + 1} <span className="text-gray-400 font-normal">/ {questions.length}</span></p>
               </div>
             </div>
 
             <Card className="border-2 border-purple-100 shadow-md min-h-[400px] flex flex-col">
-              <CardHeader className="bg-purple-50/50 border-b">
-                <CardTitle className="text-lg leading-relaxed">{currentQ.question_text}</CardTitle>
+              <CardHeader className="bg-purple-50/50 border-b p-5">
+                <CardTitle className="text-base font-semibold leading-relaxed">{currentQ.question_text}</CardTitle>
               </CardHeader>
               <CardContent className="p-8 space-y-4 flex-grow">
                 <div className="grid grid-cols-1 gap-3">
@@ -460,7 +460,7 @@ const PracticeTest = () => {
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="text-center md:text-left space-y-4">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-widest">Test Summary</div>
-                  <h2 className="text-4xl font-extrabold">{examType}: {subject}</h2>
+                  <h2 className="text-3xl font-extrabold">{examType}: {subject}</h2>
                   <div className="flex items-center gap-6 justify-center md:justify-start">
                     <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-purple-300" /><span className="text-lg font-medium">{formatTime(report.time_taken_sec)}</span></div>
                     <div className="flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-400" /><span className="text-lg font-medium">{report.score}/{report.total_questions}</span></div>
@@ -472,7 +472,7 @@ const PracticeTest = () => {
                     <circle cx="96" cy="96" r="80" fill="transparent" stroke="white" strokeWidth="12" strokeDasharray={502} strokeDashoffset={502 - (502 * accuracy) / 100} strokeLinecap="round" />
                   </svg>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                    <span className="text-5xl font-black block">{accuracy}%</span>
+                    <span className="text-4xl font-black block">{accuracy}%</span>
                     <span className="text-sm font-bold opacity-60 uppercase tracking-widest">Accuracy</span>
                   </div>
                 </div>
@@ -486,7 +486,7 @@ const PracticeTest = () => {
           </div>
 
           <div className="space-y-6">
-            <h3 className="text-2xl font-bold text-gray-900 flex items-center gap-3"><BookOpen className="w-6 h-6 text-purple-600" /> Question Review</h3>
+            <h3 className="text-xl font-bold text-gray-900 flex items-center gap-3"><BookOpen className="w-6 h-6 text-purple-600" /> Question Review</h3>
             {report.questions.map((q, i) => (
               <Card key={i} className={`border-l-8 ${q.is_correct ? 'border-l-green-500' : 'border-l-red-500'}`}>
                 <CardHeader className="pb-2">
@@ -496,7 +496,7 @@ const PracticeTest = () => {
                       {q.is_correct ? <CheckCircle2 className="w-4 h-4" /> : <XCircle className="w-4 h-4" />} {q.is_correct ? 'Correct' : q.user_answer ? 'Incorrect' : 'Skipped'}
                     </span>
                   </div>
-                  <CardTitle className="text-lg text-gray-800 leading-relaxed">{q.question_text}</CardTitle>
+                  <CardTitle className="text-base text-gray-800 leading-relaxed">{q.question_text}</CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
