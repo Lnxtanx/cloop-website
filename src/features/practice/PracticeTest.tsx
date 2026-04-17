@@ -49,6 +49,27 @@ const PracticeTest = () => {
     time_taken_sec: number;
     questions: PracticeQuestion[];
   } | null>(null);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  const loadingMessages = [
+    "Analyzing curriculum standards...",
+    "Curating high-quality questions...",
+    "Applying difficulty levels...",
+    "Generating expert explanations...",
+    "Finalizing your practice session...",
+    "Almost ready, hang tight!"
+  ];
+
+  // Cycle loading messages
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (state === "loading") {
+      interval = setInterval(() => {
+        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+      }, 3500);
+    }
+    return () => clearInterval(interval);
+  }, [state]);
 
   const handleSubmit = useCallback(async () => {
     if (!testId) return;
@@ -160,10 +181,10 @@ const PracticeTest = () => {
   if (state === "selection") {
     return (
       <DashboardLayout title="Test Your Self">
-        <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-10">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold text-purple-900">Practice Dashboard</h2>
-            <p className="text-muted-foreground text-base">Challenge yourself with exam-style questions or review past performance.</p>
+        <div className="max-w-5xl mx-auto space-y-5 animate-fade-in pb-6">
+          <div className="text-center space-y-1">
+            <h2 className="text-xl font-bold text-purple-900">Practice Dashboard</h2>
+            <p className="text-muted-foreground text-sm">Challenge yourself or review past performance.</p>
           </div>
 
           {/* Tabs */}
@@ -189,13 +210,13 @@ const PracticeTest = () => {
           </div>
 
           {activeTab === "new" ? (
-            <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-              <div className="grid md:grid-cols-2 gap-8">
+            <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="grid md:grid-cols-2 gap-6">
                 {/* NEET SECTION */}
                 <Card className="border-2 border-purple-100 hover:border-purple-300 transition-all overflow-hidden shadow-sm">
-                  <div className="bg-purple-600 p-4 text-white text-center font-bold text-lg">NEET (UG)</div>
-                  <CardContent className="p-6 space-y-4">
-                    <p className="text-sm text-gray-600">Practice Biology, Physics, and Chemistry questions at NEET difficulty level.</p>
+                  <div className="bg-purple-600 p-3 text-white text-center font-bold text-base">NEET (UG)</div>
+                  <CardContent className="p-4 space-y-3">
+                    <p className="text-xs text-gray-600">Practice Biology, Physics, and Chemistry questions at NEET level.</p>
                     <div className="grid grid-cols-1 gap-2">
                       {["Biology", "Physics", "Chemistry"].map((sub) => (
                         <Button 
@@ -213,9 +234,9 @@ const PracticeTest = () => {
 
                 {/* IIT-JEE SECTION */}
                 <Card className="border-2 border-blue-100 hover:border-blue-300 transition-all overflow-hidden shadow-sm">
-                  <div className="bg-blue-600 p-4 text-white text-center font-bold text-lg">IIT-JEE (Main)</div>
-                  <CardContent className="p-6 space-y-4">
-                    <p className="text-sm text-gray-600">Prepare for Engineering with high-difficulty Physics, Chemistry, and Math questions.</p>
+                  <div className="bg-blue-600 p-3 text-white text-center font-bold text-base">IIT-JEE (Main)</div>
+                  <CardContent className="p-4 space-y-3">
+                    <p className="text-xs text-gray-600">Prepare for Engineering with high-difficulty Physics, Chemistry, and Math questions.</p>
                     <div className="grid grid-cols-1 gap-2">
                       {["Mathematics", "Physics", "Chemistry"].map((sub) => (
                         <Button 
@@ -233,7 +254,7 @@ const PracticeTest = () => {
               </div>
               
               <Card className="bg-amber-50 border-amber-200">
-                <CardContent className="p-4 flex gap-3 items-start">
+                <CardContent className="p-3 flex gap-2.5 items-start">
                   <AlertCircle className="w-5 h-5 text-amber-600 mt-0.5" />
                   <div>
                     <p className="font-semibold text-amber-900">Test Rules</p>
@@ -250,9 +271,9 @@ const PracticeTest = () => {
           ) : (
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
               {loadingHistory ? (
-                <div className="text-center py-20">
-                  <div className="w-10 h-10 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-4"></div>
-                  <p className="text-muted-foreground">Fetching your test history...</p>
+                <div className="text-center py-12">
+                  <div className="w-8 h-8 border-3 border-purple-200 border-t-purple-600 rounded-full animate-spin mx-auto mb-3"></div>
+                  <p className="text-sm text-muted-foreground">Fetching your test history...</p>
                 </div>
               ) : history.length === 0 ? (
                 <Card className="border-dashed border-2 py-20 text-center">
@@ -269,14 +290,14 @@ const PracticeTest = () => {
                     <Card key={test.id} className="hover:shadow-md transition-all border-gray-100 group">
                       <CardContent className="p-5 flex items-center justify-between">
                         <div className="flex items-center gap-5">
-                          <div className={`w-12 h-12 rounded-xl flex items-center justify-center font-black text-white ${
+                          <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-black text-white ${
                             test.exam_type === 'NEET' ? 'bg-purple-600' : 'bg-blue-600'
                           }`}>
                             {test.exam_type[0]}
                           </div>
                           <div>
-                            <h4 className="font-bold text-gray-900">{test.exam_type}: {test.subject}</h4>
-                            <div className="flex items-center gap-4 mt-1 text-sm text-gray-500">
+                            <h4 className="font-bold text-gray-900 text-sm">{test.exam_type}: {test.subject}</h4>
+                            <div className="flex items-center gap-3 mt-0.5 text-[11px] text-gray-500">
                               <span className="flex items-center gap-1.5"><Calendar className="w-3.5 h-3.5" /> {formatDate(test.created_at)}</span>
                               <span className="flex items-center gap-1.5"><Clock className="w-3.5 h-3.5" /> {formatTime(test.time_taken_sec || 0)} taken</span>
                             </div>
@@ -285,15 +306,16 @@ const PracticeTest = () => {
                         
                         <div className="flex items-center gap-8">
                           <div className="text-right">
-                            <p className="text-2xl font-black text-purple-600">{test.score} <span className="text-sm text-gray-400">/ {test.total_questions}</span></p>
-                            <p className="text-[10px] font-bold uppercase tracking-widest text-gray-400">Final Score</p>
+                            <p className="text-xl font-black text-purple-600">{test.score} <span className="text-xs text-gray-400">/ {test.total_questions}</span></p>
+                            <p className="text-[9px] font-bold uppercase tracking-widest text-gray-400">Final Score</p>
                           </div>
                           <Button 
                             variant="outline" 
-                            className="group-hover:bg-purple-600 group-hover:text-white transition-all gap-2"
+                            size="sm"
+                            className="group-hover:bg-purple-600 group-hover:text-white transition-all gap-1.5 h-9"
                             onClick={() => handleViewDetails(test.id)}
                           >
-                            View Report <ArrowRight className="w-4 h-4" />
+                            View Report <ArrowRight className="w-3.5 h-3.5" />
                           </Button>
                         </div>
                       </CardContent>
@@ -317,9 +339,9 @@ const PracticeTest = () => {
             <div className="w-20 h-20 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             <BookOpen className="w-8 h-8 text-purple-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <div className="text-center">
-            <h3 className="text-xl font-bold text-purple-900">Please wait...</h3>
-            <p className="text-muted-foreground">Our AI is processing your request.</p>
+          <div className="text-center animate-in fade-in zoom-in duration-500">
+            <h3 className="text-lg font-bold text-purple-900 mb-1">{loadingMessages[loadingMessageIndex]}</h3>
+            <p className="text-sm text-muted-foreground">Our AI is preparing your unique test set.</p>
           </div>
         </div>
       </DashboardLayout>
@@ -331,29 +353,29 @@ const PracticeTest = () => {
     const currentQ = questions[currentIndex];
     return (
       <DashboardLayout title={`${examType} Practice: ${subject}`}>
-        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_300px] gap-6">
+        <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_280px] gap-4">
           <div className="space-y-6">
-            <div className="flex items-center justify-between bg-white p-4 rounded-xl border shadow-sm">
-              <div className="flex items-center gap-4">
-                <div className="bg-purple-100 p-2 rounded-lg">
-                  <Timer className={`w-5 h-5 ${timeLeft < 60 ? 'text-red-600 animate-pulse' : 'text-purple-600'}`} />
+              <div className="flex items-center justify-between bg-white p-3 rounded-xl border shadow-sm">
+                <div className="flex items-center gap-3">
+                  <div className="bg-purple-100 p-1.5 rounded-lg">
+                    <Timer className={`w-4 h-4 ${timeLeft < 60 ? 'text-red-600 animate-pulse' : 'text-purple-600'}`} />
+                  </div>
+                  <div>
+                    <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">Time Remaining</p>
+                    <p className={`text-base font-mono font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-gray-900'}`}>{formatTime(timeLeft)}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Time Remaining</p>
-                  <p className={`text-lg font-mono font-bold ${timeLeft < 60 ? 'text-red-600' : 'text-gray-900'}`}>{formatTime(timeLeft)}</p>
+                <div className="text-right">
+                  <p className="text-[9px] text-muted-foreground font-medium uppercase tracking-wider">Progress</p>
+                  <p className="text-base font-bold text-purple-600">{currentIndex + 1} <span className="text-gray-400 font-normal">/ {questions.length}</span></p>
                 </div>
               </div>
-              <div className="text-right">
-                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Progress</p>
-                <p className="text-lg font-bold text-purple-600">{currentIndex + 1} <span className="text-gray-400 font-normal">/ {questions.length}</span></p>
-              </div>
-            </div>
 
             <Card className="border-2 border-purple-100 shadow-md min-h-[400px] flex flex-col">
-              <CardHeader className="bg-purple-50/50 border-b p-5">
-                <CardTitle className="text-base font-semibold leading-relaxed">{currentQ.question_text}</CardTitle>
+              <CardHeader className="bg-purple-50/50 border-b p-4">
+                <CardTitle className="text-sm font-semibold leading-relaxed">{currentQ.question_text}</CardTitle>
               </CardHeader>
-              <CardContent className="p-8 space-y-4 flex-grow">
+              <CardContent className="p-5 space-y-3 flex-grow">
                 <div className="grid grid-cols-1 gap-3">
                   {currentQ.options.map((option, idx) => {
                     const isSelected = userAnswers[currentQ.id] === option;
@@ -367,37 +389,40 @@ const PracticeTest = () => {
                             : 'border-gray-100 hover:border-purple-200 hover:bg-gray-50 text-gray-700'
                         }`}
                       >
-                        <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold border-2 ${
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold border-2 text-xs ${
                           isSelected ? 'bg-purple-600 border-purple-600 text-white' : 'border-gray-200 text-gray-400'
                         }`}>
                           {String.fromCharCode(65 + idx)}
                         </div>
-                        <span className="font-medium">{option}</span>
+                        <span className="text-sm font-medium">{option}</span>
                       </button>
                     );
                   })}
                 </div>
               </CardContent>
-              <div className="p-6 bg-gray-50 border-t flex justify-between items-center">
+              <div className="p-4 bg-gray-50 border-t flex justify-between items-center">
                 <Button 
                   variant="outline" 
+                  size="sm"
                   disabled={currentIndex === 0}
                   onClick={() => setCurrentIndex(prev => prev - 1)}
-                  className="gap-2"
+                  className="gap-1.5 h-9"
                 >
-                  <ArrowLeft className="w-4 h-4" /> Previous
+                  <ArrowLeft className="w-3.5 h-3.5" /> Previous
                 </Button>
                 
                 {currentIndex < questions.length - 1 ? (
                   <Button 
-                    className="bg-purple-600 hover:bg-purple-700 gap-2 px-8"
+                    size="sm"
+                    className="bg-purple-600 hover:bg-purple-700 gap-1.5 px-6 h-9"
                     onClick={() => setCurrentIndex(prev => prev + 1)}
                   >
-                    Next Question <ArrowRight className="w-4 h-4" />
+                    Next Question <ArrowRight className="w-3.5 h-3.5" />
                   </Button>
                 ) : (
                   <Button 
-                    className="bg-green-600 hover:bg-green-700 gap-2 px-10"
+                    size="sm"
+                    className="bg-green-600 hover:bg-green-700 gap-1.5 px-8 h-9"
                     onClick={handleSubmit}
                   >
                     Finish & Submit Test
@@ -436,13 +461,14 @@ const PracticeTest = () => {
                 </div>
               </CardContent>
             </Card>
-            <Button 
-              variant="outline" 
-              className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-red-100"
-              onClick={() => { if (window.confirm("Are you sure? progress will be lost.")) setState("selection"); }}
-            >
-              Quit Test
-            </Button>
+              <Button 
+                variant="outline" 
+                size="sm"
+                className="w-full text-red-600 hover:bg-red-50 hover:text-red-700 border-red-100 h-9"
+                onClick={() => { if (window.confirm("Are you sure? progress will be lost.")) setState("selection"); }}
+              >
+                Quit Test
+              </Button>
           </div>
         </div>
       </DashboardLayout>
@@ -455,34 +481,34 @@ const PracticeTest = () => {
     return (
       <DashboardLayout title="Performance Report">
         <div className="max-w-4xl mx-auto space-y-8 animate-fade-in pb-12">
-          <Card className="overflow-hidden border-none shadow-xl bg-gradient-to-br from-purple-700 to-indigo-900 text-white">
-            <CardContent className="p-8 md:p-12">
+          <Card className="overflow-hidden border-none shadow-lg bg-gradient-to-br from-purple-700 to-indigo-900 text-white">
+            <CardContent className="p-6 md:p-8">
               <div className="flex flex-col md:flex-row items-center justify-between gap-8">
                 <div className="text-center md:text-left space-y-4">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-xs font-bold uppercase tracking-widest">Test Summary</div>
-                  <h2 className="text-3xl font-extrabold">{examType}: {subject}</h2>
-                  <div className="flex items-center gap-6 justify-center md:justify-start">
-                    <div className="flex items-center gap-2"><Clock className="w-5 h-5 text-purple-300" /><span className="text-lg font-medium">{formatTime(report.time_taken_sec)}</span></div>
-                    <div className="flex items-center gap-2"><Trophy className="w-5 h-5 text-amber-400" /><span className="text-lg font-medium">{report.score}/{report.total_questions}</span></div>
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-white text-[10px] font-bold uppercase tracking-widest">Test Summary</div>
+                  <h2 className="text-2xl font-extrabold">{examType}: {subject}</h2>
+                  <div className="flex items-center gap-4 justify-center md:justify-start">
+                    <div className="flex items-center gap-2"><Clock className="w-4 h-4 text-purple-300" /><span className="text-base font-medium">{formatTime(report.time_taken_sec)}</span></div>
+                    <div className="flex items-center gap-2"><Trophy className="w-4 h-4 text-amber-400" /><span className="text-base font-medium">{report.score}/{report.total_questions}</span></div>
                   </div>
                 </div>
                 <div className="relative">
-                  <svg className="w-48 h-48 transform -rotate-90">
-                    <circle cx="96" cy="96" r="80" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="12" />
-                    <circle cx="96" cy="96" r="80" fill="transparent" stroke="white" strokeWidth="12" strokeDasharray={502} strokeDashoffset={502 - (502 * accuracy) / 100} strokeLinecap="round" />
+                  <svg className="w-32 h-32 transform -rotate-90">
+                    <circle cx="64" cy="64" r="56" fill="transparent" stroke="rgba(255,255,255,0.1)" strokeWidth="8" />
+                    <circle cx="64" cy="64" r="56" fill="transparent" stroke="white" strokeWidth="8" strokeDasharray={351} strokeDashoffset={351 - (351 * accuracy) / 100} strokeLinecap="round" />
                   </svg>
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center">
-                    <span className="text-4xl font-black block">{accuracy}%</span>
-                    <span className="text-sm font-bold opacity-60 uppercase tracking-widest">Accuracy</span>
+                    <span className="text-2xl font-black block">{accuracy}%</span>
+                    <span className="text-[10px] font-bold opacity-60 uppercase tracking-widest">Accuracy</span>
                   </div>
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Button className="bg-purple-600 hover:bg-purple-700 h-12 px-8 rounded-xl font-bold gap-2 text-lg shadow-lg shadow-purple-200" onClick={() => handleStartTest(examType, subject)}><RotateCcw className="w-5 h-5" /> Retake Test</Button>
-            <Button variant="outline" className="h-12 px-8 rounded-xl font-bold text-lg border-2" onClick={() => { setState("selection"); setActiveTab("history"); }}>Back to History</Button>
+          <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <Button className="bg-purple-600 hover:bg-purple-700 h-10 px-6 rounded-lg font-bold gap-2 text-base shadow-lg shadow-purple-200" onClick={() => handleStartTest(examType, subject)}><RotateCcw className="w-4 h-4" /> Retake Test</Button>
+            <Button variant="outline" className="h-10 px-6 rounded-lg font-bold text-base border-2" onClick={() => { setState("selection"); setActiveTab("history"); }}>Back to History</Button>
           </div>
 
           <div className="space-y-6">
