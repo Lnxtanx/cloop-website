@@ -14,6 +14,7 @@ import Sessions from "./features/sessions/Sessions";
 import Statistics from "./features/statistics/Statistics";
 import Chat from "./features/chat/Chat";
 import Profile from "./features/profile/Profile";
+import PracticeTest from "./features/practice/PracticeTest";
 import Notifications from "./features/notifications/Notifications";
 import Feedback from "./features/feedback/Feedback";
 import NotFound from "./features/common/NotFound";
@@ -38,6 +39,7 @@ const App = () => (
           <Route path="/dashboard/statistics" element={<Statistics />} />
           <Route path="/dashboard/chat" element={<Chat />} />
           <Route path="/dashboard/profile" element={<Profile />} />
+          <Route path="/dashboard/test-your-self" element={<PracticeTest />} />
           <Route path="/dashboard/notifications" element={<Notifications />} />
           <Route path="/feedback" element={<Feedback />} />
           <Route path="*" element={<NotFound />} />

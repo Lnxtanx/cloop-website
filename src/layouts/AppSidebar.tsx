@@ -17,7 +17,8 @@ import {
 const navItems = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Sessions", url: "/dashboard/sessions", icon: Video },
-  { title: "Statistics", url: "/dashboard/statistics", icon: BarChart3 },
+  { title: "Dashborad", url: "/dashboard/statistics", icon: BarChart3 },
+  { title: "Test Your Self", url: "/dashboard/test-your-self", icon: BarChart3},
   { title: "Chat", url: "/dashboard/chat", icon: MessageCircle },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
