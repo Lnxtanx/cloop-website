@@ -50,25 +50,25 @@ const PracticeTest = () => {
     questions: PracticeQuestion[];
   } | null>(null);
 
-  // Timer logic
-  useEffect(() => {
-    let timer: NodeJS.Timeout;
-    if (state === "testing" && timeLeft > 0) {
-      timer = setInterval(() => {
-        setTimeLeft((prev) => prev - 1);
-      }, 1000);
-    } else if (timeLeft === 0 && state === "testing") {
-      handleSubmit();
-    }
-    return () => clearInterval(timer);
-  }, [state, timeLeft, handleSubmit]);
+  const handleSubmit = useCallback(async () => {
+    if (!testId) return;
+    setState("loading");
+    
+    const formattedAnswers = questions.map(q => ({
+      question_id: q.id,
+      user_answer: userAnswers[q.id] || null
+    }));
 
-  // Load history when switching to history tab
-  useEffect(() => {
-    if (activeTab === "history") {
-      loadHistory();
+    try {
+      const timeTaken = 600 - timeLeft;
+      const data = await submitPracticeTest(testId, formattedAnswers, timeTaken);
+      setReport(data);
+      setState("reporting");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to submit test");
+      setState("testing");
     }
-  }, [activeTab]);
+  }, [testId, questions, userAnswers, timeLeft]);
 
   const loadHistory = async () => {
     setLoadingHistory(true);
@@ -119,25 +119,25 @@ const PracticeTest = () => {
     }
   };
 
-  const handleSubmit = useCallback(async () => {
-    if (!testId) return;
-    setState("loading");
-    
-    const formattedAnswers = questions.map(q => ({
-      question_id: q.id,
-      user_answer: userAnswers[q.id] || null
-    }));
-
-    try {
-      const timeTaken = 600 - timeLeft;
-      const data = await submitPracticeTest(testId, formattedAnswers, timeTaken);
-      setReport(data);
-      setState("reporting");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to submit test");
-      setState("testing");
+  // Timer logic
+  useEffect(() => {
+    let timer: NodeJS.Timeout;
+    if (state === "testing" && timeLeft > 0) {
+      timer = setInterval(() => {
+        setTimeLeft((prev) => prev - 1);
+      }, 1000);
+    } else if (timeLeft === 0 && state === "testing") {
+      handleSubmit();
     }
-  }, [testId, questions, userAnswers, timeLeft]);
+    return () => clearInterval(timer);
+  }, [state, timeLeft, handleSubmit]);
+
+  // Load history when switching to history tab
+  useEffect(() => {
+    if (activeTab === "history") {
+      loadHistory();
+    }
+  }, [activeTab]);
 
   const formatTime = (seconds: number) => {
     const mins = Math.floor(seconds / 60);
