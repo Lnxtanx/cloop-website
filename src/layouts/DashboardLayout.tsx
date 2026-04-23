@@ -2,8 +2,11 @@ import { ReactNode, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/layouts/AppSidebar";
-import { Bell } from "lucide-react";
+import { PracticeSidebar } from "@/layouts/PracticeSidebar";
+import { Bell, Zap, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePracticeMode } from "@/contexts/PracticeModeContext";
+import { toast } from "sonner";
 
 interface Props {
   children: ReactNode;
@@ -14,8 +17,11 @@ interface Props {
 
 const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) => {
   const navigate = useNavigate();
+  const { mode, toggleMode } = usePracticeMode();
   const [userInitials, setUserInitials] = useState("JD");
   const [unreadCount, setUnreadCount] = useState(0);
+
+  const isPractice = mode === "PRACTICE";
 
   // Session timeout: logout after 30 minutes of inactivity
   const logoutTimeout = useCallback(() => {
@@ -103,20 +109,27 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
 
   return (
     <SidebarProvider>
-      <div className="h-screen flex w-full overflow-hidden bg-secondary/30">
-        <AppSidebar />
+      <div className={`h-screen flex w-full overflow-hidden ${isPractice ? 'bg-purple-50/30' : 'bg-secondary/30'}`}>
+        {isPractice ? <PracticeSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
           {/* Header */}
           {!hideHeader && (
             <header className="h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-6 gap-4 z-10 shadow-md">
               {/* Left: Title */}
-              <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
+              <div className="flex items-center gap-4">
+                <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
+                {isPractice && (
+                  <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+                    Practice Mode
+                  </span>
+                )}
+              </div>
               {/* Right: Notification + Profile */}
               <div className="flex items-center gap-3">
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="relative w-9 h-9 hover:bg-purple-500/30 cursor-pointer"
+                  className="relative w-9 h-9 hover:bg-white/10 cursor-pointer"
                   onClick={() => navigate("/dashboard/notifications")}
                   title="Notifications"
                 >
@@ -137,7 +150,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
               </div>
             </header>
           )}
-          <main className={mainClassName ?? "flex-1 p-6 overflow-y-auto min-h-0"}>
+          <main className={mainClassName ?? "flex-1 p-6 overflow-y-auto min-h-0 relative"}>
             {children}
           </main>
         </div>

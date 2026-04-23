@@ -43,13 +43,34 @@ export interface SubmitTestResponse {
   questions: PracticeQuestion[];
 }
 
+export interface StandardExam {
+  id: number;
+  code: string;
+  name: string;
+  description?: string;
+}
+
+export interface StandardSubject {
+  id: number;
+  exam_id: number;
+  name: string;
+}
+
+export interface StandardChapter {
+  id: number;
+  subject_id: number;
+  title: string;
+  order?: number;
+}
+
 /**
  * Generate a new practice test
  * POST /api/practice-tests/generate
  */
 export const generatePracticeTest = async (
   examType: string,
-  subject: string
+  subject: string,
+  chapterIds: number[] = []
 ): Promise<GenerateTestResponse> => {
   const token = localStorage.getItem("cloop_token");
 
@@ -66,6 +87,7 @@ export const generatePracticeTest = async (
     body: JSON.stringify({
       exam_type: examType,
       subject: subject,
+      chapter_ids: chapterIds,
     }),
   });
 
@@ -74,6 +96,42 @@ export const generatePracticeTest = async (
     throw new Error(error.error || "Failed to generate practice test");
   }
 
+  return response.json();
+};
+
+/**
+ * Fetch all standard exams
+ */
+export const fetchStandardExams = async (): Promise<StandardExam[]> => {
+  const token = localStorage.getItem("cloop_token");
+  const response = await fetch(`${API_BASE_URL}/api/standard-exams`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to fetch exams");
+  return response.json();
+};
+
+/**
+ * Fetch subjects for an exam
+ */
+export const fetchStandardSubjects = async (examId: number): Promise<StandardSubject[]> => {
+  const token = localStorage.getItem("cloop_token");
+  const response = await fetch(`${API_BASE_URL}/api/standard-exams/${examId}/subjects`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to fetch subjects");
+  return response.json();
+};
+
+/**
+ * Fetch chapters for a subject
+ */
+export const fetchStandardChapters = async (subjectId: number): Promise<StandardChapter[]> => {
+  const token = localStorage.getItem("cloop_token");
+  const response = await fetch(`${API_BASE_URL}/api/standard-exams/subjects/${subjectId}/chapters`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to fetch chapters");
   return response.json();
 };
 

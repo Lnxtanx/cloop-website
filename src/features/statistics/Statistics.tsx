@@ -24,10 +24,10 @@ const fmtTime = (s: number) => {
 };
 
 const scoreColor = (n: number) =>
-  n >= 80 ? "#8B5CF6" : n >= 60 ? "#A78BFA" : "#C4B5FD";
+  n >= 80 ? "#9333EA" : n >= 60 ? "#A855F7" : "#C084FC";
 
 const scoreBg = (n: number) =>
-  n >= 70 ? "#EDE9FE" : "#F3E8FF";
+  n >= 70 ? "#F3E8FF" : "#FAF5FF";
 
 // ─── tiny components ──────────────────────────────────────────────────────────
 
@@ -90,7 +90,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
   if (loading) {
     return (
       <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
-        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
+        <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#ec4899" }} />
       </div>
     );
   }
@@ -100,12 +100,12 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
 
       {/* Welcome box */}
       <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 28 }}>
-        <div style={{ background: "#E9D5FF", padding: "12px 16px" }}>
+        <div style={{ background: "#FCE7F3", padding: "12px 16px" }}>
           <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: 0 }}>
             Hi there! Welcome to your mastery dashboard
           </p>
         </div>
-        <div style={{ background: "#F3E8FF", padding: "12px 16px 16px" }}>
+        <div style={{ background: "#FDF2F8", padding: "12px 16px 16px" }}>
           <p style={{ fontWeight: 700, fontSize: 13, color: "#374151", margin: "0 0 8px" }}>Here you can -</p>
           {[
             "Track how much you study and how effectively you learn",
@@ -150,7 +150,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
               </div>
               <div style={{ display: "flex", gap: 16 }}>
                 <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}>
-                  <CheckCircle2 style={{ width: 14, height: 14, color: "#8B5CF6" }} />{r.correct_answers} Correct
+                  <CheckCircle2 style={{ width: 14, height: 14, color: "#EC4899" }} />{r.correct_answers} Correct
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}>
                   <XCircle style={{ width: 14, height: 14, color: "#DC2626" }} />{r.incorrect_answers} Incorrect
@@ -262,16 +262,16 @@ function SubjectView({ subjectId, subjectName, onBack }: { subjectId: number; su
         </button>
         <div style={{
           display: "flex", alignItems: "center", gap: 8,
-          background: "#E9D5FF", padding: "8px 16px", borderRadius: 12,
+          background: "#FCE7F3", padding: "8px 16px", borderRadius: 12,
         }}>
           <div style={{
-            width: 28, height: 28, borderRadius: "50%", background: "hsl(174,40%,88%)",
+            width: 28, height: 28, borderRadius: "50%", background: "hsl(330,100%,92%)",
             display: "flex", alignItems: "center", justifyContent: "center",
-            fontWeight: 800, fontSize: 13, color: "hsl(174,58%,35%)",
+            fontWeight: 800, fontSize: 13, color: "hsl(330,81%,35%)",
           }}>
             {(subject?.name || subjectName)?.[0]?.toUpperCase()}
           </div>
-          <span style={{ fontWeight: 700, fontSize: 15, color: "#4C1D95" }}>
+          <span style={{ fontWeight: 700, fontSize: 15, color: "#9D174D" }}>
             {subject?.name || subjectName}
           </span>
         </div>

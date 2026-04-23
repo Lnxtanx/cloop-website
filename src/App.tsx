@@ -19,34 +19,40 @@ import Notifications from "./features/notifications/Notifications";
 import Feedback from "./features/feedback/Feedback";
 import NotFound from "./features/common/NotFound";
 
+import { PracticeModeProvider } from "./contexts/PracticeModeContext";
+
 const queryClient = new QueryClient();
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Index />} />
-          <Route path="/login" element={<Login />} />
-          <Route path="/signup" element={<Signup />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/chapters" element={<Chapters />} />
-          <Route path="/topics" element={<Topics />} />
-          <Route path="/topic-chat" element={<TopicChat />} />
-          <Route path="/dashboard/sessions" element={<Sessions />} />
-          <Route path="/dashboard/statistics" element={<Statistics />} />
-          <Route path="/dashboard/chat" element={<Chat />} />
-          <Route path="/dashboard/profile" element={<Profile />} />
-          <Route path="/dashboard/test-your-self" element={<PracticeTest />} />
-          <Route path="/dashboard/notifications" element={<Notifications />} />
-          <Route path="/feedback" element={<Feedback />} />
-          <Route path="*" element={<NotFound />} />
-        </Routes>
-      </BrowserRouter>
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+const App = () => {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PracticeModeProvider>
+        <TooltipProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <Routes>
+              <Route path="/" element={<Index />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/signup" element={<Signup />} />
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/chapters" element={<Chapters />} />
+              <Route path="/topics" element={<Topics />} />
+              <Route path="/topic-chat" element={<TopicChat />} />
+              <Route path="/dashboard/sessions" element={<Sessions />} />
+              <Route path="/dashboard/statistics" element={<Statistics />} />
+              <Route path="/dashboard/chat" element={<Chat />} />
+              <Route path="/dashboard/profile" element={<Profile />} />
+              <Route path="/dashboard/test-your-self" element={<PracticeTest />} />
+              <Route path="/dashboard/notifications" element={<Notifications />} />
+              <Route path="/feedback" element={<Feedback />} />
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </BrowserRouter>
+        </TooltipProvider>
+      </PracticeModeProvider>
+    </QueryClientProvider>
+  );
+};
 
 export default App;

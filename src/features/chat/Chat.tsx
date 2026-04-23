@@ -179,7 +179,7 @@ const Chat = () => {
     <div style={{ position: "fixed", inset: 0, display: "flex", fontFamily: "Inter,system-ui,sans-serif", background: "#fff" }}>
       {/* LEFT SIDEBAR */}
       <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid #e5e7eb" }}>
-        {/* Logo Header - Purple gradient */}
+        {/* Logo Header - purple gradient */}
         <div style={{ height: 56, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
           <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <span style={{ color: "#7c3aed", fontSize: 14, fontWeight: 800 }}>C</span>
@@ -229,7 +229,7 @@ const Chat = () => {
       {/* RIGHT CHAT PANEL */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
         {/* Header */}
-        <div style={{ flexShrink: 0, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid #E5E7EB", background: "linear-gradient(to right, hsl(271, 70%, 50%), hsl(260, 65%, 55%))" }}>
+        <div style={{ flexShrink: 0, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid #E5E7EB", background: "linear-gradient(to right, hsl(330, 81%, 60%), hsl(340, 70%, 55%))" }}>
           <h1 style={{ fontSize: 18, fontWeight: 600, color: "#fff", margin: 0 }}>CLOOP AI</h1>
           <div style={{ fontSize: 13, color: "#fff", opacity: 0.8 }}>Your personal learning assistant</div>
         </div>

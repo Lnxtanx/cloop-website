@@ -1,4 +1,4 @@
-import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen, MessageSquare, BookOpen } from "lucide-react";
+import { Home, BookOpen, BarChart3, History, MessageSquare, PanelLeftClose, PanelLeftOpen, Zap } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import favicon from "/favicon.ico";
@@ -18,17 +18,15 @@ import {
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
 
-const navItems = [
+const practiceNavItems = [
   { title: "Home", url: "/dashboard", icon: Home },
-  { title: "Sessions", url: "/dashboard/sessions", icon: Video },
+  { title: "Practice", url: "/dashboard/test-your-self", icon: BookOpen },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
-  { title: "Chat", url: "/dashboard/chat", icon: MessageCircle },
-  { title: "Profile", url: "/dashboard/profile", icon: User },
-  { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
-  { title: "Feedback", url: "/feedback", icon: MessageSquare },
+  { title: "History", url: "/dashboard/test-your-self?tab=history", icon: History },
+  { title: "Cloop-AI", url: "/dashboard/chat", icon: MessageSquare },
 ];
 
-export function AppSidebar() {
+export function PracticeSidebar() {
   const { state, toggleSidebar } = useSidebar();
   const { toggleMode } = usePracticeMode();
   const collapsed = state === "collapsed";
@@ -37,7 +35,6 @@ export function AppSidebar() {
 
   return (
     <>
-      {/* Floating toggle button - always visible when collapsed */}
       {collapsed && (
         <button
           onClick={toggleSidebar}
@@ -55,7 +52,7 @@ export function AppSidebar() {
             title="Go to Dashboard"
           >
             <img src={favicon} alt="Cloop" width={28} height={28} className="shrink-0" />
-            {!collapsed && <span className="text-lg font-bold text-white">Cloop</span>}
+            {!collapsed && <span className="text-lg font-bold text-white tracking-tight">Practice Mode</span>}
           </button>
           <SidebarTrigger className="text-purple-200 hover:text-white hover:bg-purple-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
             {collapsed
@@ -68,8 +65,17 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.url;
+              {practiceNavItems.map((item) => {
+                const itemUrl = new URL(item.url, window.location.origin);
+                const itemPath = itemUrl.pathname;
+                const itemTab = itemUrl.searchParams.get('tab');
+                
+                const currentTab = new URLSearchParams(location.search).get('tab');
+                const isPathMatch = location.pathname === itemPath;
+                const isTabMatch = itemTab === currentTab;
+                
+                const isActive = isPathMatch && isTabMatch;
+                
                 return (
                   <SidebarMenuItem key={item.title}>
                     <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
@@ -94,15 +100,15 @@ export function AppSidebar() {
         <Button
           onClick={() => {
             toggleMode();
-            toast("Switched to Practice Mode", {
-              icon: <BookOpen className="w-4 h-4 text-purple-600" />
+            toast("Switched to Normal Mode", {
+              icon: <Zap className="w-4 h-4 text-purple-600" />
             });
           }}
           className={`w-full justify-start gap-3 h-11 px-3 bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all ${collapsed ? 'p-0 justify-center' : ''}`}
-          title={collapsed ? "Practice Mode" : ""}
+          title={collapsed ? "Normal Mode" : ""}
         >
-          <BookOpen className="w-5 h-5 shrink-0" />
-          {!collapsed && <span className="font-bold text-lg">Practice Mode</span>}
+          <Zap className="w-5 h-5 shrink-0 fill-current" />
+          {!collapsed && <span className="font-bold text-lg">Normal Mode</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
