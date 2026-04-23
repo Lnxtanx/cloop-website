@@ -17,12 +17,13 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
+import { ChatHistory } from "@/features/chat/components/ChatHistory";
 
 const navItems = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Sessions", url: "/dashboard/sessions", icon: Video },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
-  { title: "Chat", url: "/dashboard/chat", icon: MessageCircle },
+  { title: "Chat with AI Tutor", url: "/dashboard/chat", icon: MessageCircle },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Feedback", url: "/feedback", icon: MessageSquare },
@@ -68,41 +69,46 @@ export function AppSidebar() {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {navItems.map((item) => {
-                const isActive = location.pathname === item.url;
-                return (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
-                      <NavLink
-                        to={item.url}
-                        end
-                        className={`flex items-center gap-3 rounded-lg px-4 py-3 text-lg transition-all ${isActive ? "bg-purple-100 text-purple-800 font-bold" : "text-gray-800 hover:bg-purple-50 hover:text-purple-700"}`}
-                        activeClassName=""
-                      >
-                        <item.icon className="w-5 h-5 shrink-0" />
-                        {!collapsed && <span className="font-medium">{item.title}</span>}
-                      </NavLink>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
-                );
-              })}
+              {location.pathname === "/dashboard/chat" && !collapsed ? (
+                <div className="flex flex-col h-[calc(100vh-250px)]">
+                  <ChatHistory collapsed={collapsed} />
+                </div>
+              ) : (
+                navItems.map((item) => {
+                  const isActive = location.pathname === item.url;
+                  return (
+                    <SidebarMenuItem key={item.title}>
+                      <SidebarMenuButton asChild tooltip={collapsed ? item.title : undefined}>
+                        <NavLink
+                          to={item.url}
+                          end
+                          className={`flex items-center gap-3 rounded-lg px-4 py-3 text-lg transition-all ${isActive ? "bg-purple-100 text-purple-800 font-bold" : "text-gray-800 hover:bg-purple-50 hover:text-purple-700"}`}
+                          activeClassName=""
+                        >
+                          <item.icon className="w-5 h-5 shrink-0" />
+                          {!collapsed && <span className="font-medium">{item.title}</span>}
+                        </NavLink>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  );
+                })
+              )}
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
-      <SidebarFooter className="p-4 border-t bg-gray-50/50">
+      <SidebarFooter className="p-4 bg-white border-t border-gray-100 flex flex-col gap-2">
         <Button
           onClick={() => {
             toggleMode();
-            toast("Switched to Practice Mode", {
-              icon: <BookOpen className="w-4 h-4 text-purple-600" />
+            toast("Switched to Test Preparation", {
+              icon: <div className="w-2 h-2 rounded-full bg-purple-400" />
             });
           }}
-          className={`w-full justify-start gap-3 h-11 px-3 bg-purple-600 hover:bg-purple-700 text-white shadow-md transition-all ${collapsed ? 'p-0 justify-center' : ''}`}
-          title={collapsed ? "Practice Mode" : ""}
+          className={`w-full justify-center gap-3 h-10 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shadow-none transition-all ${collapsed ? 'p-0' : ''}`}
+          title={collapsed ? "Go to Test Preparation" : ""}
         >
-          <BookOpen className="w-5 h-5 shrink-0" />
-          {!collapsed && <span className="font-bold text-lg">Practice Mode</span>}
+          {!collapsed && <span className="font-bold text-xs tracking-tight">Go to Test Preparation</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

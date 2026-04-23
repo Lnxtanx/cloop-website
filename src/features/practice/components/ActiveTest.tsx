@@ -9,6 +9,7 @@ interface ActiveTestProps {
   userAnswers: Record<number, string>;
   timeLeft: number;
   onSelectAnswer: (qid: number, ans: string) => void;
+  onTimeUpdate: (qid: number, seconds: number) => void;
   onPrev: () => void;
   onNext: () => void;
   onSubmit: () => void;
@@ -23,6 +24,7 @@ export const ActiveTest = ({
   userAnswers,
   timeLeft,
   onSelectAnswer,
+  onTimeUpdate,
   onPrev,
   onNext,
   onSubmit,
@@ -31,6 +33,13 @@ export const ActiveTest = ({
   formatTime
 }: ActiveTestProps) => {
   const currentQ = questions[currentIndex];
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      onTimeUpdate(currentQ.id, 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [currentQ.id, onTimeUpdate]);
 
   return (
     <div className="max-w-5xl mx-auto grid lg:grid-cols-[1fr_280px] gap-4">

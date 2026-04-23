@@ -1,8 +1,18 @@
 import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Copy, Check, Trash2, Home, Video, BarChart3, MessageCircle, User, Bell } from "lucide-react";
+import { Send, Loader2, Copy, Check } from "lucide-react";
+import DashboardLayout from "@/layouts/DashboardLayout";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkMath from "remark-math";
+import rehypeKatex from "rehype-katex";
+import { 
+  fetchNormalChatMessages, 
+  sendNormalChatMessage,
+  NormalChatResponse 
+} from "@/lib/api/normal-chat";
 
 interface Message {
   id: string;
@@ -13,20 +23,27 @@ interface Message {
 
 const Chat = () => {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const sessionId = searchParams.get("session");
+  
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [isFetchingHistory, setIsFetchingHistory] = useState(true);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (scrollContainerRef.current) {
+      scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight;
+    }
   };
 
   useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+  }, [messages, isLoading]);
 
   useEffect(() => {
     const token = localStorage.getItem("cloop_token");
@@ -34,34 +51,52 @@ const Chat = () => {
       navigate("/login");
       return;
     }
+    
+    const initializeChat = async () => {
+      await fetchChatHistory();
+      
+      const question = searchParams.get("q");
+      if (question) {
+        // Clear the q param immediately
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("q");
+        setSearchParams(newParams, { replace: true });
+        
+        // Auto-send the question
+        handleSendMessage(question);
+      }
+    };
 
-    // Fetch chat history on mount
-    fetchChatHistory();
-  }, [navigate]);
+    initializeChat();
+  }, [sessionId, navigate]);
 
   const fetchChatHistory = async () => {
+    if (sessionId === "new") {
+      setMessages([]);
+      setIsFetchingHistory(false);
+      return;
+    }
+
+    setIsFetchingHistory(true);
     try {
-      const token = localStorage.getItem("cloop_token");
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+      const data: NormalChatResponse = await fetchNormalChatMessages(
+        sessionId ? parseInt(sessionId) : undefined
+      );
 
-      const response = await fetch(`${API_BASE_URL}/api/normal-chat`, {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
+      if (data.messages && Array.isArray(data.messages)) {
+        const formattedMessages: Message[] = data.messages.map((msg: any) => ({
+          id: msg.id.toString(),
+          role: msg.sender === "ai" ? "assistant" : "user",
+          content: msg.message,
+          timestamp: new Date(msg.created_at),
+        }));
+        setMessages(formattedMessages);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.messages && Array.isArray(data.messages)) {
-          const formattedMessages: Message[] = data.messages.map((msg: any) => ({
-            id: msg.id.toString(),
-            role: msg.sender === "ai" ? "assistant" : "user",
-            content: msg.message,
-            timestamp: new Date(msg.created_at),
-          }));
-          setMessages(formattedMessages);
+        if (!sessionId && data.session_id) {
+          setSearchParams({ session: String(data.session_id) }, { replace: true });
         }
+      } else {
+        setMessages([]);
       }
     } catch (error) {
       console.error("Error fetching chat history:", error);
@@ -70,13 +105,14 @@ const Chat = () => {
     }
   };
 
-  const handleSendMessage = async () => {
-    if (!inputValue.trim()) return;
+  const handleSendMessage = async (customMessage?: string) => {
+    const messageToSend = customMessage || inputValue;
+    if (!messageToSend.trim()) return;
 
     const userMessage: Message = {
       id: Date.now().toString(),
       role: "user",
-      content: inputValue,
+      content: messageToSend,
       timestamp: new Date(),
     };
 
@@ -85,32 +121,21 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
-      const token = localStorage.getItem("cloop_token");
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
-
-      const response = await fetch(`${API_BASE_URL}/api/normal-chat/message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: inputValue,
-        }),
+      const result = await sendNormalChatMessage({
+        message: messageToSend,
+        session_id: (sessionId && sessionId !== "new") ? parseInt(sessionId) : undefined
       });
 
-      if (!response.ok) {
-        throw new Error("Failed to send message");
+      if ((!sessionId || sessionId === "new") && result.session_id) {
+        setSearchParams({ session: String(result.session_id) }, { replace: true });
       }
 
-      const data = await response.json();
       const assistantMessage: Message = {
-        id: data.aiMessage?.id?.toString() || (Date.now() + 1).toString(),
+        id: result.aiMessage?.id?.toString() || (Date.now() + 1).toString(),
         role: "assistant",
-        content: data.aiMessage?.message || "I couldn't generate a response. Please try again.",
-        timestamp: new Date(data.aiMessage?.created_at || new Date()),
+        content: result.aiMessage?.message || "I couldn't generate a response.",
+        timestamp: new Date(result.aiMessage?.created_at || new Date()),
       };
-
       setMessages((prev) => [...prev, assistantMessage]);
     } catch (error) {
       console.error("Error sending message:", error);
@@ -132,268 +157,159 @@ const Chat = () => {
     setTimeout(() => setCopiedId(null), 2000);
   };
 
-  const handleClearChat = async () => {
-    if (!window.confirm("Are you sure you want to clear all chat history?")) {
-      return;
-    }
-
-    try {
-      const token = localStorage.getItem("cloop_token");
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
-
-      const response = await fetch(`${API_BASE_URL}/api/normal-chat/clear`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (response.ok) {
-        setMessages([]);
-      } else {
-        console.error("Failed to clear chat history");
-      }
-    } catch (error) {
-      console.error("Error clearing chat:", error);
+  const adjustTextareaHeight = () => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      textarea.style.height = "auto";
+      textarea.style.height = `${Math.min(textarea.scrollHeight, 180)}px`;
     }
   };
 
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [inputValue]);
+
   const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && e.ctrlKey) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
       handleSendMessage();
     }
   };
 
-  const NAV = [
-    { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: Video, label: "Sessions", path: "/dashboard/sessions" },
-    { icon: BarChart3, label: "Statistics", path: "/dashboard/statistics" },
-    { icon: MessageCircle, label: "Chat", path: "/dashboard/chat" },
-    { icon: User, label: "Profile", path: "/dashboard/profile" },
-    { icon: Bell, label: "Notifications", path: "/dashboard/notifications" },
-  ];
-
-  // Use position: fixed + inset: 0 for stable viewport-sized layout (like TopicChat)
   return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", fontFamily: "Inter,system-ui,sans-serif", background: "#fff" }}>
-      {/* LEFT SIDEBAR */}
-      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid #e5e7eb" }}>
-        {/* Logo Header - purple gradient */}
-        <div style={{ height: 56, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#7c3aed", fontSize: 14, fontWeight: 800 }}>C</span>
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Cloop</span>
-        </div>
-
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
-          {NAV.map(({ icon: Icon, label, path }) => {
-            const active = location.pathname === path;
-            return (
-              <button
-                key={path}
-                onClick={() => navigate(path)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  background: active ? "#f3e8ff" : "transparent",
-                  color: active ? "#6b2d8f" : "#111827",
-                  fontSize: 14,
-                  fontWeight: active ? 600 : 500,
-                  width: "100%",
-                  textAlign: "left",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) (e.currentTarget as any).style.background = "#f3f4f6";
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) (e.currentTarget as any).style.background = "transparent";
-                }}
-              >
-                <Icon style={{ width: 20, height: 20 }} />
-                {label}
-              </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* RIGHT CHAT PANEL */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
-        {/* Header */}
-        <div style={{ flexShrink: 0, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "1px solid #E5E7EB", background: "linear-gradient(to right, hsl(330, 81%, 60%), hsl(340, 70%, 55%))" }}>
-          <h1 style={{ fontSize: 18, fontWeight: 600, color: "#fff", margin: 0 }}>CLOOP AI</h1>
-          <div style={{ fontSize: 13, color: "#fff", opacity: 0.8 }}>Your personal learning assistant</div>
-        </div>
-
-        {/* Messages Container - flex:1 fills all remaining space */}
-        <div style={{ flex: 1, overflowY: "auto", background: "linear-gradient(to bottom, #F3E8FF, #fff)", padding: "24px 20px 12px" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto" }}>
-            {isFetchingHistory ? (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, padding: "80px 0", color: "#9CA3AF", fontSize: 14 }}>
-                <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: "#7c3aed" }} />
-                Loading chat history...
+    <DashboardLayout title="Chat with AI Tutor" mainClassName="flex-1 flex flex-col min-h-0 relative p-0 overflow-hidden bg-white">
+      <div 
+        ref={scrollContainerRef}
+        className="flex-1 overflow-y-auto pt-6 pb-32 px-4 scroll-smooth bg-white"
+      >
+        <div className="max-w-3xl mx-auto">
+          {isFetchingHistory ? (
+            <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
+              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+              <p className="text-xs font-medium">Loading history...</p>
+            </div>
+          ) : messages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center min-h-[50vh] text-center animate-in fade-in zoom-in duration-500">
+              <div className="w-12 h-12 mb-6 rounded-full overflow-hidden shadow-sm border border-gray-100 p-2 bg-white">
+                <img src="/favicon.ico" alt="Cloop" className="w-full h-full object-contain" />
               </div>
-            ) : messages.length === 0 ? (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", padding: "80px 0" }}>
-                <div style={{ textAlign: "center" }}>
-                  <div style={{ width: 64, height: 64, margin: "0 auto 16px", background: "linear-gradient(to right, #7c3aed, #a855f7)", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <span style={{ fontSize: 28, color: "#fff", fontWeight: 700 }}>C</span>
+              <h2 className="text-xl font-bold text-gray-900 mb-2">Welcome to AI Tutor</h2>
+              <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
+                Your personal learning assistant. Ask me anything about your studies!
+              </p>
+            </div>
+          ) : (
+            <div className="flex flex-col gap-8 py-4">
+              {messages.map((message) => (
+                <div
+                  key={message.id}
+                  className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
+                >
+                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold shadow-sm self-start mt-1 ${
+                    message.role === "user" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600 border border-gray-200"
+                  }`}>
+                    {message.role === "user" ? "ME" : "AI"}
                   </div>
-                  <p style={{ fontSize: 20, fontWeight: 600, color: "#1F2937", margin: 0 }}>Welcome to CLOOP AI</p>
-                  <p style={{ fontSize: 14, color: "#6B7280", margin: "8px 0 0" }}>Your personal learning assistant</p>
-                  <p style={{ fontSize: 12, color: "#9CA3AF", margin: "16px 0 0" }}>Ask me anything about your studies!</p>
-                </div>
-              </div>
-            ) : (
-              <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
-                {messages.map((message) => (
-                  <div
-                    key={message.id}
-                    style={{
-                      display: "flex",
-                      justifyContent: message.role === "user" ? "flex-end" : "flex-start",
-                      marginBottom: 16,
-                    }}
-                  >
+                  <div className={`flex flex-col max-w-[88%] ${message.role === "user" ? "items-end" : "items-start"}`}>
                     <div
-                      style={{
-                        maxWidth: 480,
-                        padding: "12px 16px",
-                        borderRadius: 12,
-                        background: message.role === "user" ? "linear-gradient(to right, #7c3aed, #a855f7)" : "#f3f4f6",
-                        color: message.role === "user" ? "#fff" : "#111827",
-                        fontSize: 14,
-                        lineHeight: 1.6,
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.06)",
-                      }}
+                      className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                        message.role === "user"
+                          ? "bg-purple-600 text-white rounded-tr-none"
+                          : "bg-white text-gray-800 border border-gray-100"
+                      }`}
                     >
-                      <p style={{ margin: 0, whiteSpace: "pre-wrap", wordBreak: "break-word" }}>{message.content}</p>
-                      {message.role === "assistant" && (
-                        <button
-                          onClick={() => handleCopyMessage(message.id, message.content)}
-                          style={{
-                            marginTop: 8,
-                            display: "flex",
-                            alignItems: "center",
-                            gap: 4,
-                            fontSize: 12,
-                            color: "#7c3aed",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            padding: 0,
+                      {message.role === "user" ? (
+                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                      ) : (
+                        <ReactMarkdown 
+                          remarkPlugins={[remarkGfm, remarkMath]}
+                          rehypePlugins={[rehypeKatex]}
+                          components={{
+                            p: ({ children }) => <p className="mb-3 last:mb-0 leading-relaxed">{children}</p>,
+                            ul: ({ children }) => <ul className="list-disc pl-5 mb-3 space-y-1">{children}</ul>,
+                            ol: ({ children }) => <ol className="list-decimal pl-5 mb-3 space-y-1">{children}</ol>,
+                            li: ({ children }) => <li className="mb-1">{children}</li>,
+                            h1: ({ children }) => <h1 className="text-lg font-bold mb-3 text-gray-900">{children}</h1>,
+                            h2: ({ children }) => <h2 className="text-base font-bold mb-3 text-gray-900">{children}</h2>,
+                            h3: ({ children }) => <h3 className="text-sm font-bold mb-2 text-gray-900">{children}</h3>,
+                            code: ({ children }) => <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-purple-700 font-mono text-[13px]">{children}</code>,
+                            pre: ({ children }) => <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 text-[12px] shadow-inner">{children}</pre>,
+                            strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
                           }}
                         >
-                          {copiedId === message.id ? (
-                            <>
-                              <Check style={{ width: 14, height: 14 }} />
-                              Copied!
-                            </>
-                          ) : (
-                            <>
-                              <Copy style={{ width: 14, height: 14 }} />
-                              Copy
-                            </>
-                          )}
-                        </button>
+                          {message.content}
+                        </ReactMarkdown>
                       )}
                     </div>
+                    {message.role === "assistant" && (
+                      <button
+                        onClick={() => handleCopyMessage(message.id, message.content)}
+                        className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-purple-600 transition-colors"
+                      >
+                        {copiedId === message.id ? (
+                          <><Check className="w-3 h-3" /> Copied</>
+                        ) : (
+                          <><Copy className="w-3 h-3" /> Copy</>
+                        )}
+                      </button>
+                    )}
                   </div>
-                ))}
-                {isLoading && (
-                  <div style={{ display: "flex", gap: 8, marginBottom: 16 }}>
-                    <div style={{ maxWidth: 480, padding: "12px 16px", borderRadius: 12, background: "#f3f4f6", display: "flex", alignItems: "center", gap: 8 }}>
-                      <Loader2 className="animate-spin" style={{ width: 14, height: 14, color: "#7c3aed" }} />
-                      <span style={{ fontSize: 14, color: "#6B7280" }}>CLOOP is thinking...</span>
+                </div>
+              ))}
+              {isLoading && (
+                <div className="flex gap-4 animate-pulse">
+                  <div className="w-8 h-8 rounded-full bg-gray-100 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-gray-400 border border-gray-200">
+                    AI
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-2xl rounded-tl-none border border-gray-100 flex items-center gap-2">
+                    <div className="flex gap-1">
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" />
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.2s]" />
+                      <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:0.4s]" />
                     </div>
                   </div>
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-            )}
-          </div>
-        </div>
-
-        {/* Input Area - flexShrink:0 ALWAYS sticks to bottom */}
-        <div style={{ flexShrink: 0, borderTop: "1px solid #E5E7EB", background: "#fff", padding: "16px 20px", boxShadow: "0 -2px 8px rgba(0,0,0,0.04)" }}>
-          <div style={{ maxWidth: 860, margin: "0 auto" }}>
-            <div style={{ display: "flex", gap: 12, alignItems: "flex-end" }}>
-              <div style={{ flex: 1 }}>
-                <Textarea
-                  value={inputValue}
-                  onChange={(e) => setInputValue(e.target.value)}
-                  onKeyDown={handleKeyDown}
-                  placeholder="Ask CLOOP AI anything..."
-                  className="resize-none"
-                  style={{
-                    width: "100%",
-                    borderRadius: 12,
-                    border: "1.5px solid #E5E7EB",
-                    background: "#F9FAFB",
-                    padding: "12px 16px",
-                    fontSize: 14,
-                    outline: "none",
-                    color: "#111827",
-                    fontFamily: "Inter, system-ui, sans-serif",
-                    minHeight: 40,
-                    maxHeight: 80,
-                  }}
-                  rows={1}
-                  disabled={isLoading}
-                />
-              </div>
-              <Button
-                onClick={handleSendMessage}
-                disabled={isLoading || !inputValue.trim()}
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: "50%",
-                  padding: 0,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  flexShrink: 0,
-                  background: isLoading || !inputValue.trim() ? "#E5E7EB" : "linear-gradient(to right, #7c3aed, #a855f7)",
-                  color: "#fff",
-                  cursor: isLoading || !inputValue.trim() ? "not-allowed" : "pointer",
-                  opacity: isLoading || !inputValue.trim() ? 0.5 : 1,
-                }}
-              >
-                {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-              </Button>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginTop: 8, paddingLeft: 4 }}>
-              <p style={{ fontSize: 12, color: "#9CA3AF", margin: 0 }}>Ctrl+Enter to send</p>
-              {messages.length > 0 && (
-                <Button
-                  onClick={handleClearChat}
-                  variant="ghost"
-                  style={{
-                    color: "#EF4444",
-                    fontSize: 12,
-                    padding: "4px 8px",
-                    height: "auto",
-                  }}
-                >
-                  <Trash2 style={{ width: 14, height: 14, marginRight: 4 }} />
-                  Clear Chat
-                </Button>
+                </div>
               )}
             </div>
-          </div>
+          )}
         </div>
       </div>
-    </div>
+
+      <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-white via-white/95 to-transparent pb-4 pt-10 px-4 pointer-events-none">
+        <div className="max-w-3xl mx-auto pointer-events-auto">
+          <div className="relative bg-white rounded-2xl shadow-[0_0_20px_rgba(0,0,0,0.05)] border border-gray-200 p-2 transition-shadow focus-within:shadow-[0_0_25px_rgba(0,0,0,0.08)]">
+            <Textarea
+              ref={textareaRef}
+              value={inputValue}
+              onChange={(e) => setInputValue(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Ask AI Tutor anything..."
+              className="w-full bg-transparent border-0 focus:ring-0 text-sm py-3 pl-4 pr-12 min-h-[44px] max-h-[180px] resize-none overflow-y-auto scrollbar-hide"
+              rows={1}
+              disabled={isLoading}
+            />
+            <div className="absolute right-3 bottom-3">
+              <Button
+                onClick={() => handleSendMessage()}
+                disabled={isLoading || !inputValue.trim()}
+                className={`w-8 h-8 rounded-xl p-0 flex items-center justify-center transition-all ${
+                  isLoading || !inputValue.trim()
+                    ? "bg-gray-100 text-gray-300"
+                    : "bg-purple-600 text-white hover:bg-purple-700 shadow-sm"
+                }`}
+              >
+                {isLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                ) : (
+                  <Send className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
+          <div className="h-2" />
+        </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

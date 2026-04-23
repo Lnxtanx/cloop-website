@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Trophy, Clock, BookOpen, CheckCircle2, XCircle, AlertCircle, RotateCcw, Target, MessageSquare, Send, Loader2 } from "lucide-react";
@@ -19,11 +20,6 @@ interface ReportProps {
   formatTime: (sec: number) => string;
 }
 
-interface ChatMessage {
-  role: 'user' | 'ai';
-  content: string;
-}
-
 export const TestReport = ({
   examType,
   subject,
@@ -32,80 +28,13 @@ export const TestReport = ({
   onViewHistory,
   formatTime
 }: ReportProps) => {
+  const navigate = useNavigate();
+  const [expandedQuestionId, setExpandedQuestionId] = useState<number | null>(null);
+  
   const accuracy = Math.round((report.score / report.total_questions) * 100);
   const correctCount = report.score;
   const incorrectCount = report.questions.filter(q => q.user_answer && !q.is_correct).length;
   const skippedCount = report.questions.filter(q => !q.user_answer).length;
-
-  const [activeChatId, setActiveChatId] = useState<number | null>(null);
-  const [chats, setChats] = useState<Record<number, ChatMessage[]>>({});
-  const [loadingAi, setLoadingAi] = useState<Record<number, boolean>>({});
-  const [userInput, setUserInput] = useState("");
-
-  const handleStartDiscussion = async (q: PracticeQuestion) => {
-    if (activeChatId === q.id) {
-      setActiveChatId(null);
-      return;
-    }
-
-    setActiveChatId(q.id);
-    
-    if (chats[q.id]) return;
-
-    setLoadingAi(prev => ({ ...prev, [q.id]: true }));
-    try {
-      setChats(prev => ({
-        ...prev,
-        [q.id]: [{ role: 'ai', content: q.explanation || "Let me help you understand this question." }]
-      }));
-    } finally {
-      setLoadingAi(prev => ({ ...prev, [q.id]: false }));
-    }
-  };
-
-  const handleSendMessage = async (qId: number) => {
-    if (!userInput.trim()) return;
-
-    const userMsg = userInput.trim();
-    setUserInput("");
-
-    setChats(prev => ({
-      ...prev,
-      [qId]: [...(prev[qId] || []), { role: 'user', content: userMsg }]
-    }));
-
-    setLoadingAi(prev => ({ ...prev, [qId]: true }));
-
-    try {
-      const token = localStorage.getItem("cloop_token");
-      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
-      
-      const response = await fetch(`${API_BASE_URL}/api/normal-chat/message`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify({
-          message: `Discussion about Question: "${report.questions.find(q => q.id === qId)?.question_text}". User says: ${userMsg}`,
-          context: "PRACTICE_TEST_DISCUSSION"
-        }),
-      });
-
-      if (!response.ok) throw new Error("AI failed to respond");
-
-      const data = await response.json();
-      
-      setChats(prev => ({
-        ...prev,
-        [qId]: [...(prev[qId] || []), { role: 'ai', content: data.message }]
-      }));
-    } catch (error) {
-      toast.error("Failed to get AI response");
-    } finally {
-      setLoadingAi(prev => ({ ...prev, [qId]: false }));
-    }
-  };
 
   return (
     <div className="max-w-4xl mx-auto space-y-6 animate-fade-in pb-20">
@@ -216,57 +145,39 @@ export const TestReport = ({
                 <Button 
                   variant="ghost" 
                   size="sm" 
-                  onClick={() => handleStartDiscussion(q)}
+                  onClick={() => setExpandedQuestionId(expandedQuestionId === q.id ? null : q.id)}
                   className={`h-8 text-[11px] font-bold gap-2 px-3 rounded-full transition-all ${
-                    activeChatId === q.id ? 'bg-purple-600 text-white hover:bg-purple-700' : 'text-purple-600 bg-purple-50 hover:bg-purple-100'
+                    expandedQuestionId === q.id ? 'bg-purple-600 text-white hover:bg-purple-700' : 'text-purple-600 bg-purple-50 hover:bg-purple-100'
                   }`}
                 >
                   <MessageSquare className="w-3.5 h-3.5" />
-                  {activeChatId === q.id ? 'Close Discussion' : 'Explain More'}
+                  {expandedQuestionId === q.id ? 'Hide Explanation' : 'Explain More'}
                 </Button>
 
-                {activeChatId === q.id && (
-                  <div className="mt-4 border-t border-purple-50 pt-4 animate-in slide-in-from-top-2 duration-300">
-                    <div className="space-y-3 max-h-[300px] overflow-y-auto mb-4 pr-2">
-                      {(chats[q.id] || []).map((msg, idx) => (
-                        <div key={idx} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                          <div className={`max-w-[85%] p-3 rounded-2xl text-[11px] leading-relaxed shadow-sm font-medium ${
-                            msg.role === 'user' 
-                              ? 'bg-purple-600 text-white rounded-tr-none' 
-                              : 'bg-purple-50 text-purple-900 rounded-tl-none border border-purple-100'
-                          }`}>
-                            {msg.role === 'ai' && <p className="text-[9px] font-bold uppercase tracking-widest opacity-60 mb-1">Cloop AI</p>}
-                            {msg.content}
-                          </div>
-                        </div>
-                      ))}
-                      {loadingAi[q.id] && (
-                        <div className="flex justify-start">
-                          <div className="bg-purple-50 text-purple-400 p-3 rounded-2xl rounded-tl-none border border-purple-100 flex items-center gap-2">
-                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
-                            <span className="text-[10px] font-bold">Thinking...</span>
-                          </div>
-                        </div>
-                      )}
+                {expandedQuestionId === q.id && (
+                  <div className="mt-4 space-y-3 animate-in slide-in-from-top-2 duration-300">
+                    <div className="bg-purple-50/50 rounded-xl p-4 border border-purple-100">
+                      <div className="flex items-center gap-2 mb-2">
+                        <AlertCircle className="w-3.5 h-3.5 text-purple-600" />
+                        <span className="text-[10px] font-bold text-purple-700 uppercase tracking-wider">Explanation</span>
+                      </div>
+                      <p className="text-xs text-gray-700 leading-relaxed font-medium">
+                        {q.explanation || "No explanation available for this question."}
+                      </p>
                     </div>
-                    <div className="flex gap-2 bg-gray-50 p-2 rounded-xl border border-gray-100 focus-within:border-purple-300 transition-colors">
-                      <input 
-                        type="text" 
-                        value={userInput}
-                        onChange={(e) => setUserInput(e.target.value)}
-                        onKeyDown={(e) => e.key === 'Enter' && handleSendMessage(q.id)}
-                        placeholder="Ask something about this question..."
-                        className="flex-1 bg-transparent border-none outline-none text-xs px-2 py-1 placeholder:text-gray-400 font-medium"
-                      />
-                      <Button 
-                        size="icon" 
-                        className="h-8 w-8 rounded-lg bg-purple-600 hover:bg-purple-700 shadow-sm"
-                        disabled={!userInput.trim() || loadingAi[q.id]}
-                        onClick={() => handleSendMessage(q.id)}
-                      >
-                        <Send className="w-3.5 h-3.5 text-white" />
-                      </Button>
-                    </div>
+
+                    <Button 
+                      variant="outline" 
+                      size="sm" 
+                      onClick={() => {
+                        const message = encodeURIComponent(`I have a doubt about this question: "${q.question_text}". The options were: ${q.options.join(", ")}. The correct answer is: ${q.correct_answer}. Can you explain it more?`);
+                        navigate(`/dashboard/chat?q=${message}`);
+                      }}
+                      className="h-8 text-[11px] font-bold gap-2 px-4 rounded-full border-purple-200 text-purple-600 hover:bg-purple-600 hover:text-white transition-all shadow-sm"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5" />
+                      Ask AI Tutor
+                    </Button>
                   </div>
                 )}
               </div>

@@ -45,6 +45,7 @@ const PracticeTest = () => {
   const [questions, setQuestions] = useState<PracticeQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
+  const [timeSpentPerQuestion, setTimeSpentPerQuestion] = useState<Record<number, number>>({});
   const [timeLeft, setTimeLeft] = useState(600);
   const [history, setHistory] = useState<PracticeTestType[]>([]);
   const [loadingHistory, setLoadingHistory] = useState(false);
@@ -65,18 +66,25 @@ const PracticeTest = () => {
     "Almost ready, hang tight!"
   ];
 
-  // Load Exams on mount
+  // Load Exams and Deep-linked Report on mount
   useEffect(() => {
-    const loadExams = async () => {
+    const init = async () => {
+      // 1. Load Exams
       try {
         const data = await fetchStandardExams();
         setExams(data);
       } catch (err) {
         toast.error("Failed to load competitive exams");
       }
+
+      // 2. Check for Deep-linked Report
+      const reportId = searchParams.get("reportId");
+      if (reportId) {
+        handleViewDetails(parseInt(reportId));
+      }
     };
-    loadExams();
-  }, []);
+    init();
+  }, [searchParams]); // Re-run if search params change
 
   // Cycle loading messages
   useEffect(() => {
@@ -95,7 +103,8 @@ const PracticeTest = () => {
     
     const formattedAnswers = questions.map(q => ({
       question_id: q.id,
-      user_answer: userAnswers[q.id] || null
+      user_answer: userAnswers[q.id] || null,
+      time_spent_sec: timeSpentPerQuestion[q.id] || 0
     }));
 
     try {
@@ -170,6 +179,11 @@ const PracticeTest = () => {
     setState("loading");
     try {
       const data = await fetchPracticeTestDetails(id);
+      
+      // Ensure the header info is available for TestReport
+      setSelectedExam({ code: data.exam_type, name: data.exam_type } as any);
+      setSelectedSubject({ name: data.subject } as any);
+
       setReport({
         score: data.score || 0,
         total_questions: data.total_questions,
@@ -235,6 +249,7 @@ const PracticeTest = () => {
           userAnswers={userAnswers}
           timeLeft={timeLeft}
           onSelectAnswer={(qid, ans) => setUserAnswers({ ...userAnswers, [qid]: ans })}
+          onTimeUpdate={(qid, time) => setTimeSpentPerQuestion(prev => ({ ...prev, [qid]: (prev[qid] || 0) + time }))}
           onPrev={() => setCurrentIndex(prev => prev - 1)}
           onNext={() => setCurrentIndex(prev => prev + 1)}
           onSubmit={handleSubmit}

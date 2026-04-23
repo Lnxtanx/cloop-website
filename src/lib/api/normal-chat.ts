@@ -1,5 +1,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
 
+const getToken = (): string => {
+  return localStorage.getItem("cloop_token") ?? "";
+};
+
+export interface SendNormalMessageResponse {
+  userMessage: NormalChatMessage;
+  aiMessage: NormalChatMessage;
+}
+
 export interface NormalChatMessage {
   id: number;
   user_id?: number;
@@ -15,61 +24,66 @@ export interface NormalChatMessage {
   created_at: string;
 }
 
+export interface ChatSession {
+  id: number;
+  user_id: number;
+  title: string;
+  created_at: string;
+  updated_at: string;
+  messages?: NormalChatMessage[];
+}
+
 export interface NormalChatResponse {
   messages: NormalChatMessage[];
+  session_id?: number;
 }
 
-export interface SendNormalMessageResponse {
-  userMessage: NormalChatMessage;
-  aiMessage: NormalChatMessage;
+export interface ChatSessionsResponse {
+  sessions: ChatSession[];
 }
 
-const getToken = (): string => {
-  return localStorage.getItem("cloop_token") ?? "";
-};
-
-const getUserId = (): number | null => {
-  const t = localStorage.getItem("cloop_token");
-  if (!t) return null;
-  try {
-    const payload = JSON.parse(atob(t.split(".")[1]));
-    return payload.userId || payload.user_id || payload.id || null;
-  } catch {
-    return null;
-  }
+/**
+ * Fetch chat sessions for the user
+ */
+export const fetchChatSessions = async (): Promise<ChatSessionsResponse> => {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/api/normal-chat/sessions`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to fetch sessions");
+  return response.json();
 };
 
 /**
- * Fetch normal chat messages for the authenticated user
+ * Create a new chat session
  */
-export const fetchNormalChatMessages = async (): Promise<NormalChatResponse> => {
-  const url = `${API_BASE_URL}/api/normal-chat`;
+export const createChatSession = async (title?: string): Promise<{ session: ChatSession }> => {
   const token = getToken();
-  const userId = getUserId();
+  const response = await fetch(`${API_BASE_URL}/api/normal-chat/sessions`, {
+    method: "POST",
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
+    body: JSON.stringify({ title }),
+  });
+  if (!response.ok) throw new Error("Failed to create session");
+  return response.json();
+};
 
-  const fullUrl = new URL(url);
-  if (userId) {
-    fullUrl.searchParams.set("user_id", String(userId));
-  }
+/**
+ * Fetch messages for a specific session
+ */
+export const fetchNormalChatMessages = async (sessionId?: number): Promise<NormalChatResponse> => {
+  const token = getToken();
+  const url = new URL(`${API_BASE_URL}/api/normal-chat`);
+  if (sessionId) url.searchParams.set("session_id", String(sessionId));
 
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(fullUrl.toString(), {
-    method: "GET",
-    headers,
+  const response = await fetch(url.toString(), {
+    headers: { Authorization: `Bearer ${token}` },
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    if (response.status === 401) {
-      throw new Error("Authentication required - please login again");
-    }
-    throw new Error(error.error || "Failed to fetch chat messages");
-  }
-
+  if (!response.ok) throw new Error("Failed to fetch messages");
   return response.json();
 };
 
@@ -78,71 +92,33 @@ export const fetchNormalChatMessages = async (): Promise<NormalChatResponse> => 
  */
 export const sendNormalChatMessage = async (
   messageData: {
-    message?: string;
-    file_url?: string;
+    message: string;
+    session_id?: number;
   }
-): Promise<SendNormalMessageResponse> => {
-  const url = `${API_BASE_URL}/api/normal-chat/message`;
+): Promise<SendNormalMessageResponse & { session_id: number }> => {
   const token = getToken();
-  const userId = getUserId();
-
-  const fullUrl = new URL(url);
-  if (userId) {
-    fullUrl.searchParams.set("user_id", String(userId));
-  }
-
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(fullUrl.toString(), {
+  const response = await fetch(`${API_BASE_URL}/api/normal-chat/message`, {
     method: "POST",
-    headers,
+    headers: { 
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}` 
+    },
     body: JSON.stringify(messageData),
   });
 
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    if (response.status === 401) {
-      throw new Error("Authentication required - please login again");
-    }
-    throw new Error(error.error || "Failed to send message");
-  }
-
+  if (!response.ok) throw new Error("Failed to send message");
   return response.json();
 };
 
 /**
- * Clear all normal chat messages for the authenticated user
+ * Delete a session
  */
-export const clearNormalChatHistory = async (): Promise<{ message: string }> => {
-  const url = `${API_BASE_URL}/api/normal-chat/clear`;
+export const deleteChatSession = async (id: number): Promise<{ message: string }> => {
   const token = getToken();
-  const userId = getUserId();
-
-  const fullUrl = new URL(url);
-  if (userId) {
-    fullUrl.searchParams.set("user_id", String(userId));
-  }
-
-  const headers: HeadersInit = { "Content-Type": "application/json" };
-  if (token) {
-    headers.Authorization = `Bearer ${token}`;
-  }
-
-  const response = await fetch(fullUrl.toString(), {
+  const response = await fetch(`${API_BASE_URL}/api/normal-chat/sessions/${id}`, {
     method: "DELETE",
-    headers,
+    headers: { Authorization: `Bearer ${token}` },
   });
-
-  if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    if (response.status === 401) {
-      throw new Error("Authentication required - please login again");
-    }
-    throw new Error(error.error || "Failed to clear chat history");
-  }
-
+  if (!response.ok) throw new Error("Failed to delete session");
   return response.json();
 };

@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { SidebarProvider } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/layouts/AppSidebar";
 import { PracticeSidebar } from "@/layouts/PracticeSidebar";
-import { Bell, Zap, BookOpen } from "lucide-react";
+import { Bell, Zap, BookOpen, ChevronLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import { toast } from "sonner";
@@ -115,12 +115,21 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
           {/* Header */}
           {!hideHeader && (
             <header className="h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-6 gap-4 z-10 shadow-md">
-              {/* Left: Title */}
-              <div className="flex items-center gap-4">
+              {/* Left: Back + Title */}
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="w-8 h-8 hover:bg-white/10 cursor-pointer -ml-2"
+                  onClick={() => navigate(-1)}
+                  title="Go Back"
+                >
+                  <ChevronLeft className="w-5 h-5 text-white" />
+                </Button>
                 <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
                 {isPractice && (
                   <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    Practice Mode
+                    Test Preparation
                   </span>
                 )}
               </div>
