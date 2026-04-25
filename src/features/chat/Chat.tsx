@@ -1,8 +1,8 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Send, Loader2, Copy, Check } from "lucide-react";
+import { Send, Loader2, Copy, Check, GitBranch, ArrowRight } from "lucide-react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
@@ -19,12 +19,16 @@ interface Message {
   role: "user" | "assistant";
   content: string;
   timestamp: Date;
+  fromReportId?: number | null;
+  fromQIndex?: string | null;
 }
 
 const Chat = () => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const sessionId = searchParams.get("session");
+  const fromReportParam = searchParams.get("fromReport");
+  const fromQParam = searchParams.get("fromQ");
   
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
@@ -45,42 +49,11 @@ const Chat = () => {
     scrollToBottom();
   }, [messages, isLoading]);
 
-  useEffect(() => {
-    const token = localStorage.getItem("cloop_token");
-    if (!token) {
-      navigate("/login");
-      return;
-    }
-    
-    const initializeChat = async () => {
-      await fetchChatHistory();
-      
-      const question = searchParams.get("q");
-      if (question) {
-        // Clear the q param immediately
-        const newParams = new URLSearchParams(searchParams);
-        newParams.delete("q");
-        setSearchParams(newParams, { replace: true });
-        
-        // Auto-send the question
-        handleSendMessage(question);
-      }
-    };
-
-    initializeChat();
-  }, [sessionId, navigate]);
-
-  const fetchChatHistory = async () => {
-    if (sessionId === "new") {
-      setMessages([]);
-      setIsFetchingHistory(false);
-      return;
-    }
-
+  const fetchChatHistory = useCallback(async (sid?: string) => {
     setIsFetchingHistory(true);
     try {
       const data: NormalChatResponse = await fetchNormalChatMessages(
-        sessionId ? parseInt(sessionId) : undefined
+        sid ? parseInt(sid) : undefined
       );
 
       if (data.messages && Array.isArray(data.messages)) {
@@ -89,23 +62,64 @@ const Chat = () => {
           role: msg.sender === "ai" ? "assistant" : "user",
           content: msg.message,
           timestamp: new Date(msg.created_at),
+          fromReportId: msg.from_report_id,
+          fromQIndex: msg.from_q_index,
         }));
         setMessages(formattedMessages);
 
-        if (!sessionId && data.session_id) {
+        if (!sid && data.session_id) {
           setSearchParams({ session: String(data.session_id) }, { replace: true });
         }
+        return data.session_id;
       } else {
         setMessages([]);
+        return data.session_id;
       }
     } catch (error) {
       console.error("Error fetching chat history:", error);
+      return null;
     } finally {
       setIsFetchingHistory(false);
     }
-  };
+  }, [setSearchParams]);
 
-  const handleSendMessage = async (customMessage?: string) => {
+  // Initial Loading and Deep-linking
+  useEffect(() => {
+    const token = localStorage.getItem("cloop_token");
+    if (!token) {
+      navigate("/login");
+      return;
+    }
+    
+    const initializeChat = async () => {
+      const activeSessionId = await fetchChatHistory(sessionId || undefined);
+      
+      const question = searchParams.get("q");
+      if (question) {
+        const newParams = new URLSearchParams(searchParams);
+        newParams.delete("q");
+        newParams.delete("fromReport");
+        newParams.delete("fromQ");
+        setSearchParams(newParams, { replace: true });
+        
+        void handleSendMessage(
+          question, 
+          fromReportParam ? parseInt(fromReportParam) : null, 
+          fromQParam,
+          activeSessionId || undefined
+        );
+      }
+    };
+
+    void initializeChat();
+  }, []);
+
+  const handleSendMessage = async (
+    customMessage?: string, 
+    originReportId?: number | null, 
+    qIndex?: string | null,
+    explicitSessionId?: number
+  ) => {
     const messageToSend = customMessage || inputValue;
     if (!messageToSend.trim()) return;
 
@@ -114,6 +128,8 @@ const Chat = () => {
       role: "user",
       content: messageToSend,
       timestamp: new Date(),
+      fromReportId: originReportId,
+      fromQIndex: qIndex
     };
 
     setMessages((prev) => [...prev, userMessage]);
@@ -121,9 +137,13 @@ const Chat = () => {
     setIsLoading(true);
 
     try {
+      const targetSid = explicitSessionId || ((sessionId && sessionId !== "new") ? parseInt(sessionId) : undefined);
+      
       const result = await sendNormalChatMessage({
         message: messageToSend,
-        session_id: (sessionId && sessionId !== "new") ? parseInt(sessionId) : undefined
+        session_id: targetSid,
+        from_report_id: originReportId || undefined,
+        from_q_index: qIndex || undefined
       });
 
       if ((!sessionId || sessionId === "new") && result.session_id) {
@@ -136,7 +156,30 @@ const Chat = () => {
         content: result.aiMessage?.message || "I couldn't generate a response.",
         timestamp: new Date(result.aiMessage?.created_at || new Date()),
       };
-      setMessages((prev) => [...prev, assistantMessage]);
+      
+      setMessages((prev) => {
+        // Sync the local user message with backend data to ensure persistence
+        const updatedMessages = [...prev];
+        // Find the index of the user message we just sent (searching from the end)
+        let userMsgIndex = -1;
+        for (let i = updatedMessages.length - 1; i >= 0; i--) {
+          if (updatedMessages[i].role === "user" && updatedMessages[i].content === messageToSend) {
+            userMsgIndex = i;
+            break;
+          }
+        }
+        
+        if (userMsgIndex !== -1) {
+          updatedMessages[userMsgIndex] = {
+            ...updatedMessages[userMsgIndex],
+            id: result.userMessage?.id?.toString() || updatedMessages[userMsgIndex].id,
+            fromReportId: result.userMessage?.from_report_id ?? updatedMessages[userMsgIndex].fromReportId,
+            fromQIndex: result.userMessage?.from_q_index ?? updatedMessages[userMsgIndex].fromQIndex,
+          };
+        }
+        
+        return [...updatedMessages, assistantMessage];
+      });
     } catch (error) {
       console.error("Error sending message:", error);
       const errorMessage: Message = {
@@ -172,7 +215,7 @@ const Chat = () => {
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
-      handleSendMessage();
+      void handleSendMessage();
     }
   };
 
@@ -212,14 +255,32 @@ const Chat = () => {
                   </div>
                   <div className={`flex flex-col max-w-[88%] ${message.role === "user" ? "items-end" : "items-start"}`}>
                     <div
-                      className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
+                      className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative ${
                         message.role === "user"
                           ? "bg-purple-600 text-white rounded-tr-none"
                           : "bg-white text-gray-800 border border-gray-100"
                       }`}
                     >
                       {message.role === "user" ? (
-                        <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                        <>
+                          <p className="whitespace-pre-wrap break-words">{message.content}</p>
+                          {message.fromReportId != null && (
+                            <button
+                              onClick={() => {
+                                const qPart = message.fromQIndex ? `&fromQ=${message.fromQIndex}` : "";
+                                navigate(`/dashboard/test-your-self?reportId=${message.fromReportId}${qPart}`);
+                              }}
+                              className="mt-3 flex items-center gap-1.5 bg-white hover:bg-purple-50 transition-all px-3 py-1.5 rounded-lg text-[10px] font-bold text-purple-700 w-fit shadow-md border border-purple-100/50"
+                              title="Go back to original question"
+                            >
+                              <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center">
+                                <GitBranch className="w-2.5 h-2.5 text-purple-600" />
+                              </div>
+                              View in Report
+                              <ArrowRight className="w-3 h-3 opacity-50" />
+                            </button>
+                          )}
+                        </>
                       ) : (
                         <ReactMarkdown 
                           remarkPlugins={[remarkGfm, remarkMath]}
@@ -290,7 +351,7 @@ const Chat = () => {
             />
             <div className="absolute right-3 bottom-3">
               <Button
-                onClick={() => handleSendMessage()}
+                onClick={() => void handleSendMessage()}
                 disabled={isLoading || !inputValue.trim()}
                 className={`w-8 h-8 rounded-xl p-0 flex items-center justify-center transition-all ${
                   isLoading || !inputValue.trim()

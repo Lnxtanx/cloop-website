@@ -1,11 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { CardContent } from "@/components/ui/card";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, CheckCircle2, XCircle, HelpCircle,
-  TrendingUp, Clock, RefreshCw, CheckCheck, AlertCircle, ArrowRight, ChevronRight, Loader2, Zap, Target
+  TrendingUp, Clock, AlertCircle, ArrowRight, ChevronRight, Loader2, Zap, Target
 } from "lucide-react";
 
 const API = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
@@ -48,7 +48,8 @@ function CardContainer({ children, style, className, onClick }: { children: Reac
       className={className}
       style={{
         background: "#fff", borderRadius: 14, padding: 16,
-        boxShadow: "0 1px 4px rgba(0,0,0,0.06)", ...style,
+        border: "1px solid #F3F4F6",
+        boxShadow: "0 1px 3px rgba(0,0,0,0.02)", ...style,
       }}
       onClick={onClick}
     >
@@ -72,26 +73,6 @@ function PracticeAnalyticsView({ onSelectExam }: { onSelectExam: (code: string) 
   }, []);
 
   if (loading) return <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}><Loader2 className="animate-spin" style={{ color: "#9333EA" }} /></div>;
-
-  if (!data?.has_data) {
-    return (
-      <div style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 28 }}>
-          <div style={{ background: "#F3E8FF", padding: "12px 16px" }}>
-            <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: 0 }}>Hi there! Welcome to Practice Analytics</p>
-          </div>
-          <div style={{ background: "#FAF5FF", padding: "16px" }}>
-            <p style={{ fontSize: 12, color: "#4B5563", margin: 0 }}>Complete your first mock test to unlock deep insights into your competitive exam readiness.</p>
-          </div>
-        </div>
-        <Section title="Quick Overview (Recent Tests)" />
-        <CardContainer style={{ textAlign: "center", border: "1.5px dashed #E5E7EB", padding: 40 }}>
-           <Zap style={{ width: 32, height: 32, color: "#E5E7EB", margin: "0 auto 12px" }} />
-           <p style={{ fontSize: 13, color: "#6B7280" }}>No recent sessions found.</p>
-        </CardContainer>
-      </div>
-    );
-  }
 
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
@@ -118,58 +99,83 @@ function PracticeAnalyticsView({ onSelectExam }: { onSelectExam: (code: string) 
         </CardContainer>
       </div>
 
-      <div style={{ borderRadius: 16, overflow: "hidden", marginBottom: 28 }}>
+      {/* 2. Welcome Box */}
+      <div style={{ borderRadius: 16, overflow: "hidden", border: "1px solid #F3E8FF", marginBottom: 28 }}>
         <div style={{ background: "#F3E8FF", padding: "12px 16px" }}>
-          <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: 0 }}>Ready for your Competitive Exams?</p>
+          <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: 0 }}>Practice Mastery Dashboard</p>
         </div>
-        <div style={{ background: "#FAF5FF", padding: "12px 16px 16px" }}>
-          <p style={{ fontWeight: 700, fontSize: 13, color: "#374151", margin: "0 0 8px" }}>Here you can -</p>
-          {[
-            "Track performance across NEET, JEE, and KCET mock tests",
-            "See which subjects and chapters need more practice",
-            "Monitor predicted exam scores and potential rank improvement",
-            "Identify common calculation or conceptual errors",
-          ].map((t, i) => (
-            <p key={i} style={{ fontSize: 12, color: "#4B5563", margin: "0 0 3px", lineHeight: 1.5 }}>{i + 1}. {t}</p>
+        <div style={{ background: "#FAF5FF", padding: "16px" }}>
+          <p style={{ fontSize: 12, color: "#4B5563", margin: 0, lineHeight: 1.5 }}>
+            Analyze your mock test performance, track chapter-wise readiness, and follow AI-suggested focus areas to improve your competitive exam rank.
+          </p>
+        </div>
+      </div>
+
+      {/* 3. Recent Tests */}
+      <Section title="Quick Overview (Recent Tests)" />
+      {!data?.recent_tests?.length ? (
+        <CardContainer style={{ textAlign: "center", border: "1.5px dashed #E5E7EB", padding: 32, marginBottom: 28 }}>
+           <Zap style={{ width: 24, height: 24, color: "#E5E7EB", margin: "0 auto 8px" }} />
+           <p style={{ fontSize: 12, color: "#9CA3AF" }}>No recent tests completed.</p>
+        </CardContainer>
+      ) : (
+        <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
+          {data.recent_tests.map((r: any) => (
+            <CardContainer 
+              key={r.id} 
+              style={{ cursor: "pointer", border: "1px solid #F3F4F6", background: "#fff" }}
+              className="hover:border-purple-200 hover:shadow-sm transition-all group"
+              onClick={() => navigate(`/dashboard/test-your-self?reportId=${r.id}`)}
+            >
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: "0 0 2px" }} className="group-hover:text-purple-600 transition-colors">{r.title}</p>
+                  <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+                    <p style={{ fontSize: 10, color: "#9CA3AF", margin: 0 }}>{new Date(r.created_at).toLocaleDateString()}</p>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, color: "#16A34A", fontWeight: 700 }}>
+                      <CheckCircle2 style={{ width: 12, height: 12 }} />{r.correct_answers} Correct
+                    </span>
+                    <span style={{ display: "flex", alignItems: "center", gap: 3, fontSize: 10, color: "#DC2626", fontWeight: 700 }}>
+                      <XCircle style={{ width: 12, height: 12 }} />{r.incorrect_answers} Incorrect
+                    </span>
+                  </div>
+                </div>
+                <ChevronRight style={{ width: 16, height: 16, color: "#E5E7EB" }} className="group-hover:text-purple-400 transition-colors" />
+              </div>
+            </CardContainer>
           ))}
         </div>
-      </div>
+      )}
 
-      <Section title="Quick Overview (Recent Tests)" />
-      <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 28 }}>
-        {data.recent_tests?.map((r: any) => (
-          <CardContainer 
-            key={r.id} 
-            style={{ cursor: "pointer", border: "1px solid transparent" }}
-            className="hover:border-purple-200 hover:shadow-md transition-all group"
-            onClick={() => navigate(`/dashboard/test-your-self?reportId=${r.id}`)}
-          >
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", marginBottom: 10 }}>
-              <div style={{ minWidth: 0, flex: 1, paddingRight: 12 }}>
-                <p style={{ fontWeight: 700, fontSize: 15, color: "#1F2937", margin: "0 0 2px" }} className="group-hover:text-purple-600 transition-colors">{r.title}</p>
-                <p style={{ fontSize: 11, color: "#9CA3AF", margin: 0 }}>{new Date(r.created_at).toLocaleDateString()} • Click to view report</p>
-              </div>
-              <span style={{ padding: "3px 10px", borderRadius: 20, fontWeight: 700, fontSize: 13, background: scoreBg(r.score_percent), color: scoreColor(r.score_percent) }}>{r.score_percent}%</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <div style={{ display: "flex", gap: 16 }}>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}><CheckCircle2 style={{ width: 14, height: 14, color: "#9333EA" }} />{r.correct_answers} Correct</span>
-                <span style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 12, color: "#4B5563" }}><XCircle style={{ width: 14, height: 14, color: "#DC2626" }} />{r.incorrect_answers} Incorrect</span>
-              </div>
-              <ChevronRight style={{ width: 16, height: 16, color: "#E5E7EB" }} className="group-hover:text-purple-400 transition-colors" />
-            </div>
-          </CardContainer>
-        ))}
-      </div>
-
+      {/* 4. Exam Grid */}
       <Section title="Exams-wise Analysis" />
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
         {data.exams?.map((exam: any) => (
-          <CardContainer key={exam.exam_type} className="border-purple-200 hover:shadow-lg transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50" onClick={() => onSelectExam(exam.exam_type)}>
-            <CardContent className="p-5">
-              <h4 className="font-semibold mt-1 mb-2">{exam.name || exam.exam_type}</h4>
-              <p style={{ fontSize: 12, fontWeight: 700, color: "#9333EA", margin: "0 0 8px" }}>Predicted Score: {exam.predicted_score}%</p>
-              <div className="flex items-center justify-between mt-2"><span className="text-xs text-gray-600">Click to analyze</span><ChevronRight style={{ width: 16, height: 16, color: "#9333EA" }} /></div>
+          <CardContainer key={exam.exam_type}
+            className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 group flex flex-col h-full min-h-[160px]"
+            onClick={() => onSelectExam(exam.exam_type)}>
+            <CardContent className="p-5 flex flex-col flex-1">
+              <div className="mb-3">
+                <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-200/50 rounded-full px-2.5 py-0.5">
+                  Competitive Exam
+                </span>
+              </div>
+              
+              <div className="flex-1">
+                <h4 className="font-bold text-gray-900 group-hover:text-purple-700 transition-colors text-sm">
+                  {exam.name || exam.exam_type}
+                </h4>
+                <div className="mt-2">
+                   <p style={{ fontSize: 12, fontWeight: 800, color: "#9333EA", margin: 0 }}>
+                     Predicted Score: {exam.predicted_score || 0}%
+                   </p>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between mt-4 pt-3 border-t border-purple-200/30">
+                <span className="text-[10px] font-bold text-purple-600 uppercase tracking-tight">View Analysis</span>
+                <ChevronRight className="w-3.5 h-3.5 text-purple-600 group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </CardContent>
           </CardContainer>
         ))}
@@ -198,37 +204,39 @@ function ExamDeepDiveView({ examCode, onBack }: { examCode: string; onBack: () =
   return (
     <div style={{ maxWidth: 900, margin: "0 auto" }}>
       <div style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 20 }}>
-        <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", fontSize: 13, cursor: "pointer", color: "#374151", fontWeight: 500 }}><ArrowLeft style={{ width: 14, height: 14 }} /> Back</button>
+        <button onClick={onBack} style={{ display: "flex", alignItems: "center", gap: 6, padding: "7px 14px", borderRadius: 10, border: "1px solid #e5e7eb", background: "#fff", fontSize: 12, cursor: "pointer", color: "#374151", fontWeight: 600 }}>
+          <ArrowLeft style={{ width: 14, height: 14 }} /> Back
+        </button>
         <div style={{ display: "flex", alignItems: "center", gap: 8, background: "#F3E8FF", padding: "8px 16px", borderRadius: 12 }}>
-          <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#9333EA", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 13, color: "#fff" }}>{examCode?.[0]}</div>
-          <span style={{ fontWeight: 700, fontSize: 15, color: "#9D174D" }}>{examCode} Deep Analysis</span>
+          <div style={{ width: 24, height: 24, borderRadius: "50%", background: "#9333EA", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: 11, color: "#fff" }}>{examCode?.[0]}</div>
+          <span style={{ fontWeight: 700, fontSize: 14, color: "#9D174D" }}>{examCode} Detailed Analysis</span>
         </div>
       </div>
 
-      <Section title="Predicted Exam Readiness" />
+      <Section title="Predicted Exam Score" />
       <CardContainer style={{ marginBottom: 24 }}>
-        <div style={{ height: 32, background: "#F3F4F6", borderRadius: 16, position: "relative", overflow: "hidden", marginBottom: 8 }}>
-          <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${currentScore}%`, background: "#FF8787", borderRadius: "16px 0 0 16px", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8 }}><span style={{ color: "#fff", fontSize: 12, fontWeight: 800 }}>{currentScore}%</span></div>
-          <div style={{ position: "absolute", top: 0, height: "100%", left: `${currentScore}%`, width: `${bestPossible - currentScore}%`, background: "#CCFF90", borderRadius: "0 16px 16px 0", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8 }}><span style={{ color: "#1F2937", fontSize: 12, fontWeight: 800 }}>{bestPossible}%</span></div>
+        <div style={{ height: 28, background: "#F3F4F6", borderRadius: 14, position: "relative", overflow: "hidden", marginBottom: 8 }}>
+          <div style={{ position: "absolute", left: 0, top: 0, height: "100%", width: `${currentScore}%`, background: "#FF8787", borderRadius: "14px 0 0 14px", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8 }}><span style={{ color: "#fff", fontSize: 11, fontWeight: 800 }}>{currentScore}%</span></div>
+          <div style={{ position: "absolute", top: 0, height: "100%", left: `${currentScore}%`, width: `${bestPossible - currentScore}%`, background: "#CCFF90", borderRadius: "0 14px 14px 0", display: "flex", alignItems: "center", justifyContent: "flex-end", paddingRight: 8 }}><span style={{ color: "#1F2937", fontSize: 11, fontWeight: 800 }}>{bestPossible}%</span></div>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between" }}>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Current Preparedness</span>
-          <span style={{ fontSize: 12, fontWeight: 600, color: "#6B7280" }}>Potential Readiness</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF" }}>Current Proficiency</span>
+          <span style={{ fontSize: 11, fontWeight: 600, color: "#9CA3AF" }}>Target Potential</span>
         </div>
       </CardContainer>
 
-      <Section title="Subjects Performance" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+      <Section title="Subject Mastery" />
+      <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-8">
         {data?.subjects?.map((sub: any) => (
           <CardContainer key={sub.name}>
-             <h5 style={{ fontSize: 13, fontWeight: 700, color: "#1F2937", marginBottom: 6 }}>{sub.name}</h5>
-             <p style={{ fontSize: 16, fontWeight: 900, color: scoreColor(sub.score_percent), margin: 0 }}>{sub.score_percent}%</p>
-             <p style={{ fontSize: 9, fontWeight: 600, color: "#9CA3AF", textTransform: "uppercase" }}>Avg Accuracy</p>
+             <h5 style={{ fontSize: 12, fontWeight: 700, color: "#1F2937", marginBottom: 4 }}>{sub.name}</h5>
+             <p style={{ fontSize: 18, fontWeight: 900, color: scoreColor(sub.score_percent), margin: 0 }}>{sub.score_percent}%</p>
+             <p style={{ fontSize: 8, fontWeight: 700, color: "#9CA3AF", textTransform: "uppercase", letterSpacing: '0.05em' }}>Average Accuracy</p>
           </CardContainer>
         ))}
       </div>
 
-      <Section title="Practice Time Breakdown" />
+      <Section title="Preparation Time" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
         {[
           { label: "Daily", val: fmtTime(data?.time_analytics?.daily_seconds || 0) },
@@ -236,29 +244,13 @@ function ExamDeepDiveView({ examCode, onBack }: { examCode: string; onBack: () =
           { label: "Total", val: fmtTime(data?.time_analytics?.total_seconds || 0) },
         ].map(t => (
           <CardContainer key={t.label} style={{ textAlign: "center" }}>
-            <p style={{ fontSize: 20, fontWeight: 700, color: "#8B5CF6", margin: "0 0 4px" }}>{t.val}</p>
-            <p style={{ fontSize: 12, fontWeight: 600, color: "#374151", margin: "0 0 2px" }}>{t.label}</p>
-            <p style={{ fontSize: 10, color: "#9CA3AF", margin: 0 }}>Practice Time</p>
+            <p style={{ fontSize: 18, fontWeight: 800, color: "#9333EA", margin: "0 0 2px" }}>{t.val}</p>
+            <p style={{ fontSize: 10, fontWeight: 700, color: "#374151", margin: 0 }}>{t.label} Prep</p>
           </CardContainer>
         ))}
       </div>
 
-      <Section title="Performance Overview" />
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
-        {[
-          { icon: <HelpCircle style={{ width: 20, height: 20, color: "#6B7280" }} />, val: data?.summary?.total_questions || 0, label: "Questions", color: "#8B5CF6" },
-          { icon: <CheckCircle2 style={{ width: 20, height: 20, color: "#8B5CF6" }} />, val: data?.summary?.correct_answers || 0, label: "Correct", color: "#8B5CF6" },
-          { icon: <TrendingUp style={{ width: 20, height: 20, color: "#8B5CF6" }} />, val: "+15%", label: "Improved", color: "#8B5CF6" },
-        ].map(({ icon, val, label, color }) => (
-          <CardContainer key={label} style={{ textAlign: "center" }}>
-            <div style={{ display: "flex", justifyContent: "center", marginBottom: 6 }}>{icon}</div>
-            <p style={{ fontSize: 24, fontWeight: 700, color, margin: "0 0 2px" }}>{val}</p>
-            <p style={{ fontSize: 12, color: "#6B7280", margin: 0 }}>{label}</p>
-          </CardContainer>
-        ))}
-      </div>
-
-      <Section title="Common Error Profile" />
+      <Section title="Error Profile" />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 12, marginBottom: 24 }}>
         {[
           { label: "Conceptual", val: data?.error_analysis?.error_types?.Conceptual || 0, color: "#9333EA" },
@@ -266,27 +258,25 @@ function ExamDeepDiveView({ examCode, onBack }: { examCode: string; onBack: () =
           { label: "Calculation", val: data?.error_analysis?.error_types?.Calculation || 0, color: "#D946EF" },
         ].map(err => (
           <CardContainer key={err.label} style={{ padding: 12 }}>
-            <p style={{ fontSize: 12, fontWeight: 700, color: "#1F2937", margin: "0 0 3px" }}>{err.label}</p>
-            <p style={{ fontSize: 11, color: "#6B7280", margin: "0 0 8px" }}>{err.val} mistakes</p>
-            <div style={{ height: 5, background: "#E5E7EB", borderRadius: 3 }}>
-              <div style={{ height: "100%", width: `${Math.min(100, (err.val || 0) * 10)}%`, background: err.color, borderRadius: 3 }} />
+            <p style={{ fontSize: 11, fontWeight: 700, color: "#1F2937", margin: "0 0 2px" }}>{err.label}</p>
+            <p style={{ fontSize: 10, color: "#6B7280", margin: "0 0 6px" }}>{err.val} errors</p>
+            <div style={{ height: 4, background: "#F3F4F6", borderRadius: 2 }}>
+              <div style={{ height: "100%", width: `${Math.min(100, (err.val || 0) * 10)}%`, background: err.color, borderRadius: 2 }} />
             </div>
           </CardContainer>
         ))}
       </div>
 
-      <Section title="Priority Focus Areas" subtitle="AI suggests mastering these chapters to improve scores fastest" />
-      <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+      <Section title="Weak Areas" subtitle="Focus on these chapters to maximize score gain" />
+      <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
         {data?.chapter_mastery?.slice(0, 3).map((item: any, i: number) => (
-          <div key={i} style={{ background: i === 0 ? "#EDE9FE" : "#DDD6FE", borderRadius: 16, padding: 16 }}>
-            <p style={{ fontWeight: 700, fontSize: 15, color: "#4C1D95", margin: "0 0 4px" }}>{item.title}</p>
-            <p style={{ fontSize: 12, color: "#5B21B6", margin: "0 0 12px" }}>Accuracy: {item.score_percent}% • High potential for marks improvement.</p>
-            <div style={{ background: "#fff", borderRadius: 8, padding: "10px 14px", display: "flex", justifyContent: "space-between", marginBottom: 12 }}>
-                <span style={{ fontSize: 13, fontWeight: 600, color: "#8B5CF6" }}>Potential Gain</span>
-                <span style={{ fontSize: 13, fontWeight: 700, color: "#8B5CF6" }}>+{15 - Math.round((item.score_percent || 0)/10)} Marks</span>
-              </div>
-            <button style={{ width: "100%", background: "#8B5CF6", color: "#fff", border: "none", borderRadius: 8, padding: "10px 0", fontSize: 14, fontWeight: 600, cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              Practice Now <ArrowRight style={{ width: 15, height: 15 }} />
+          <div key={i} style={{ background: "#fff", border: "1px solid #F3F4F6", borderRadius: 12, padding: 14, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <div>
+              <p style={{ fontWeight: 700, fontSize: 14, color: "#1F2937", margin: "0 0 2px" }}>{item.title}</p>
+              <p style={{ fontSize: 11, color: "#6B7280", margin: 0 }}>Accuracy: {item.score_percent}%</p>
+            </div>
+            <button style={{ background: "#F3E8FF", color: "#9333EA", border: "none", borderRadius: 8, padding: "6px 12px", fontSize: 11, fontWeight: 700, cursor: "pointer" }}>
+              Practice
             </button>
           </div>
         ))}
@@ -439,10 +429,31 @@ function NormalSubjectView({ subjectId, subjectName, onBack }: { subjectId: numb
 
 export default function Statistics() {
   const { mode } = usePracticeMode();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [selectedSubject, setSelectedSubject] = useState<{ id: number; name: string } | null>(null);
-  const [selectedExam, setSelectedExam] = useState<string | null>(null);
+  
+  // Use state but initialize from URL if possible
+  const [selectedExam, setSelectedExam] = useState<string | null>(searchParams.get("exam"));
 
   const activeMode = mode === 'PRACTICE' ? 'practice' : 'normal';
+
+  const handleBack = useCallback(() => {
+    setSelectedExam(null);
+    setSearchParams({}, { replace: true });
+  }, [setSearchParams]);
+
+  const handleSelectExam = useCallback((code: string) => {
+    setSelectedExam(code);
+    setSearchParams({ exam: code }, { replace: true });
+  }, [setSearchParams]);
+
+  // Sync state if URL changes (e.g. browser back)
+  useEffect(() => {
+    const examInUrl = searchParams.get("exam");
+    if (examInUrl !== selectedExam) {
+      setSelectedExam(examInUrl);
+    }
+  }, [searchParams, selectedExam]);
 
   return (
     <DashboardLayout title="Performance Analytics">
@@ -455,9 +466,9 @@ export default function Statistics() {
           )
         ) : (
           selectedExam ? (
-            <ExamDeepDiveView examCode={selectedExam} onBack={() => setSelectedExam(null)} />
+            <ExamDeepDiveView examCode={selectedExam} onBack={handleBack} />
           ) : (
-            <PracticeAnalyticsView onSelectExam={setSelectedExam} />
+            <PracticeAnalyticsView onSelectExam={handleSelectExam} />
           )
         )}
       </div>

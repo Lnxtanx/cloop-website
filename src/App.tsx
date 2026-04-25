@@ -15,6 +15,7 @@ import Statistics from "./features/statistics/Statistics";
 import Chat from "./features/chat/Chat";
 import Profile from "./features/profile/Profile";
 import PracticeTest from "./features/practice/PracticeTest";
+import PracticeDashboard from "./features/practice/PracticeDashboard";
 import Notifications from "./features/notifications/Notifications";
 import Feedback from "./features/feedback/Feedback";
 import NotFound from "./features/common/NotFound";
@@ -36,6 +37,7 @@ const App = () => {
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/dashboard/practice" element={<PracticeDashboard />} />
               <Route path="/chapters" element={<Chapters />} />
               <Route path="/topics" element={<Topics />} />
               <Route path="/topic-chat" element={<TopicChat />} />

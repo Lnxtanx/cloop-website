@@ -179,6 +179,7 @@ const PracticeTest = () => {
     setState("loading");
     try {
       const data = await fetchPracticeTestDetails(id);
+      setTestId(id);
       
       // Ensure the header info is available for TestReport
       setSelectedExam({ code: data.exam_type, name: data.exam_type } as any);
@@ -266,6 +267,7 @@ const PracticeTest = () => {
     return (
       <DashboardLayout title="Performance Report">
         <TestReport
+          reportId={testId || Number(searchParams.get("reportId"))}
           examType={selectedExam?.code || "Test"}
           subject={selectedSubject?.name || "Subject"}
           report={report}

@@ -48,6 +48,7 @@ export interface StandardExam {
   code: string;
   name: string;
   description?: string;
+  predicted_score?: number;
 }
 
 export interface StandardSubject {

@@ -17,26 +17,34 @@ function fmt(s: number) {
   return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
-function mergeMessages(a: TopicChatMessage[], b: TopicChatMessage[]) {
-  const m = new Map<string, TopicChatMessage>();
-  const all = [...a, ...b];
+function mergeMessages(userMsgs: TopicChatMessage[], aiMsgs: TopicChatMessage[]) {
+  const m = new Map<string | number, TopicChatMessage>();
   
-  all.forEach((x) => {
-    // Use composite key to avoid collisions between user/AI messages with same ID
-    const key = `${x.id}-${x.sender ?? 'unknown'}-${x.message_type ?? 'none'}`;
-    if (!m.has(key)) {
-      m.set(key, x);
+  // Combine all messages
+  const all = [...(userMsgs || []), ...(aiMsgs || [])];
+  
+  all.forEach((x, index) => {
+    // Handle missing or non-numeric IDs to prevent Map collisions on NaN
+    const id = (x.id !== undefined && x.id !== null && !isNaN(Number(x.id))) 
+      ? Number(x.id) 
+      : `temp-${index}-${x.created_at || Date.now()}`;
+      
+    if (!m.has(id)) {
+      m.set(id, x);
     } else {
-      // If duplicate, keep the one with more data
-      const existing = m.get(key)!;
-      if (x.diff_html || x.options?.length || x.session_summary) {
-        m.set(key, x);
+      const existing = m.get(id)!;
+      // Heuristic to keep the "better" version of the message
+      const xScore = (x.diff_html ? 2 : 0) + (x.sender ? 1 : 0) + (x.message_type ? 1 : 0);
+      const existingScore = (existing.diff_html ? 2 : 0) + (existing.sender ? 1 : 0) + (existing.message_type ? 1 : 0);
+      
+      if (xScore >= existingScore) {
+        m.set(id, x);
       }
     }
   });
   
   return [...m.values()].sort(
-    (x, y) => new Date(x.created_at).getTime() - new Date(y.created_at).getTime()
+    (x, y) => new Date(x.created_at || 0).getTime() - new Date(y.created_at || 0).getTime()
   );
 }
 
@@ -50,7 +58,7 @@ function DiffText({ html }: { html: string }) {
         if (p.startsWith("<del>"))
           return <span key={i} style={{ textDecoration: "line-through", color: "#ef4444" }}>{p.replace(/<\/?del>/g, "")}</span>;
         if (p.startsWith("<ins>"))
-          return <span key={i} style={{ fontWeight: 600, color: "#8b5cf6" }}>{p.replace(/<\/?ins>/g, "")}</span>;
+          return <span key={i} style={{ fontWeight: 600, color: "#16a34a" }}>{p.replace(/<\/?ins>/g, "")}</span>;
         return <span key={i}>{p}</span>;
       })}
     </span>
@@ -179,9 +187,9 @@ function SummaryCard({ data }: { data: SessionSummaryData }) {
     <div className="flex justify-start mb-4">
       <div className={`rounded-2xl p-5 w-72 ${low ? "bg-red-50" : "bg-green-50"}`}>
         <div className="text-center mb-4">
-          <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${low ? "text-red-500" : "text-purple-600"}`} />
-          <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-purple-700"}`}>Score — {score}</p>
-          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-purple-500"}`}>Predicted — {predicted}</p>
+          <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${low ? "text-red-500" : "text-green-600"}`} />
+          <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-green-700"}`}>Score — {score}</p>
+          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-green-500"}`}>Predicted — {predicted}</p>
         </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
@@ -218,8 +226,8 @@ function ScorePredictionCard({ data }: { data: ScorePrediction }) {
   const pred = Math.round(data.predicted_score);
   const concept = Math.round((data.concept_score ?? 0) * 100);
   const exam = Math.round((data.exam_score ?? 0) * 100);
-  const color = pred >= 75 ? "text-purple-700" : pred >= 50 ? "text-amber-600" : "text-red-600";
-  const bg = pred >= 75 ? "bg-purple-50 border-purple-200" : pred >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
+  const color = pred >= 75 ? "text-green-700" : pred >= 50 ? "text-amber-600" : "text-red-600";
+  const bg = pred >= 75 ? "bg-green-50 border-green-200" : pred >= 50 ? "bg-amber-50 border-amber-200" : "bg-red-50 border-red-200";
   return (
     <div className="flex justify-start mb-4">
       <div className={`rounded-2xl p-4 min-w-[240px] max-w-[300px] border ${bg}`}>
@@ -423,10 +431,17 @@ export default function TopicChat() {
       const rawMessages = mergeMessages(data.messages ?? [], data.aiMessages ?? []);
 
       // Normalize messages for consistent rendering
-      const normalized = rawMessages.map((msg) => {
-        // Fix missing sender
-        const sender = msg.sender || 
-          (msg.message_type === "user_correction" ? "user" : "ai");
+      const normalized = rawMessages.map((msg: any) => {
+        // Fix missing sender: Trust explicit sender, otherwise fallback based on heuristics
+        let sender = msg.sender;
+        if (!sender) {
+          if (msg.message_type === "user_correction" || msg.diff_html) {
+            sender = "user";
+          } else {
+            // Default to AI if we can't determine
+            sender = "ai";
+          }
+        }
         
         // Fix missing message_type
         let messageType = msg.message_type;
@@ -511,12 +526,20 @@ export default function TopicChat() {
       }
       if (res.all_goals_completed) setDone(true);
 
+      // Update the temporary user message ID if the backend returned the real one
+      let realUserId = tid;
+      if (res.userMessage && res.userMessage.id) {
+        realUserId = res.userMessage.id;
+        setMessages((p) => p.map((m) => m.id === tid ? { ...m, id: realUserId } : m));
+      }
+
       const corr = res.userCorrection;
       if (corr) {
         console.log("✏️ Applying correction:", corr);
-        setMessages((p) => p.map((m) => m.id === tid
+        setMessages((p) => p.map((m) => m.id === realUserId || m.id === tid
           ? {
               ...m,
+              id: realUserId,
               message_type: "user_correction",
               diff_html: corr.diff_html ?? corr.correction ?? null,
               emoji: corr.emoji ?? null,

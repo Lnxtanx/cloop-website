@@ -3,8 +3,10 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { BookOpen, Play } from "lucide-react";
+import { BookOpen, Play, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { usePracticeMode } from "@/contexts/PracticeModeContext";
+import PracticeDashboard from "@/features/practice/PracticeDashboard";
 
 interface UserSubject {
   subject_id: number;
@@ -26,6 +28,7 @@ interface UserProfile {
 }
 
 const Dashboard = () => {
+  const { mode } = usePracticeMode();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -70,10 +73,17 @@ const Dashboard = () => {
     fetchProfile();
   }, [navigate]);
 
+  // Handle Practice Mode Home
+  if (mode === "PRACTICE") {
+    return <PracticeDashboard />;
+  }
+
   if (loading) {
     return (
       <DashboardLayout title="Dashboard">
-        <div className="p-8 text-center">Loading profile...</div>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <Loader2 className="w-8 h-8 animate-spin text-purple-600" />
+        </div>
       </DashboardLayout>
     );
   }

@@ -20,7 +20,7 @@ import { Button } from "@/components/ui/button";
 import { ChatHistory } from "@/features/chat/components/ChatHistory";
 
 const practiceNavItems = [
-  { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Home", url: "/dashboard/practice", icon: Home },
   { title: "Test Preparation", url: "/dashboard/test-your-self", icon: BookOpen },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
   { title: "History", url: "/dashboard/test-your-self?tab=history", icon: History },

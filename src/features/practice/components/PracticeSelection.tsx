@@ -47,30 +47,28 @@ export const PracticeSelection = ({
             exams.map((exam) => (
               <Card 
                 key={exam.id} 
-                className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 group"
+                className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 group h-full"
                 onClick={() => onExamSelect(exam)}
               >
-                <CardContent className="p-5 flex flex-col h-full">
-                  <div className="mb-4">
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-200 rounded-full px-2.5 py-0.5">
+                <CardContent className="p-4 flex flex-col h-full">
+                  <div className="mb-3">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-purple-800 bg-purple-200/50 rounded-full px-2.5 py-0.5">
                       Competitive Exam
                     </span>
                   </div>
                   
                   <div className="flex-1">
-                    <h4 className="font-bold text-gray-900 group-hover:text-purple-700 transition-colors">{exam.name}</h4>
-                    <p className="text-[11px] text-gray-600 mt-1 line-clamp-2 leading-relaxed">
-                      {exam.description || `Official competitive exam syllabus for ${exam.name}.`}
+                    <h4 className="font-bold text-gray-900 group-hover:text-purple-700 transition-colors text-sm">
+                      {exam.name}
+                    </h4>
+                    <p className="text-[10px] text-gray-500 mt-1 line-clamp-2 leading-relaxed">
+                      Official syllabus-based preparation for {exam.name}.
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-purple-200/50">
-                    <span className="text-[10px] font-semibold text-gray-500 uppercase tracking-tight flex items-center gap-1">
-                      <BookOpen className="w-3 h-3" /> Syllabus Ready
-                    </span>
-                    <Button size="sm" variant="ghost" className="h-7 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-100/50 gap-1 p-1">
-                      Select <ChevronRight className="w-3 h-3" />
-                    </Button>
+                  <div className="flex items-center justify-between mt-4 pt-3 border-t border-purple-200/30">
+                    <span className="text-[10px] font-bold text-purple-600 uppercase tracking-tight">Select Exam</span>
+                    <ChevronRight className="w-3.5 h-3.5 text-purple-600 group-hover:translate-x-0.5 transition-transform" />
                   </div>
                 </CardContent>
               </Card>

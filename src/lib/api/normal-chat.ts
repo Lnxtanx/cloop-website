@@ -15,6 +15,8 @@ export interface NormalChatMessage {
   sender?: string;
   message?: string;
   message_type?: string;
+  from_report_id?: number;
+  from_q_index?: string;
   diff_html?: string;
   options?: string[];
   images?: string[];
@@ -94,6 +96,8 @@ export const sendNormalChatMessage = async (
   messageData: {
     message: string;
     session_id?: number;
+    from_report_id?: number;
+    from_q_index?: string;
   }
 ): Promise<SendNormalMessageResponse & { session_id: number }> => {
   const token = getToken();

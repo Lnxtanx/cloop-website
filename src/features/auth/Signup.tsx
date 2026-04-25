@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import cloopLogo from "@/assets/cloop-logo.png";
+import favicon from "/favicon.ico";
 import { getSignupOptions, signupUser, SignupOptions } from "@/lib/api/signup";
 
 type QuestionType = "text" | "single-choice" | "multi-choice";
@@ -214,7 +214,7 @@ const Signup = () => {
       <div className="flex-1 flex flex-col p-6 max-w-3xl mx-auto w-full">
         <div className="mb-6 flex items-center gap-2">
           <Link to="/" className="flex items-center gap-2 text-base font-bold text-foreground">
-            <img src={cloopLogo} alt="Cloop" width={32} height={32} />
+            <img src={favicon} alt="Cloop" width={32} height={32} />
             Cloop Signup
           </Link>
         </div>
