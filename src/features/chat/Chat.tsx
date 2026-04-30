@@ -155,6 +155,8 @@ const Chat = () => {
         role: "assistant",
         content: result.aiMessage?.message || "I couldn't generate a response.",
         timestamp: new Date(result.aiMessage?.created_at || new Date()),
+        fromReportId: result.aiMessage?.from_report_id ?? originReportId,
+        fromQIndex: result.aiMessage?.from_q_index ?? qIndex,
       };
       
       setMessages((prev) => {
@@ -243,7 +245,7 @@ const Chat = () => {
             </div>
           ) : (
             <div className="flex flex-col gap-8 py-4">
-              {messages.map((message) => (
+              {messages.map((message, index) => (
                 <div
                   key={message.id}
                   className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
@@ -264,22 +266,6 @@ const Chat = () => {
                       {message.role === "user" ? (
                         <>
                           <p className="whitespace-pre-wrap break-words">{message.content}</p>
-                          {message.fromReportId != null && (
-                            <button
-                              onClick={() => {
-                                const qPart = message.fromQIndex ? `&fromQ=${message.fromQIndex}` : "";
-                                navigate(`/dashboard/test-your-self?reportId=${message.fromReportId}${qPart}`);
-                              }}
-                              className="mt-3 flex items-center gap-1.5 bg-white hover:bg-purple-50 transition-all px-3 py-1.5 rounded-lg text-[10px] font-bold text-purple-700 w-fit shadow-md border border-purple-100/50"
-                              title="Go back to original question"
-                            >
-                              <div className="w-4 h-4 rounded-full bg-purple-100 flex items-center justify-center">
-                                <GitBranch className="w-2.5 h-2.5 text-purple-600" />
-                              </div>
-                              View in Report
-                              <ArrowRight className="w-3 h-3 opacity-50" />
-                            </button>
-                          )}
                         </>
                       ) : (
                         <ReactMarkdown 
@@ -303,16 +289,34 @@ const Chat = () => {
                       )}
                     </div>
                     {message.role === "assistant" && (
-                      <button
-                        onClick={() => handleCopyMessage(message.id, message.content)}
-                        className="mt-2 flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-purple-600 transition-colors"
-                      >
-                        {copiedId === message.id ? (
-                          <><Check className="w-3 h-3" /> Copied</>
-                        ) : (
-                          <><Copy className="w-3 h-3" /> Copy</>
+                      <div className="mt-2 flex items-center gap-3">
+                        <button
+                          onClick={() => handleCopyMessage(message.id, message.content)}
+                          className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-purple-600 transition-colors"
+                        >
+                          {copiedId === message.id ? (
+                            <><Check className="w-3 h-3" /> Copied</>
+                          ) : (
+                            <><Copy className="w-3 h-3" /> Copy</>
+                          )}
+                        </button>
+                        
+                        {(message.fromReportId != null || (index > 0 && messages[index-1].role === "user" && messages[index-1].fromReportId != null)) && (
+                          <button
+                            onClick={() => {
+                              const reportId = message.fromReportId ?? messages[index-1].fromReportId;
+                              const qIndex = message.fromQIndex ?? messages[index-1].fromQIndex;
+                              const qPart = qIndex ? `&fromQ=${qIndex}` : "";
+                              navigate(`/dashboard/test-your-self?reportId=${reportId}${qPart}`);
+                            }}
+                            className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+                            title="Go back to original question"
+                          >
+                            <GitBranch className="w-3 h-3" /> 
+                            View in Report
+                          </button>
                         )}
-                      </button>
+                      </div>
                     )}
                   </div>
                 </div>

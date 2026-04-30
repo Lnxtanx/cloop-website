@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { Search, Bookmark, CheckCircle2, Clock, ChevronRight, Loader2, FolderOpen, X, Play } from "lucide-react";
+import { Search, Bookmark, CheckCircle2, Clock, ChevronRight, Loader2, FolderOpen, X, Play, Target, Sparkles, TrendingUp } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -25,7 +26,7 @@ const getUserId = (): number | null => {
   }
 };
 
-type FilterType = "saved" | "completed" | "incomplete";
+type FilterType = "incomplete" | "completed" | "saved";
 
 interface ChatHistoryItem {
   topic_id: number;
@@ -49,10 +50,9 @@ interface SavedTopic {
   };
 }
 
-const scoreColor = (n: number) => (n >= 80 ? "#8B5CF6" : n >= 60 ? "#A78BFA" : "#C4B5FD");
-
 export default function Sessions() {
-  const [filter, setFilter] = useState<FilterType>("saved");
+  const navigate = useNavigate();
+  const [filter, setFilter] = useState<FilterType>("incomplete");
   const [search, setSearch] = useState("");
   const [chatHistory, setChatHistory] = useState<ChatHistoryItem[]>([]);
   const [savedTopics, setSavedTopics] = useState<SavedTopic[]>([]);
@@ -145,168 +145,226 @@ export default function Sessions() {
   };
 
   const filtered = getFiltered();
-  const sectionLabel = filter === "saved" ? "Saved Sessions" : filter === "completed" ? "Completed Sessions" : "Incomplete Sessions";
+  
+  const tabs = [
+    { label: "In Progress", value: "incomplete" as FilterType },
+    { label: "Mastered Concepts", value: "completed" as FilterType },
+    { label: "Saved Topics", value: "saved" as FilterType },
+  ];
+
+  const handleSaveToggle = async (e: React.MouseEvent, topicId: number, currentlySaved: boolean) => {
+    e.stopPropagation();
+    if (!userId) return;
+
+    if (currentlySaved) {
+      handleUnsave(topicId);
+    } else {
+      try {
+        const res = await fetch(`${API}/api/saved-topics/save`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${token()}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ userId, topicId }),
+        });
+        if (res.ok) {
+          fetchSaved();
+        }
+      } catch (err) {
+        console.error("Save error", err);
+      }
+    }
+  };
+
+  const isTopicSaved = (topicId: number) => savedTopics.some(t => t.topic_id === topicId);
 
   const navigateToTopic = (topicId: number) => {
-    window.location.href = `/topic-chat?topicId=${topicId}`;
+    navigate(`/topic-chat?topicId=${topicId}`);
   };
 
   return (
     <DashboardLayout title="Sessions">
-      <div style={{ maxWidth: 860, margin: "0 auto" }} className="animate-fade-in">
+      <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-12">
+        
+        {/* Header */}
+        <div>
+          <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
+            Learning Sessions & Concept Tracking
+          </h2>
+          <p className="text-base text-[#8d33ff] font-bold mt-1.5 flex items-center gap-2">
+            <Sparkles className="w-4 h-4" /> Monitor your progress and master every concept
+          </p>
+        </div>
 
-        {/* Search */}
-        <div style={{
-          display: "flex", alignItems: "center", gap: 10,
-          background: "#EDE9FE", borderRadius: 20, padding: "8px 16px", marginBottom: 20,
-        }}>
-          <Search style={{ width: 18, height: 18, color: "#9CA3AF", flexShrink: 0 }} />
-          <input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search Topics"
-            style={{
-              flex: 1, background: "transparent", border: "none", outline: "none",
-              fontSize: 14, color: "#1F2937",
-            }}
-          />
-          {search && (
-            <button onClick={() => setSearch("")} style={{ background: "none", border: "none", cursor: "pointer", display: "flex" }}>
-              <X style={{ width: 16, height: 16, color: "#8B5CF6" }} />
-            </button>
+        {/* Tabs & Search */}
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex bg-gray-100/80 p-1 rounded-xl w-fit">
+            {tabs.map((tab) => (
+              <button
+                key={tab.value}
+                onClick={() => setFilter(tab.value)}
+                className={`px-5 py-2 rounded-lg text-xs font-bold transition-all ${
+                  filter === tab.value 
+                    ? "bg-white text-[#8d33ff] shadow-sm" 
+                    : "text-gray-500 hover:text-gray-700"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search concepts or sessions..."
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-100 bg-white focus:ring-2 focus:ring-[#8d33ff] focus:border-transparent text-sm font-medium shadow-sm"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch("")} 
+                className="absolute right-3.5 top-1/2 -translate-y-1/2 p-1 hover:bg-gray-100 rounded-full"
+              >
+                <X className="w-3.5 h-3.5 text-gray-400" />
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Active Sessions List */}
+        <div className="space-y-4">
+          {loading || (filter === "saved" && savedLoading) ? (
+            <div className="flex items-center justify-center py-20">
+              <Loader2 className="w-8 h-8 animate-spin text-[#8d33ff]" />
+            </div>
+          ) : filtered.length === 0 ? (
+            <div className="text-center py-20 bg-purple-50/50 rounded-3xl border border-purple-100 space-y-4">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-md shadow-purple-100">
+                <FolderOpen className="w-8 h-8 text-purple-200" />
+              </div>
+              <div>
+                <h4 className="text-xl font-extrabold text-gray-900 mb-1">
+                  {filter === "saved" ? "No saved topics yet" : "No learning sessions yet"}
+                </h4>
+                <p className="text-sm text-gray-500 font-medium max-w-md mx-auto">
+                  {filter === "saved" 
+                    ? "Bookmark concepts during your study sessions to find them here"
+                    : "Start a session to begin concept diagnosis and mastery tracking"}
+                </p>
+              </div>
+              {filter !== "saved" && (
+                <Button 
+                    onClick={() => navigate("/dashboard")}
+                    className="h-12 px-8 bg-[#8d33ff] hover:bg-[#7a2de0] text-white rounded-xl text-base font-bold shadow-lg shadow-purple-200"
+                >
+                    Start Learning Session
+                </Button>
+              )}
+            </div>
+          ) : (
+            <div className="grid grid-cols-1 gap-3">
+              {filtered.map((session) => {
+                const saved = session._saved || isTopicSaved(session.topic_id);
+                return (
+                  <div key={session.topic_id}
+                    onClick={() => navigateToTopic(session.topic_id)}
+                    className="group bg-white rounded-xl p-4 border border-gray-100 hover:border-[#8d33ff] hover:shadow-lg hover:shadow-purple-50 transition-all cursor-pointer flex items-center gap-4"
+                  >
+                    <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
+                      session.is_completed ? "bg-green-100" : "bg-purple-100"
+                    }`}>
+                      {session.is_completed ? (
+                        <CheckCircle2 className="w-5 h-5 text-green-600" />
+                      ) : (
+                        <Clock className="w-5 h-5 text-[#8d33ff]" />
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="text-base font-extrabold text-gray-900 truncate group-hover:text-[#8d33ff] transition-colors">{session.title}</h4>
+                      <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-wider">
+                        {session.subject}{session.chapter ? ` • ${session.chapter}` : ""}
+                      </p>
+                    </div>
+
+                    {!session.is_completed && (
+                      <div className="hidden md:block w-36 space-y-1.5">
+                        <div className="flex justify-between text-[10px] font-bold text-gray-400">
+                          <span>MASTERY</span>
+                          <span className="text-[#8d33ff]">{Math.round(session.completion_percent || 0)}%</span>
+                        </div>
+                        <Progress value={session.completion_percent || 0} className="h-1.5 bg-gray-50" />
+                      </div>
+                    )}
+
+                    <div className="flex items-center gap-2">
+                        <button
+                          onClick={(e) => handleSaveToggle(e, session.topic_id, saved)}
+                          className={`p-1.5 rounded-lg transition-colors ${
+                            saved ? "bg-amber-100 text-amber-600" : "hover:bg-gray-100 text-gray-300 hover:text-gray-500"
+                          }`}
+                          title={saved ? "Unsave Concept" : "Save for Revision"}
+                        >
+                          <Bookmark className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
+                        </button>
+                        
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#8d33ff]" />
+                        </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
         </div>
 
-        {/* Filter tabs */}
-        <div style={{ display: "flex", gap: 10, marginBottom: 24 }}>
-          {(["saved", "completed", "incomplete"] as FilterType[]).map((f) => (
-            <button key={f} onClick={() => setFilter(f)} style={{
-              padding: "8px 20px", borderRadius: 20, border: "1.5px solid",
-              borderColor: filter === f ? "#7c3aed" : "#E5E7EB",
-              background: filter === f ? "#7c3aed" : "#fff",
-              color: filter === f ? "#fff" : "#6B7280",
-              fontWeight: 500, fontSize: 14, cursor: "pointer",
-            }}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-
-        {/* Section heading */}
-        <p style={{ fontSize: 20, fontWeight: 700, color: "#1F2937", marginBottom: 16 }}>{sectionLabel}</p>
-
-        {/* Session cards */}
-        {loading || (filter === "saved" && savedLoading) ? (
-          <div style={{ display: "flex", justifyContent: "center", padding: "40px 0" }}>
-            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
+        {/* Subjects with Active Learning Data */}
+        <div className="space-y-6 pt-8 border-t border-gray-100">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-[#8d33ff]" />
+            </div>
+            <h3 className="text-xl lg:text-2xl font-extrabold text-gray-900">Subjects with Active Learning Data</h3>
           </div>
-        ) : filtered.length === 0 ? (
-          <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "48px 0", marginBottom: 32 }}>
-            <FolderOpen style={{ width: 56, height: 56, color: "#D1D5DB" }} />
-            <p style={{ fontWeight: 600, fontSize: 16, color: "#6B7280", marginTop: 16, marginBottom: 6 }}>
-              No {filter} sessions
-            </p>
-            <p style={{ fontSize: 13, color: "#9CA3AF" }}>Your {filter} sessions will appear here.</p>
-          </div>
-        ) : (
-          <div style={{ display: "flex", flexDirection: "column", gap: 12, marginBottom: 40 }}>
-            {filtered.map((session) => (
-              <div key={session.topic_id}
-                style={{
-                  background: session._saved ? "#fff" : session.is_completed ? "#f3e8ff" : "#fff",
-                  borderRadius: 16, padding: "14px 16px",
-                  boxShadow: "0 2px 6px rgba(0,0,0,0.06)", cursor: "pointer",
-                  border: session._saved ? "1px solid #E5E7EB" : "1.5px solid #c4b5fd",
-                  display: "flex", alignItems: "center", gap: 12,
-                  transition: "all 0.2s",
-                }}
-                onClick={() => navigateToTopic(session.topic_id)}
-              >
-                <div style={{
-                  width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                  background: session._saved ? "#ede9fe" : session.is_completed ? "#7c3aed" : "#f3e8ff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                }}>
-                  {session._saved ? (
-                    <Bookmark style={{ width: 20, height: 20, color: "#7c3aed", fill: "#7c3aed" }} />
-                  ) : session.is_completed ? (
-                    <CheckCircle2 style={{ width: 22, height: 22, color: "#fff" }} />
-                  ) : (
-                    <Clock style={{ width: 22, height: 22, color: "#7c3aed" }} />
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <p style={{ fontWeight: 600, fontSize: 15, color: "#1F2937", margin: 0, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {session.title}
-                  </p>
-                  <p style={{ fontSize: 12, color: "#6B7280", margin: "2px 0 0" }}>
-                    {session.subject}{session.chapter ? ` — ${session.chapter}` : ""}
-                  </p>
-                </div>
-                {!session.is_completed && !session._saved && (
-                  <div style={{ flexShrink: 0, width: 120 }}>
-                    <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 4 }}>
-                      <span style={{ fontSize: 11, color: "#6B7280" }}>{Math.round(session.completion_percent || 0)}%</span>
-                    </div>
-                    <div style={{ height: 6, background: "#F3F4F6", borderRadius: 3, overflow: "hidden" }}>
-                      <div style={{
-                        height: "100%", borderRadius: 3,
-                        width: `${session.completion_percent || 0}%`,
-                        background: "linear-gradient(90deg, #8B5CF6, #7c3aed)",
-                        transition: "width 0.3s ease",
-                      }} />
-                    </div>
-                  </div>
-                )}
-                {session._saved && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); handleUnsave(session.topic_id); }}
-                    style={{
-                      background: "none", border: "none", cursor: "pointer", padding: 4, flexShrink: 0,
-                    }}
+
+          {subjects.length === 0 ? (
+            <p className="text-center py-10 text-sm text-gray-500 font-medium">No active learning data available.</p>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {subjects.map((s: any) => {
+                const score = subjectScore(s.id);
+                return (
+                  <Card
+                    key={s.id}
+                    className="rounded-3xl border-purple-200 hover:shadow-xl hover:border-[#8d33ff] transition-all duration-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 overflow-hidden group"
+                    onClick={() => navigate(`/chapters?subjectId=${s.id}&subjectName=${encodeURIComponent(s.name)}`)}
                   >
-                    <X style={{ width: 18, height: 18, color: "#9CA3AF" }} />
-                  </button>
-                )}
-                <ChevronRight style={{ width: 18, height: 18, color: "#9CA3AF", flexShrink: 0 }} />
-              </div>
-            ))}
-          </div>
-        )}
+                    <CardContent className="p-6">
+                      <h4 className="text-xl font-extrabold text-gray-900 mb-5 group-hover:text-[#8d33ff] transition-colors leading-tight">{s.name}</h4>
+                      
+                      <div className="space-y-3 mb-8">
+                        <div className="flex items-center justify-between p-3.5 bg-white/60 rounded-xl border border-white">
+                           <span className="text-xs font-bold text-gray-500">Predicted Score:</span>
+                           <span className="text-lg font-black text-[#8d33ff]">{score}%</span>
+                        </div>
+                        
+                        <div className="flex items-center justify-between p-3.5 bg-white/60 rounded-xl border border-white">
+                           <span className="text-xs font-bold text-gray-500">Concept Status:</span>
+                           <span className="text-xs font-extrabold text-green-600 uppercase tracking-wider">Improving</span>
+                        </div>
+                      </div>
 
-        {/* Enrolled Subjects */}
-        <p style={{ fontSize: 20, fontWeight: 700, color: "#1F2937", marginBottom: 16 }}>Enrolled Subjects</p>
-        {subjects.length === 0 ? (
-          <p style={{ color: "#9CA3AF", fontSize: 14, textAlign: "center", padding: "20px 0" }}>No subjects enrolled</p>
-        ) : (
-          <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-            {subjects.map((s: any) => {
-              const score = subjectScore(s.id);
-              return (
-                <Card
-                  key={s.id}
-                  className="border-purple-200 hover:shadow-lg hover:border-purple-400 transition-all cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
-                  onClick={() => window.location.href = `/chapters?subjectId=${s.id}&subjectName=${encodeURIComponent(s.name)}`}
-                >
-                  <CardContent className="p-5">
-                    <h4 className="font-semibold mt-1 mb-2">{s.name}</h4>
-                    <p style={{ fontSize: 12, fontWeight: 700, color: scoreColor(score), margin: "0 0 8px" }}>
-                      Predicted Score: {score}%
-                    </p>
-                    <div className="flex items-center justify-between mt-2">
-                      <span className="text-xs text-gray-600">
-                        Click to view chapters
-                      </span>
-                      <Button size="sm" variant="ghost" className="h-7 text-xs text-purple-600 hover:text-purple-700 hover:bg-purple-50 gap-1 p-1">
-                        <Play className="w-3 h-3" /> Open
+                      <Button className="w-full h-11 bg-white text-[#8d33ff] font-bold hover:bg-[#8d33ff] hover:text-white transition-all rounded-xl gap-2 text-xs shadow-sm border-0">
+                        <Play className="w-4 h-4 fill-current" /> Continue Learning
                       </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          )}
+        </div>
       </div>
     </DashboardLayout>
   );

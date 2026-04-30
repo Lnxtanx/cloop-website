@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import favicon from "/favicon.ico";
+import { ArrowRight, Sparkles, Brain, Target, ShieldCheck, ClipboardCheck } from "lucide-react";
 import { getSignupOptions, signupUser, SignupOptions } from "@/lib/api/signup";
+import { Footer } from "../landing/sections/Footer";
+import { DownloadAppSection } from "../landing/sections/DownloadAppSection";
 
 type QuestionType = "text" | "single-choice" | "multi-choice";
 interface QuestionOption { label: string; value: string; }
@@ -203,143 +205,190 @@ const Signup = () => {
   const isOptionsLoaded = !!options;
 
   return (
-    <div className="min-h-screen bg-secondary/30 flex">
-      <div className="hidden lg:flex flex-1 hero-gradient items-center justify-center p-12">
-        <div className="text-primary-foreground max-w-md">
-          <h1 className="text-4xl font-bold mb-4">Start learning today!</h1>
-          <p className="text-primary-foreground/80 text-lg">Join 50,000+ learners mastering new skills every day.</p>
+    <div className="min-h-screen bg-white flex flex-col">
+      <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
+        <DownloadAppSection />
+      </div>
+
+      <div className="flex flex-col lg:flex-row flex-1">
+        {/* Left Side - Visual Hero */}
+        <div className="hidden lg:flex flex-1 bg-[linear-gradient(137deg,rgba(104,59,218,1)_0%,rgba(180,129,230,1)_100%)] items-center justify-center p-12 relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-full opacity-10">
+              <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl" />
+              <div className="absolute bottom-10 right-10 w-80 h-80 bg-white rounded-full blur-3xl" />
+          </div>
+          
+          <div className="text-white max-w-lg relative z-10 text-left">
+            <div className="inline-flex items-center gap-2 bg-white/20 backdrop-blur-md rounded-full px-4 py-2 text-sm font-bold mb-8 border border-white/30">
+              <Sparkles className="w-4 h-4" /> Start Learning Today
+            </div>
+            <h1 className="text-5xl font-extrabold mb-6 leading-tight">
+              Join 50,000+ Students Mastering New Skills
+            </h1>
+            <p className="text-white/90 text-xl leading-relaxed mb-10">
+              Unlock your potential with our AI-powered learning platform. Personalised for your curriculum.
+            </p>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                  <Brain className="w-8 h-8 mb-3 opacity-80" />
+                  <div className="font-bold">AI Tutoring</div>
+                  <div className="text-xs opacity-70">24/7 Availability</div>
+              </div>
+              <div className="bg-white/10 backdrop-blur-sm p-4 rounded-2xl border border-white/20">
+                  <Target className="w-8 h-8 mb-3 opacity-80" />
+                  <div className="font-bold">Score Goals</div>
+                  <div className="text-xs opacity-70">Improvement Tracked</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Right Side - Signup Form */}
+        <div className="flex-1 flex flex-col p-6 lg:p-12 bg-white mx-auto w-full">
+          <div className="flex-1 flex flex-col rounded-3xl border border-purple-100 bg-white shadow-xl shadow-purple-100/50 overflow-hidden min-h-[500px]">
+            <div className="px-6 py-5 border-b border-purple-50 bg-purple-50/50">
+              <h2 className="text-xl font-bold text-gray-900">Chat Signup</h2>
+              <p className="text-sm text-gray-500 font-medium">Complete signup through quick chat prompts.</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ height: "450px" }}>
+              {!isOptionsLoaded && !error && (
+                <div className="flex items-center gap-2 text-purple-600 animate-pulse">
+                  <div className="w-2 h-2 bg-purple-600 rounded-full animate-bounce" />
+                  <p className="text-sm font-medium">Loading signup questions...</p>
+                </div>
+              )}
+
+              {error && (
+                <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-4 rounded-xl flex items-center gap-2">
+                  <ShieldCheck className="w-4 h-4" />
+                  {error}
+                </div>
+              )}
+
+              {messages.map((msg) => (
+                <div key={msg.id} className={`flex ${msg.sender === "bot" ? "justify-start" : "justify-end"} animate-fade-in`}>
+                  <div className={`max-w-[85%] rounded-2xl px-5 py-3 text-base font-medium shadow-sm ${
+                    msg.sender === "bot" 
+                      ? "bg-gray-100 text-gray-900 rounded-tl-none" 
+                      : "bg-[#8d33ff] text-white rounded-tr-none shadow-[#8d33ff]/20"
+                  }`}>
+                    {msg.text}
+                  </div>
+                </div>
+              ))}
+
+              {isTyping && (
+                <div className="flex items-center gap-1 text-gray-400 pl-2">
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.3s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce [animation-delay:-0.15s]" />
+                  <div className="w-1.5 h-1.5 bg-gray-300 rounded-full animate-bounce" />
+                </div>
+              )}
+
+              <div ref={scrollRef} />
+            </div>
+
+            <div className="border-t border-purple-50 bg-white p-6">
+              {!currentQuestion && hasCompleted && (
+                <div className="text-center py-4 animate-scale-in">
+                  <p className="text-2xl font-bold text-green-600 mb-6 flex items-center justify-center gap-2">
+                    <ClipboardCheck className="w-6 h-6" /> Signup Complete!
+                  </p>
+                  <div className="bg-purple-50 border-2 border-purple-200 rounded-[32px] p-8 mb-8 shadow-inner">
+                    <p className="text-sm font-bold text-purple-900 mb-3 uppercase tracking-wider">Your Unique User ID</p>
+                    <p className="text-4xl font-black text-[#8d33ff] mb-6 tracking-tight">{generatedGuestId}</p>
+                    <Button
+                      onClick={() => {
+                        navigator.clipboard.writeText(generatedGuestId);
+                        toast.success("ID Copied!");
+                      }}
+                      variant="outline"
+                      className="rounded-xl border-purple-200 text-purple-700 font-bold hover:bg-purple-100"
+                    >
+                      Copy to Clipboard
+                    </Button>
+                  </div>
+                  <p className="text-sm font-medium text-gray-500 mb-8 max-w-xs mx-auto">
+                    ⚠️ Save this ID! You'll need it to login to your dashboard next time.
+                  </p>
+                  <Button
+                    onClick={() => navigate("/login")}
+                    className="w-full h-14 bg-[#8d33ff] hover:bg-[#7a2de0] text-white rounded-2xl text-lg font-black shadow-xl shadow-purple-200"
+                  >
+                    Go to Login Dashboard <ArrowRight className="ml-2 w-5 h-5" />
+                  </Button>
+                </div>
+              )}
+
+              {currentQuestion && !hasCompleted && (
+                <div className="space-y-4">
+                  {currentQuestion.type === "text" && (
+                    <form onSubmit={handleTextSubmit} className="flex gap-3">
+                      <input
+                        aria-label="Your answer"
+                        type="text"
+                        value={inputValue}
+                        onChange={(e) => setInputValue(e.target.value)}
+                        placeholder="Type your answer..."
+                        className="flex-1 h-12 rounded-xl border border-gray-200 px-4 focus:outline-none focus:ring-2 focus:ring-[#8d33ff] focus:border-transparent font-medium"
+                        disabled={isLoading}
+                      />
+                      <Button 
+                        type="submit" 
+                        className="h-12 px-8 bg-[#8d33ff] hover:bg-[#7a2de0] rounded-xl font-black shadow-lg shadow-purple-100" 
+                        disabled={isLoading || !inputValue.trim()}
+                      >
+                        Send
+                      </Button>
+                    </form>
+                  )}
+
+                  {(currentQuestion.type === "single-choice" || currentQuestion.type === "multi-choice") && (
+                    <div className="grid grid-cols-2 gap-3">
+                      {currentQuestion.options?.map((opt) => {
+                        const selected = currentQuestion.type === "multi-choice" && currentMultiSelection.includes(opt.value);
+                        return (
+                          <button
+                            key={opt.value}
+                            type="button"
+                            onClick={() => handleOptionSelect(opt)}
+                            className={`rounded-xl border-2 px-4 py-3 text-left text-sm font-black transition-all ${
+                              selected 
+                                ? "bg-[#8d33ff] text-white border-[#8d33ff] shadow-lg shadow-purple-200" 
+                                : "bg-white text-gray-700 border-gray-100 hover:border-purple-200 hover:bg-purple-50"
+                            }`}
+                            disabled={isLoading}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+
+                      {currentQuestion.type === "multi-choice" && (
+                        <div className="col-span-2 mt-2">
+                          <Button 
+                            type="button" 
+                            onClick={handleMultiChoiceContinue} 
+                            disabled={isLoading}
+                            className="w-full h-12 bg-[#8d33ff] hover:bg-[#7a2de0] rounded-xl font-black"
+                          >
+                            Continue with Selected Subjects
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       </div>
 
-      <div className="flex-1 flex flex-col p-6 max-w-3xl mx-auto w-full">
-        <div className="mb-6 flex items-center gap-2">
-          <Link to="/" className="flex items-center gap-2 text-base font-bold text-foreground">
-            <img src={favicon} alt="Cloop" width={32} height={32} />
-            Cloop Signup
-          </Link>
-        </div>
-
-        <div className="flex-1 rounded-2xl border border-border bg-white shadow-sm overflow-hidden">
-          <div className="px-5 py-4 border-b border-border bg-gray-50">
-            <h2 className="text-xl font-semibold">Chat Signup</h2>
-            <p className="text-sm text-muted-foreground">Complete signup through quick chat prompts.</p>
-          </div>
-
-          <div className="h-[65vh] overflow-y-auto p-4" style={{ minHeight: "300px" }}>
-            {!isOptionsLoaded && !error && (
-              <p className="text-sm text-muted-foreground">Loading signup questions...</p>
-            )}
-
-            {error && <p className="text-sm text-destructive mb-3">{error}</p>}
-
-            {messages.map((msg) => (
-              <div key={msg.id} className={`mb-2 max-w-[85%] ${msg.sender === "bot" ? "text-left" : "text-right ml-auto"}`}>
-                <div className={`inline-block rounded-xl px-4 py-2 ${msg.sender === "bot" ? "bg-gray-100 text-gray-900" : "bg-primary text-white"}`}> 
-                  {msg.text}
-                </div>
-              </div>
-            ))}
-
-            {isTyping && <p className="text-sm text-muted-foreground">Typing...</p>}
-
-            <div ref={scrollRef} />
-          </div>
-
-          <div className="border-t border-border bg-white p-4">
-            {!currentQuestion && hasCompleted && (
-              <div className="text-center py-4">
-                <p className="text-lg font-semibold text-success mb-4">🎉 Signup Complete!</p>
-                <div className="bg-purple-50 border-2 border-purple-300 rounded-xl p-4 mb-4">
-                  <p className="text-sm text-gray-600 mb-2">Your User ID:</p>
-                  <p className="text-2xl font-bold text-purple-700 mb-3">{generatedGuestId}</p>
-                  <button
-                    onClick={() => navigator.clipboard.writeText(generatedGuestId)}
-                    className="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors text-sm"
-                  >
-                    📋 Copy to Clipboard
-                  </button>
-                </div>
-                <p className="text-sm text-gray-600 mb-4">⚠️ Save this ID! You'll need it to login next time.</p>
-                <button
-                  onClick={() => navigate("/login")}
-                  className="px-6 py-2 hero-gradient text-white rounded-lg"
-                >
-                  Go to Login →
-                </button>
-              </div>
-            )}
-
-            {!currentQuestion && !hasCompleted && (
-              <p className="text-sm text-muted-foreground">Loading questions...</p>
-            )}
-
-            {currentQuestion && !hasCompleted && (
-              <div className="space-y-3">
-                {currentQuestion.type === "text" && (
-                  <form onSubmit={handleTextSubmit} className="flex gap-2">
-                    <input
-                      aria-label="Your answer"
-                      type="text"
-                      value={inputValue}
-                      onChange={(e) => setInputValue(e.target.value)}
-                      placeholder="Type your answer..."
-                      className="flex-1 rounded-xl border border-border px-3 py-2 focus:outline-none focus:ring-2 focus:ring-primary"
-                      disabled={isLoading}
-                    />
-                    <Button type="submit" className="min-w-fit" disabled={isLoading || !inputValue.trim()}>
-                      Send
-                    </Button>
-                  </form>
-                )}
-
-                {(currentQuestion.type === "single-choice" || currentQuestion.type === "multi-choice") && (
-                  <div className="grid grid-cols-2 gap-2">
-                    {currentQuestion.options?.map((opt) => {
-                      const selected = currentQuestion.type === "multi-choice" && currentMultiSelection.includes(opt.value);
-                      return (
-                        <button
-                          key={opt.value}
-                          type="button"
-                          onClick={() => handleOptionSelect(opt)}
-                          className={`rounded-lg border px-3 py-2 text-left text-sm ${selected ? "bg-primary text-white" : "bg-white text-gray-800"}`}
-                          disabled={isLoading}
-                        >
-                          {opt.label}
-                        </button>
-                      );
-                    })}
-
-                    {currentQuestion.type === "multi-choice" && currentMultiSelection.length > 0 && (
-                      <div className="col-span-2 mt-2 flex flex-wrap gap-2">
-                        {currentMultiSelection.map((value) => {
-                          const option = currentQuestion.options?.find((opt) => opt.value === value);
-                          if (!option) return null;
-                          return (
-                            <span key={value} className="rounded-full bg-primary/10 text-primary px-3 py-1 text-xs">
-                              {option.label}
-                            </span>
-                          );
-                        })}
-                      </div>
-                    )}
-
-                    {currentQuestion.type === "multi-choice" && (
-                      <div className="col-span-2 mt-2">
-                        <Button type="button" onClick={handleMultiChoiceContinue} disabled={isLoading}>
-                          Continue
-                        </Button>
-                      </div>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-
-        <p className="text-center text-sm text-muted-foreground mt-4">
-          Already have an account? <Link to="/login" className="text-primary underline">Log in</Link>
-        </p>
+      <div className="border-t border-gray-100 mt-12">
+        <Footer />
       </div>
     </div>
   );

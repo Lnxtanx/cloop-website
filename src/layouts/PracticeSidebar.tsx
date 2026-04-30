@@ -52,7 +52,7 @@ export function PracticeSidebar() {
             className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
             title="Go to Dashboard"
           >
-            <img src={favicon} alt="Cloop" width={28} height={28} className="shrink-0" />
+            <img src={favicon} alt="Cloop" width={28} height={28} className="shrink-0 rounded-lg shadow-sm" />
             {!collapsed && <span className="text-lg font-bold text-white tracking-tight">Test Preparation</span>}
           </button>
           <SidebarTrigger className="text-purple-200 hover:text-white hover:bg-purple-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
@@ -88,11 +88,11 @@ export function PracticeSidebar() {
                         <NavLink
                           to={item.url}
                           end
-                          className={`flex items-center gap-3 rounded-lg px-4 py-3 text-lg transition-all ${isActive ? "bg-purple-100 text-purple-800 font-bold" : "text-gray-800 hover:bg-purple-50 hover:text-purple-700"}`}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg transition-all ${isActive ? "bg-purple-100 text-purple-800 font-bold" : "text-gray-800 hover:bg-purple-50 hover:text-purple-700"}`}
                           activeClassName=""
                         >
-                          <item.icon className="w-5 h-5 shrink-0" />
-                          {!collapsed && <span className="font-medium">{item.title}</span>}
+                          <item.icon className="w-[22px] h-[22px] shrink-0" />
+                          {!collapsed && <span className="font-semibold">{item.title}</span>}
                         </NavLink>
                       </SidebarMenuButton>
                     </SidebarMenuItem>
@@ -114,7 +114,7 @@ export function PracticeSidebar() {
           className={`w-full justify-center gap-3 h-10 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shadow-none transition-all ${collapsed ? 'p-0' : ''}`}
           title={collapsed ? "Back to Normal Mode" : ""}
         >
-          {!collapsed && <span className="font-bold text-xs tracking-tight">Back to Normal Mode</span>}
+          {!collapsed && <span className="font-bold text-base tracking-tight">Back to Normal Mode</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>

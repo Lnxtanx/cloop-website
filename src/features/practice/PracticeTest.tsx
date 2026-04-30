@@ -285,12 +285,12 @@ const PracticeTest = () => {
       <div className="max-w-5xl mx-auto space-y-8 pb-12">
         <div className="text-center space-y-2">
           <h2 className="text-2xl font-bold text-purple-950 tracking-tight">
-            {isHistoryTab ? "Your Test History" : "Start New Practice"}
+            {isHistoryTab ? "Your Test History" : "Test Preparation Engine (NEET / IIT-JEE)"}
           </h2>
           <p className="text-sm text-muted-foreground">
             {isHistoryTab 
               ? "Review your past performance and identify areas for improvement."
-              : "Select your target exam and master specific chapters with AI-powered questions."}
+              : "Practice with purpose. Every test improves your concept clarity and predicted score"}
           </p>
         </div>
 

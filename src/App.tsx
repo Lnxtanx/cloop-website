@@ -3,7 +3,12 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import Index from "./features/common/Index";
+import Index from "./features/landing/Index";
+import About from "./features/landing/About";
+import Contact from "./features/landing/Contact";
+import Privacy from "./features/landing/Privacy";
+import Support from "./features/landing/Support";
+import Terms from "./features/landing/Terms";
 import Login from "./features/auth/Login";
 import Signup from "./features/auth/Signup";
 import Dashboard from "./features/dashboard/Dashboard";
@@ -34,6 +39,11 @@ const App = () => {
           <BrowserRouter>
             <Routes>
               <Route path="/" element={<Index />} />
+              <Route path="/about" element={<About />} />
+              <Route path="/contact" element={<Contact />} />
+              <Route path="/privacy" element={<Privacy />} />
+              <Route path="/support" element={<Support />} />
+              <Route path="/terms" element={<Terms />} />
               <Route path="/login" element={<Login />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />

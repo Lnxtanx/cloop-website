@@ -8,31 +8,31 @@
 @layer base {
   :root {
     --background: 0 0% 100%;
-    --foreground: 210 20% 12%;
+    --foreground: 222.2 47.4% 11.2%;
 
     --card: 0 0% 100%;
-    --card-foreground: 210 20% 12%;
+    --card-foreground: 222.2 47.4% 11.2%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 210 20% 12%;
+    --popover-foreground: 222.2 47.4% 11.2%;
 
     --primary: 271 81% 60%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 210 20% 12%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 15% 96%;
-    --muted-foreground: 210 10% 55%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
 
     --accent: 271 100% 96%;
     --accent-foreground: 271 81% 30%;
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 100%;
+    --destructive: 0 100% 50%;
+    --destructive-foreground: 210 40% 98%;
 
-    --border: 210 15% 92%;
-    --input: 210 15% 92%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
     --ring: 271 81% 60%;
 
     --radius: 0.75rem;
@@ -90,61 +90,55 @@
   }
 
   .animate-fade-up {
-    animation: fadeUp 0.6s ease-out forwards;
+    animation: fade-up 1s var(--animation-delay, 0s) ease forwards;
   }
 
   .animate-fade-in {
-    animation: fadeIn 0.4s ease-out forwards;
+    animation: fade-in 1s var(--animation-delay, 0s) ease forwards;
   }
 
-  .animate-slide-in-left {
-    animation: slideInLeft 0.6s ease-out forwards;
+  .animate-marquee {
+    animation: marquee var(--duration) infinite linear;
   }
 
-  .animate-slide-in-right {
-    animation: slideInRight 0.6s ease-out forwards;
+  .animate-marquee-vertical {
+    animation: marquee-vertical var(--duration) linear infinite;
   }
 
-  .animate-scale-in {
-    animation: scaleIn 0.5s ease-out forwards;
+  .animate-shimmer {
+    animation: shimmer 8s infinite;
   }
 
-  .animate-bounce-slow {
-    animation: bounceSlow 3s ease-in-out infinite;
+  .animate-spin {
+    animation: spin 1s linear infinite;
   }
-}
 
-@keyframes float {
-  0%, 100% { transform: translateY(0px); }
-  50% { transform: translateY(-10px); }
-}
+  @keyframes spin {
+    to { transform: rotate(1turn); }
+  }
 
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: none; }
+  }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
+  @keyframes fade-up {
+    0% { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: none; }
+  }
 
-@keyframes slideInLeft {
-  from { opacity: 0; transform: translateX(-30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+  @keyframes shimmer {
+    0%, 90%, to { background-position: calc(-100% - var(--shimmer-width)) 0; }
+    30%, 60% { background-position: calc(100% + var(--shimmer-width)) 0; }
+  }
 
-@keyframes slideInRight {
-  from { opacity: 0; transform: translateX(30px); }
-  to { opacity: 1; transform: translateX(0); }
-}
+  @keyframes marquee {
+    0% { transform: translate(0); }
+    to { transform: translateX(calc(-100% - var(--gap))); }
+  }
 
-@keyframes scaleIn {
-  from { opacity: 0; transform: scale(0.9); }
-  to { opacity: 1; transform: scale(1); }
-}
-
-@keyframes bounceSlow {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-15px); }
+  @keyframes marquee-vertical {
+    0% { transform: translateY(0); }
+    to { transform: translateY(calc(-100% - var(--gap))); }
+  }
 }
