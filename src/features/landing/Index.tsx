@@ -5,8 +5,9 @@ import { Footer } from "./sections/Footer";
 
 const Index = () => {
   const navigate = useNavigate();
-  const [studentId, setStudentId] = useState("");
+  const [guestId, setGuestId] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
 
   // Redirect logged-in users to dashboard
   useEffect(() => {
@@ -16,13 +17,46 @@ const Index = () => {
     }
   }, [navigate]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    setIsLoading(true);
-    // Navigate to login page for full auth flow
-    setTimeout(() => {
-      navigate("/login");
-    }, 400);
+    setError("");
+
+    const value = guestId.trim();
+    if (!value) {
+      setError("Please enter your Guest ID or Registered Email.");
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+      const response = await fetch(`${API_BASE_URL}/api/login`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ emailOrPhone: value }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => null);
+        const message = data?.error || `Login failed (${response.status})`;
+        setError(message);
+        setIsLoading(false);
+        return;
+      }
+
+      const result = await response.json();
+      localStorage.setItem("cloop_token", result.token);
+      localStorage.setItem("cloop_user", JSON.stringify(result.user));
+      navigate("/dashboard");
+    } catch (err) {
+      console.error("Login error", err);
+      setError("Could not connect to server. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const features = [
@@ -84,9 +118,9 @@ const Index = () => {
       </header>
 
       {/* ── HERO ── */}
-      <main className="flex flex-col items-center px-5 pt-6 pb-10">
+      <main className="flex flex-col items-center px-5 pt-0 pb-10">
         {/* Main headline */}
-        <div className="text-center max-w-xl mb-2 animate-fade-up" style={{ "--animation-delay": "0s" } as React.CSSProperties}>
+        <div className="-mt-16 text-center max-w-xl mb-2 animate-fade-up" style={{ "--animation-delay": "0s" } as React.CSSProperties}>
           <h1 className="text-[2rem] md:text-[2.5rem] font-extrabold text-[#1a0a3c] leading-tight tracking-tight">
             Concept mastery powered<br />
             by{" "}
@@ -98,7 +132,7 @@ const Index = () => {
         </div>
 
         {/* Feature badges */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl mt-8 mb-8 animate-fade-up" style={{ "--animation-delay": "0.1s" } as React.CSSProperties}>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 w-full max-w-3xl mt-4 mb-6 animate-fade-up" style={{ "--animation-delay": "0.1s" } as React.CSSProperties}>
           {features.map((f, i) => (
             <div
               key={i}
@@ -120,27 +154,34 @@ const Index = () => {
         >
           <div className="text-center mb-6">
             <h2 className="text-xl font-bold text-[#1a0a3c]">Welcome back!</h2>
-            <p className="text-gray-400 text-sm mt-1">Enter your Student ID or email to access your dashboard.</p>
+            <p className="text-gray-400 text-sm mt-1">Enter your Guest ID or email to access your dashboard.</p>
           </div>
 
           <form onSubmit={handleLogin} className="flex flex-col gap-5">
-            {/* Student ID field */}
+            {/* Guest ID field */}
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">
-                Student ID / Registered Email
+                Guest ID / Registered Email
               </label>
               <div className="relative">
                 <User className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
-                  id="student-id"
+                  id="guest-id"
                   type="text"
-                  value={studentId}
-                  onChange={(e) => setStudentId(e.target.value)}
+                  value={guestId}
+                  onChange={(e) => setGuestId(e.target.value)}
                   placeholder="Enter email or phone number"
                   className="w-full pl-10 pr-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6B4EFF]/30 focus:border-[#6B4EFF] transition"
                 />
               </div>
             </div>
+
+            {error && (
+              <div className="bg-red-50 border border-red-100 text-red-600 text-sm p-3 rounded-xl flex items-center gap-2">
+                <ShieldCheck className="w-4 h-4" />
+                {error}
+              </div>
+            )}
 
             {/* Login CTA */}
             <button
