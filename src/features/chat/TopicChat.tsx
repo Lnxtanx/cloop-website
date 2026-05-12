@@ -144,25 +144,29 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
           borderRadius: 16, padding: 14, minWidth: 220,
         }}>
           {/* Primary text: full diff if it covers the whole answer, else raw answer text */}
-          {diffCoversFullText
-            ? <DiffText html={msg.diff_html!} />
-            : <span style={{ fontSize: 14 }}>{originalText}</span>
-          }
-
-          {/* If diff is a fragment (only changed words), show it as an annotation */}
-          {hasDiff && !diffCoversFullText && (
-            <div style={{
-              marginTop: 8, padding: "6px 10px",
-              background: "#fafafa", border: "1px solid #e5e7eb",
-              borderRadius: 8,
-            }}>
-              <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Corrections:
-              </p>
+          {hasDiff ? (
+            diffCoversFullText ? (
               <DiffText html={msg.diff_html!} />
-            </div>
+            ) : (
+              <>
+                <span style={{ fontSize: 14 }}>{originalText}</span>
+                {/* If diff is a fragment (only changed words), show it as an annotation */}
+                <div style={{
+                  marginTop: 8, padding: "6px 10px",
+                  background: "#fafafa", border: "1px solid #e5e7eb",
+                  borderRadius: 8,
+                }}>
+                  <p style={{ fontSize: 10, fontWeight: 700, color: "#9ca3af", marginBottom: 3, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                    Corrections:
+                  </p>
+                  <DiffText html={msg.diff_html!} />
+                </div>
+              </>
+            )
+          ) : (
+            // No diff_html - show plain text in bubble (fallback for messages without corrections)
+            <span style={{ fontSize: 14 }}>{originalText}</span>
           )}
-
         </div>
 
         {msg.emoji && (
