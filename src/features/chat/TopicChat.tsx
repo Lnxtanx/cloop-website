@@ -134,13 +134,31 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
     ? diffPlain.length >= originalText.length * 0.6
     : hasDiff;
 
+  // Determine bubble color based on correctness
+  const feedback = msg.feedback;
+  const isCorrect = msg.is_correct ?? feedback?.is_correct;
+  
+  let bubbleBackground = "#fff";  // Default (no feedback)
+  let bubbleBorder = "#e5e7eb";    // Default border
+
+  if (isCorrect === true) {
+    // All correct → Green bubble
+    bubbleBackground = "#dcfce7";
+    bubbleBorder = "#86efac";
+  } else if (isCorrect === false) {
+    // Wrong/Incorrect → Red bubble
+    bubbleBackground = "#fee2e2";
+    bubbleBorder = "#fca5a5";
+  }
+  // else: no feedback, keep white
+
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 24 }}>
       <div style={{ position: "relative", maxWidth: "68%" }}>
 
         <div style={{
-          background: "#fff",
-          border: "1.5px solid #e5e7eb",
+          background: bubbleBackground,
+          border: `1.5px solid ${bubbleBorder}`,
           borderRadius: 16, padding: 14, minWidth: 220,
         }}>
           {/* Primary text: full diff if it covers the whole answer, else raw answer text */}
@@ -172,7 +190,7 @@ function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
         {msg.emoji && (
           <span style={{
             position: "absolute", bottom: -10, right: 14,
-            fontSize: 18, background: "#fff", borderRadius: "50%",
+            fontSize: 18, background: bubbleBackground, borderRadius: "50%",
             padding: "1px 2px", lineHeight: 1,
           }}>
             {msg.emoji}

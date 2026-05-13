@@ -22,7 +22,7 @@ import { ChatHistory } from "@/features/chat/components/ChatHistory";
 const navItems = [
   { title: "Home", url: "/dashboard", icon: Home },
   { title: "Sessions", url: "/dashboard/sessions", icon: Video },
-  { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
+  { title: "Statistics", url: "/dashboard/statistics", icon: BarChart3 },
   { title: "Chat with AI Tutor", url: "/dashboard/chat", icon: MessageCircle },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
@@ -101,14 +101,15 @@ export function AppSidebar() {
         <Button
           onClick={() => {
             toggleMode();
-            toast("Switched to Test Preparation", {
+            toast("Switched to Test Preparation Mode", {
               icon: <div className="w-2 h-2 rounded-full bg-purple-400" />
             });
+            setTimeout(() => navigate("/dashboard/test-your-self"), 300);
           }}
           className={`w-full justify-center gap-3 h-10 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shadow-none transition-all ${collapsed ? 'p-0' : ''}`}
-          title={collapsed ? "Go to Test Preparation" : ""}
+          title={collapsed ? "Go to Test Your Self" : ""}
         >
-          {!collapsed && <span className="font-bold text-base tracking-tight">Go to Test Preparation</span>}
+          {!collapsed && <span className="font-bold text-base tracking-tight">Go to Test Your Self</span>}
         </Button>
       </SidebarFooter>
     </Sidebar>
