@@ -1,18 +1,90 @@
 import { ReactNode, useEffect, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { SidebarProvider } from "@/components/ui/sidebar";
+import { SidebarProvider, useSidebar } from "@/components/ui/sidebar";
 import { AppSidebar } from "@/layouts/AppSidebar";
 import { PracticeSidebar } from "@/layouts/PracticeSidebar";
-import { Bell, Zap, BookOpen, ChevronLeft } from "lucide-react";
+import { Bell, Zap, BookOpen, ChevronLeft, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface Props {
   children: ReactNode;
   title: string;
   mainClassName?: string;
   hideHeader?: boolean;
+}
+
+// Header component that uses sidebar context (must be inside SidebarProvider)
+function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigate }: {
+  title: string;
+  isPractice: boolean;
+  userInitials: string;
+  unreadCount: number;
+  navigate: (path: string) => void;
+}) {
+  const { toggleSidebar, openMobile } = useSidebar();
+  const isMobile = useIsMobile();
+
+  return (
+    <header className="h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-4 sm:px-6 gap-4 z-10 shadow-md">
+      {/* Left: Hamburger (mobile) + Back + Title */}
+      <div className="flex items-center gap-2">
+        {/* Mobile hamburger menu */}
+        {isMobile && (
+          <Button
+            variant="ghost"
+            size="icon"
+            className="w-9 h-9 hover:bg-white/10 cursor-pointer -ml-1 mr-1"
+            onClick={toggleSidebar}
+            title="Open menu"
+          >
+            <Menu className="w-5 h-5 text-white" />
+          </Button>
+        )}
+        <Button
+          variant="ghost"
+          size="icon"
+          className="w-8 h-8 hover:bg-white/10 cursor-pointer"
+          onClick={() => navigate(-1)}
+          title="Go Back"
+        >
+          <ChevronLeft className="w-5 h-5 text-white" />
+        </Button>
+        <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
+        {isPractice && (
+          <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
+            Test Preparation
+          </span>
+        )}
+      </div>
+      {/* Right: Notification + Profile */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          className="relative w-9 h-9 hover:bg-white/10 cursor-pointer"
+          onClick={() => navigate("/dashboard/notifications")}
+          title="Notifications"
+        >
+          <Bell className="w-5 h-5 text-white" />
+          {unreadCount > 0 && (
+            <span className="absolute top-1 right-1 min-w-[8px] h-2 px-1 flex items-center justify-center bg-red-500 text-white text-[8px] font-bold rounded-full border border-white">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
+          )}
+        </Button>
+        <button
+          onClick={() => navigate("/dashboard/profile")}
+          className="w-9 h-9 rounded-full border-2 border-purple-400 overflow-hidden bg-purple-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+          title="Profile"
+        >
+          <span className="text-white text-xs font-semibold">{userInitials}</span>
+        </button>
+      </div>
+    </header>
+  );
 }
 
 const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) => {
@@ -114,52 +186,15 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
           {/* Header */}
           {!hideHeader && (
-            <header className="h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-6 gap-4 z-10 shadow-md">
-              {/* Left: Back + Title */}
-              <div className="flex items-center gap-2">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="w-8 h-8 hover:bg-white/10 cursor-pointer -ml-2"
-                  onClick={() => navigate(-1)}
-                  title="Go Back"
-                >
-                  <ChevronLeft className="w-5 h-5 text-white" />
-                </Button>
-                <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
-                {isPractice && (
-                  <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-                    Test Preparation
-                  </span>
-                )}
-              </div>
-              {/* Right: Notification + Profile */}
-              <div className="flex items-center gap-3">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="relative w-9 h-9 hover:bg-white/10 cursor-pointer"
-                  onClick={() => navigate("/dashboard/notifications")}
-                  title="Notifications"
-                >
-                  <Bell className="w-5 h-5 text-white" />
-                  {unreadCount > 0 && (
-                    <span className="absolute top-1 right-1 min-w-[8px] h-2 px-1 flex items-center justify-center bg-red-500 text-white text-[8px] font-bold rounded-full border border-white">
-                      {unreadCount > 9 ? "9+" : unreadCount}
-                    </span>
-                  )}
-                </Button>
-                <button
-                  onClick={() => navigate("/dashboard/profile")}
-                  className="w-9 h-9 rounded-full border-2 border-purple-400 overflow-hidden bg-purple-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
-                  title="Profile"
-                >
-                  <span className="text-white text-xs font-semibold">{userInitials}</span>
-                </button>
-              </div>
-            </header>
+            <DashboardHeader
+              title={title}
+              isPractice={isPractice}
+              userInitials={userInitials}
+              unreadCount={unreadCount}
+              navigate={navigate}
+            />
           )}
-          <main className={mainClassName ?? "flex-1 p-6 overflow-y-auto min-h-0 relative"}>
+          <main className={mainClassName ?? "flex-1 p-4 sm:p-6 overflow-y-auto min-h-0 relative"}>
             {children}
           </main>
         </div>

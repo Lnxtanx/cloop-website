@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
-  ArrowLeft, ChevronDown, ChevronUp,
-  Clock, Loader2, Send, Home, Video, BarChart3, MessageCircle, User, Bell,
+  ChevronDown, ChevronUp,
+  Clock, Loader2, Send,
   Trophy,
 } from "lucide-react";
 import {
@@ -10,6 +10,7 @@ import {
   TopicChatMessage, TopicGoal, TopicChatResponse,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
+import DashboardLayout from "@/layouts/DashboardLayout";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
@@ -405,19 +406,6 @@ export default function TopicChat() {
   const [baseTime,  setBaseTime]  = useState(0);
   const [elapsed,   setElapsed]   = useState(0);
 
-  // Derive user initials from JWT token
-  const userInitials = (() => {
-    try {
-      const token = localStorage.getItem("cloop_token");
-      if (!token) return "?";
-      const payload = JSON.parse(atob(token.split(".")[1]));
-      const name: string = payload.name ?? payload.email ?? "";
-      const parts = name.trim().split(/\s+/);
-      if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
-      return name.slice(0, 2).toUpperCase() || "?";
-    } catch { return "?"; }
-  })();
-
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
@@ -653,232 +641,110 @@ export default function TopicChat() {
   };
 
   // ── Render ──
-  const NAV = [
-    { icon: Home, label: "Home", path: "/dashboard" },
-    { icon: Video, label: "Sessions", path: "/dashboard/sessions" },
-    { icon: BarChart3, label: "Statistics", path: "/dashboard/statistics" },
-    { icon: MessageCircle, label: "Chat", path: "/dashboard/chat" },
-    { icon: User, label: "Profile", path: "/dashboard/profile" },
-    { icon: Bell, label: "Notifications", path: "/dashboard/notifications" },
-  ];
+  const pageTitle = loading ? "Loading…" : topicTitle;
+  const subTitle = (subjectName || chapterTitle) ? `${subjectName}${chapterTitle ? ` → ${chapterTitle}` : ""}` : "";
 
   return (
-    <div style={{ position: "fixed", inset: 0, display: "flex", fontFamily: "Inter,system-ui,sans-serif", background: "#fff" }}>
-      {/* LEFT SIDEBAR */}
-      <div style={{ width: 240, flexShrink: 0, display: "flex", flexDirection: "column", background: "#fff", borderRight: "1px solid #e5e7eb" }}>
-        {/* Logo Header - purple gradient */}
-        <div style={{ height: 56, display: "flex", alignItems: "center", gap: 8, padding: "0 16px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
-          <div style={{ width: 28, height: 28, borderRadius: 8, background: "#fff", display: "flex", alignItems: "center", justifyContent: "center" }}>
-            <span style={{ color: "#7c3aed", fontSize: 14, fontWeight: 800 }}>C</span>
-          </div>
-          <span style={{ fontSize: 16, fontWeight: 700, color: "#fff" }}>Cloop</span>
+    <DashboardLayout title={pageTitle} mainClassName="flex flex-col p-0 overflow-hidden">
+      {/* Topic info header with timer */}
+      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-purple-50 border-b border-purple-200">
+        <div className="min-w-0 flex-1">
+          {subTitle && (
+            <p className="text-xs text-purple-600 truncate">{subTitle}</p>
+          )}
         </div>
+        <div className="flex items-center gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 bg-purple-100 rounded-full px-3 py-1">
+            <Clock className="w-3.5 h-3.5 text-purple-600" />
+            <span className="text-xs font-bold text-purple-700 tabular-nums">
+              {fmt(baseTime + elapsed)}
+            </span>
+          </div>
+          {done && (
+            <span className="text-xs font-semibold text-purple-700 bg-purple-100 rounded-full px-3 py-1">
+              ✓ Done
+            </span>
+          )}
+        </div>
+      </div>
 
-        {/* Nav */}
-        <nav style={{ flex: 1, padding: "12px 8px", display: "flex", flexDirection: "column", gap: 4 }}>
-          {NAV.map(({ icon: Icon, label, path }) => {
-            const active = location.pathname === path;
-            return (
+      {/* Goals bar */}
+      {!loading && goals.length > 0 && (
+        <GoalsBar goals={goals} open={goalsOpen} onToggle={() => setGoalsOpen((p) => !p)} />
+      )}
+
+      {/* Messages */}
+      <div className="flex-1 overflow-y-auto bg-gray-50 p-4 sm:p-6">
+        <div className="max-w-3xl mx-auto">
+          {loading && (
+            <div className="flex justify-center items-center gap-2 py-20 text-gray-400 text-sm">
+              <Loader2 className="w-5 h-5 animate-spin text-purple-500" />
+              Loading topic…
+            </div>
+          )}
+          {!loading && messages.length === 0 && (
+            <p className="text-center text-gray-400 text-sm py-20">
+              Starting your session…
+            </p>
+          )}
+          {error && (
+            <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm mb-4">
+              {error}
+            </div>
+          )}
+          {messages.map((m) => renderMsg(m))}
+          {sending && <TypingDots />}
+          <div ref={bottomRef} />
+        </div>
+      </div>
+
+      {/* Input */}
+      <div className="shrink-0 border-t border-gray-200 bg-white p-4">
+        <div className="max-w-3xl mx-auto">
+          {done ? (
+            <div className="text-center">
+              <p className="text-sm font-semibold text-purple-600 mb-3">
+                🎉 You've completed this topic!
+              </p>
               <button
-                key={path}
-                onClick={() => navigate(path)}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: 12,
-                  padding: "12px 16px",
-                  borderRadius: 8,
-                  border: "none",
-                  cursor: "pointer",
-                  background: active ? "#f3e8ff" : "transparent",
-                  color: active ? "#6b2d8f" : "#111827",
-                  fontSize: 14,
-                  fontWeight: active ? 600 : 500,
-                  width: "100%",
-                  textAlign: "left",
-                  transition: "all 0.15s",
-                }}
-                onMouseEnter={(e) => {
-                  if (!active) (e.currentTarget as any).style.background = "#f3f4f6";
-                }}
-                onMouseLeave={(e) => {
-                  if (!active) (e.currentTarget as any).style.background = "transparent";
-                }}
+                onClick={() => navigate(-1)}
+                className="w-full sm:w-auto px-6 py-2.5 rounded-xl border border-gray-200 bg-white text-sm text-gray-700 hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                <Icon style={{ width: 20, height: 20 }} />
-                {label}
+                ← Back to Topics
               </button>
-            );
-          })}
-        </nav>
-      </div>
-
-      {/* RIGHT MAIN PANEL */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", overflow: "hidden", background: "#fff" }}>
-        {/* Header: back + title + timer + done */}
-        <div style={{ flexShrink: 0, height: 56, display: "flex", alignItems: "center", justifyContent: "space-between", padding: "0 24px", borderBottom: "2px solid #7c3aed", background: "linear-gradient(to right, #7c3aed, #a855f7)" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12, minWidth: 0 }}>
-            <button
-              onClick={() => navigate(-1)}
-              style={{
-                width: 32, height: 32, borderRadius: 8, border: "none",
-                background: "rgba(255,255,255,0.2)", cursor: "pointer", display: "flex",
-                alignItems: "center", justifyContent: "center", flexShrink: 0,
-              }}
-              onMouseEnter={(e) => ((e.currentTarget as any).style.background = "rgba(255,255,255,0.3)")}
-              onMouseLeave={(e) => ((e.currentTarget as any).style.background = "rgba(255,255,255,0.2)")}
+            </div>
+          ) : (
+            <form
+              onSubmit={(e) => { e.preventDefault(); void send(); }}
+              className="flex gap-3 items-center"
             >
-              <ArrowLeft style={{ width: 18, height: 18, color: "#fff" }} />
-            </button>
-            <div style={{ minWidth: 0 }}>
-              <p style={{ fontSize: 14, fontWeight: 600, color: "#fff", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                {loading ? "Loading…" : topicTitle}
-              </p>
-              {(subjectName || chapterTitle) && (
-                <p style={{ fontSize: 11, color: "rgba(255,255,255,0.8)", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-                  {subjectName}{chapterTitle ? ` → ${chapterTitle}` : ""}
-                </p>
-              )}
-            </div>
-          </div>
-
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: 6, background: "rgba(255,255,255,0.2)", borderRadius: 20, padding: "6px 12px" }}>
-              <Clock style={{ width: 14, height: 14, color: "#fff" }} />
-              <span style={{ fontSize: 12, fontWeight: 700, color: "#fff", fontVariantNumeric: "tabular-nums" }}>
-                {fmt(baseTime + elapsed)}
-              </span>
-            </div>
-
-            {done && (
-              <span style={{ fontSize: 11, fontWeight: 600, color: "#7c3aed", background: "#fff", borderRadius: 20, padding: "6px 10px" }}>
-                ✓ Done
-              </span>
-            )}
-          </div>
-        </div>
-
-        {/* Goals bar */}
-        {!loading && goals.length > 0 && (
-          <GoalsBar goals={goals} open={goalsOpen} onToggle={() => setGoalsOpen((p) => !p)} />
-        )}
-
-        {/* Messages */}
-        <div style={{ flex: 1, overflowY: "auto", background: "#f9fafb", padding: "24px 20px" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            {loading && (
-              <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 10, padding: "80px 0", color: "#9ca3af", fontSize: 14 }}>
-                <Loader2 className="animate-spin" style={{ width: 18, height: 18, color: "#7c3aed" }} />
-                Loading topic…
-              </div>
-            )}
-            {!loading && messages.length === 0 && (
-              <p style={{ textAlign: "center", color: "#9ca3af", fontSize: 14, padding: "80px 0" }}>
-                Starting your session…
-              </p>
-            )}
-            {error && (
-              <div style={{ padding: "12px 16px", background: "#fef2f2", border: "1px solid #fecaca", borderRadius: 10, color: "#b91c1c", fontSize: 13, marginBottom: 16 }}>
-                {error}
-              </div>
-            )}
-            {messages.map((m) => renderMsg(m))}
-            {sending && <TypingDots />}
-            <div ref={bottomRef} />
-          </div>
-        </div>
-
-        {/* Input */}
-        <div style={{ flexShrink: 0, borderTop: "1px solid #e5e7eb", background: "#fff", padding: "16px 20px" }}>
-          <div style={{ maxWidth: 720, margin: "0 auto" }}>
-            {done ? (
-              <div style={{ textAlign: "center" }}>
-                <p style={{ fontSize: 14, fontWeight: 600, color: "#7c3aed", marginBottom: 12 }}>
-                  🎉 You've completed this topic!
-                </p>
-                <button
-                  onClick={() => navigate(-1)}
-                  style={{
-                    width: "100%",
-                    padding: "10px 0",
-                    borderRadius: 12,
-                    border: "1.5px solid #e5e7eb",
-                    background: "#fff",
-                    fontSize: 13,
-                    cursor: "pointer",
-                    color: "#374151",
-                  }}
-                  onMouseEnter={(e) => ((e.currentTarget as any).style.background = "#f9fafb")}
-                  onMouseLeave={(e) => ((e.currentTarget as any).style.background = "#fff")}
-                >
-                  ← Back to Topics
-                </button>
-              </div>
-            ) : (
-              <form
-                onSubmit={(e) => { e.preventDefault(); void send(); }}
-                style={{ display: "flex", gap: 10, alignItems: "center" }}
+              <input
+                ref={inputRef}
+                type="text"
+                autoFocus
+                placeholder="Type your answer…"
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey && !sending) {
+                    e.preventDefault();
+                    void send();
+                  }
+                }}
+                disabled={sending}
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:bg-white transition-all disabled:opacity-60"
+              />
+              <button
+                type="submit"
+                disabled={sending || !input.trim()}
+                className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-purple-500 text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow cursor-pointer"
               >
-                <input
-                  ref={inputRef}
-                  type="text"
-                  autoFocus
-                  placeholder="Type your answer…"
-                  value={input}
-                  onChange={(e) => setInput(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey && !sending) {
-                      e.preventDefault();
-                      void send();
-                    }
-                  }}
-                  disabled={sending}
-                  style={{
-                    flex: 1,
-                    borderRadius: 12,
-                    border: "1.5px solid #e5e7eb",
-                    background: "#f9fafb",
-                    padding: "10px 14px",
-                    fontSize: 13,
-                    outline: "none",
-                    color: "#111827",
-                    fontFamily: "Inter, system-ui, sans-serif",
-                    opacity: sending ? 0.6 : 1,
-                  }}
-                  onFocus={(e) => {
-                    (e.currentTarget as any).style.borderColor = "#7c3aed";
-                    (e.currentTarget as any).style.boxShadow = "0 0 0 3px #f3e8ff";
-                  }}
-                  onBlur={(e) => {
-                    (e.currentTarget as any).style.borderColor = "#e5e7eb";
-                    (e.currentTarget as any).style.boxShadow = "none";
-                  }}
-                />
-                <button
-                  type="submit"
-                  disabled={sending || !input.trim()}
-                  style={{
-                    width: 40,
-                    height: 40,
-                    borderRadius: "50%",
-                    border: "none",
-                    background: sending || !input.trim() ? "#e5e7eb" : "linear-gradient(to right, #7c3aed, #a855f7)",
-                    color: "#fff",
-                    cursor: sending || !input.trim() ? "not-allowed" : "pointer",
-                    opacity: sending || !input.trim() ? 0.5 : 1,
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    flexShrink: 0,
-                  }}
-                >
-                  {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
-                </button>
-              </form>
-            )}
-          </div>
+                {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+              </button>
+            </form>
+          )}
         </div>
       </div>
-    </div>
+    </DashboardLayout>
   );
 };
