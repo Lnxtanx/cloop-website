@@ -1,10 +1,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { 
-  generatePracticeTest, 
-  submitPracticeTest, 
-  fetchPracticeHistory, 
+import {
+  generatePracticeTest,
+  submitPracticeTest,
+  fetchPracticeHistory,
   fetchPracticeTestDetails,
   fetchStandardExams,
   fetchStandardSubjects,
@@ -12,8 +12,8 @@ import {
   StandardExam,
   StandardSubject,
   StandardChapter,
-  PracticeQuestion, 
-  PracticeTest as PracticeTestType 
+  PracticeQuestion,
+  PracticeTest as PracticeTestType
 } from "@/lib/api/practice";
 import { toast } from "sonner";
 import { BookOpen } from "lucide-react";
@@ -31,12 +31,12 @@ const PracticeTest = () => {
   const [searchParams, setSearchParams] = useSearchParams();
   const [state, setState] = useState<TestState>("selection");
   const isHistoryTab = searchParams.get("tab") === "history";
-  
+
   const [step, setStep] = useState<SelectionStep>("exams");
   const [exams, setExams] = useState<StandardExam[]>([]);
   const [subjects, setSubjects] = useState<StandardSubject[]>([]);
   const [chapters, setChapters] = useState<StandardChapter[]>([]);
-  
+
   const [selectedExam, setSelectedExam] = useState<StandardExam | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<StandardSubject | null>(null);
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
@@ -100,7 +100,7 @@ const PracticeTest = () => {
   const handleSubmit = useCallback(async () => {
     if (!testId) return;
     setState("loading");
-    
+
     const formattedAnswers = questions.map(q => ({
       question_id: q.id,
       user_answer: userAnswers[q.id] || null,
@@ -180,7 +180,7 @@ const PracticeTest = () => {
     try {
       const data = await fetchPracticeTestDetails(id);
       setTestId(id);
-      
+
       // Ensure the header info is available for TestReport
       setSelectedExam({ code: data.exam_type, name: data.exam_type } as any);
       setSelectedSubject({ name: data.subject } as any);
@@ -217,7 +217,7 @@ const PracticeTest = () => {
 
   const formatDate = (dateStr: string) => {
     const date = new Date(dateStr);
-    return date.toLocaleDateString(undefined, { 
+    return date.toLocaleDateString(undefined, {
       day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
     });
   };
@@ -226,14 +226,14 @@ const PracticeTest = () => {
   if (state === "loading") {
     return (
       <DashboardLayout title="Processing">
-        <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-8">
+        <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] space-y-6 sm:space-y-8 px-4">
           <div className="relative">
-            <div className="w-24 h-24 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
-            <BookOpen className="w-10 h-10 text-purple-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 sm:w-20 md:w-24 sm:h-20 md:h-24 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
-          <div className="text-center space-y-3">
-            <h3 className="text-2xl font-bold text-purple-950">{loadingMessages[loadingMessageIndex]}</h3>
-            <p className="text-sm text-muted-foreground">Our AI is preparing your unique practice session.</p>
+          <div className="text-center space-y-2 sm:space-y-3">
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-950 text-center px-4">{loadingMessages[loadingMessageIndex]}</h3>
+            <p className="text-xs sm:text-sm text-muted-foreground">Our AI is preparing your unique practice session.</p>
           </div>
         </div>
       </DashboardLayout>
@@ -243,7 +243,7 @@ const PracticeTest = () => {
   // 2. TESTING VIEW
   if (state === "testing") {
     return (
-      <DashboardLayout title={`${selectedExam?.code} Practice: ${selectedSubject?.name}`}>
+      <DashboardLayout title={`${selectedExam?.code} Practice`}>
         <ActiveTest
           questions={questions}
           currentIndex={currentIndex}
@@ -282,13 +282,13 @@ const PracticeTest = () => {
   // 4. SELECTION / HISTORY VIEW
   return (
     <DashboardLayout title={isHistoryTab ? "Past Performance" : "Practice Dashboard"}>
-      <div className="max-w-5xl mx-auto space-y-8 pb-12">
-        <div className="text-center space-y-2">
-          <h2 className="text-2xl font-bold text-purple-950 tracking-tight">
-            {isHistoryTab ? "Your Test History" : "Test Preparation Engine (NEET / IIT-JEE)"}
+      <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-8 sm:pb-12 px-2 sm:px-4">
+        <div className="text-center space-y-1.5 sm:space-y-2">
+          <h2 className="text-xl sm:text-2xl font-bold text-purple-950 tracking-tight">
+            {isHistoryTab ? "Your Test History" : "Test Preparation Engine"}
           </h2>
-          <p className="text-sm text-muted-foreground">
-            {isHistoryTab 
+          <p className="text-xs sm:text-sm text-muted-foreground px-4">
+            {isHistoryTab
               ? "Review your past performance and identify areas for improvement."
               : "Practice with purpose. Every test improves your concept clarity and predicted score"}
           </p>
