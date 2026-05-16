@@ -375,7 +375,7 @@ function DashboardView({ onSelectSubject }: { onSelectSubject: (id: number, name
       </div>
 
       <div className="space-y-6">
-        <SectionTitle title="Quick Overview (Recent Sessions)" icon={Clock} />
+        <SectionTitle title="Completed Session Overview" icon={Clock} />
         {reports.length === 0 ? (
             <div className="text-center py-16 bg-white rounded-3xl border border-dashed border-gray-200">
                 <BarChart3 className="w-10 h-10 text-gray-200 mx-auto mb-4" />

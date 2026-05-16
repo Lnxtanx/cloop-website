@@ -88,48 +88,51 @@ const Chapters = () => {
   if (loading) {
     return (
       <DashboardLayout title="Chapters">
-        <div className="p-8 text-center">Loading chapters...</div>
+        <div className="p-6 sm:p-8 text-center text-sm text-muted-foreground">Loading chapters...</div>
       </DashboardLayout>
     );
   }
 
   return (
     <DashboardLayout title="Chapters">
-      <div className="space-y-6 animate-fade-in max-w-4xl">
+      <div className="space-y-4 sm:space-y-6 animate-fade-in max-w-4xl mx-auto pb-16 sm:pb-0">
         {/* Header */}
-        <div className="flex items-center gap-4 mb-6">
-          <Button variant="ghost" size="icon" onClick={() => navigate(-1)}>
-            <ArrowLeft className="w-5 h-5" />
+        <div className="flex items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+          <Button variant="ghost" size="icon" onClick={() => navigate(-1)} className="w-8 h-8 sm:w-10 sm:h-10">
+            <ArrowLeft className="w-4 h-4 sm:w-5 sm:h-5" />
           </Button>
-          <div>
-            <h2 className="text-2xl font-bold flex items-center gap-2">
-              <BookOpen className="w-6 h-6 text-purple-600" /> {subjectName}
+          <div className="min-w-0">
+            <h2 className="text-lg sm:text-xl lg:text-2xl font-bold flex items-center gap-2 truncate">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-purple-600 shrink-0" /> 
+              <span className="truncate">{subjectName}</span>
             </h2>
-            <p className="text-muted-foreground mt-1">{totalTopics} topics · {chapters.length} chapters</p>
+            <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
+              {totalTopics} topics · {chapters.length} chapters
+            </p>
           </div>
         </div>
 
         {/* Overall Progress */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100">
           <div className="flex items-center justify-between">
-            <span className="font-semibold text-sm">Progress</span>
-            <span className="text-sm font-bold text-purple-600">{Math.round(overallProgress)}%</span>
+            <span className="font-medium text-xs sm:text-sm">Progress</span>
+            <span className="text-xs sm:text-sm font-bold text-purple-600">{Math.round(overallProgress)}%</span>
           </div>
-          <Progress value={overallProgress} className="h-2" />
-          <p className="text-sm text-muted-foreground">{completedTopics} of {totalTopics} topics completed</p>
+          <Progress value={overallProgress} className="h-1.5 sm:h-2" />
+          <p className="text-[11px] sm:text-xs text-muted-foreground">{completedTopics} of {totalTopics} topics completed</p>
         </div>
 
         {error && (
-          <div className="p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="p-3 sm:p-4 bg-red-50 border border-red-200 rounded-lg sm:rounded-xl text-red-700 text-xs sm:text-sm">
             {error}
-            <Button variant="outline" size="sm" className="mt-3 ml-0" onClick={loadChapters}>Reload</Button>
+            <Button variant="outline" size="sm" className="mt-2 sm:mt-3 ml-0 text-xs" onClick={loadChapters}>Reload</Button>
           </div>
         )}
 
         {/* Chapters List */}
-        <div className="space-y-3">
+        <div className="space-y-2 sm:space-y-3">
           {chapters.length === 0 ? (
-            <div className="text-center text-muted-foreground p-8">No chapters available for this subject</div>
+            <div className="text-center text-muted-foreground p-6 sm:p-8 text-sm">No chapters available for this subject</div>
           ) : (
             chapters.map((ch, i) => {
               const status = getChapterStatus(ch);
@@ -140,29 +143,33 @@ const Chapters = () => {
                   className="border-border transition-all hover:shadow-md cursor-pointer"
                   onClick={() => handleChapterClick(ch)}
                 >
-                  <CardContent className="p-5 flex items-center gap-4">
-                    <div className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "bg-purple-100" : status === "completed" ? "bg-purple-200" : "bg-gray-100"}`}>
-                      <span className={`text-sm font-bold ${status === "in-progress" ? "text-purple-700" : status === "completed" ? "text-purple-800" : "text-gray-500"}`}>
+                  <CardContent className="p-3 sm:p-4 lg:p-5 flex items-center gap-3 sm:gap-4">
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "bg-purple-100" : status === "completed" ? "bg-purple-200" : "bg-gray-100"}`}>
+                      <span className={`text-xs sm:text-sm font-bold ${status === "in-progress" ? "text-purple-700" : status === "completed" ? "text-purple-800" : "text-gray-500"}`}>
                         {i + 1}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1">
-                        <h4 className="font-semibold text-sm">{ch.title}</h4>
-                        <Badge variant="secondary" className={`text-[10px] ${cfg.color}`}>
+                      <div className="flex items-center gap-2 mb-0.5 sm:mb-1 flex-wrap">
+                        <h4 className="font-semibold text-xs sm:text-sm truncate">{ch.title}</h4>
+                        <Badge variant="secondary" className={`text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0 ${cfg.color}`}>
                           {cfg.label}
                         </Badge>
                       </div>
-                      {ch.description && <p className="text-xs text-muted-foreground">{ch.description}</p>}
-                          <div className="flex items-center gap-3 mt-2">
-                        <Progress value={ch.total_topics > 0 ? (ch.completed_topics / ch.total_topics) * 100 : 0} className="h-1.5 flex-1 max-w-[200px]" />
-                        <span className="text-xs text-muted-foreground">
+                      {ch.description && <p className="text-[10px] sm:text-xs text-muted-foreground hidden sm:block">{ch.description}</p>}
+                      <div className="flex items-center gap-2 sm:gap-3 mt-1.5 sm:mt-2">
+                        <Progress value={ch.total_topics > 0 ? (ch.completed_topics / ch.total_topics) * 100 : 0} className="h-1 sm:h-1.5 flex-1 max-w-[120px] sm:max-w-[200px]" />
+                        <span className="text-[10px] sm:text-xs text-muted-foreground">
                           {ch.completed_topics}/{ch.total_topics}
                         </span>
                       </div>
                     </div>
-                    {status === "in-progress" && <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-0 shrink-0">Continue</Button>}
-                    {status === "completed" && <Button size="sm" variant="outline" className="shrink-0 border-purple-300 text-purple-700 hover:bg-purple-50">Review</Button>}
+                    {status === "in-progress" && (
+                      <Button size="sm" className="bg-purple-600 hover:bg-purple-700 text-white border-0 shrink-0 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Continue</Button>
+                    )}
+                    {status === "completed" && (
+                      <Button size="sm" variant="outline" className="shrink-0 border-purple-300 text-purple-700 hover:bg-purple-50 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Review</Button>
+                    )}
                   </CardContent>
                 </Card>
               );

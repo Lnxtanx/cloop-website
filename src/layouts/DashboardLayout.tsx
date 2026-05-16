@@ -28,15 +28,15 @@ function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigat
   const isMobile = useIsMobile();
 
   return (
-    <header className="h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-4 sm:px-6 gap-4 z-10 shadow-md">
+    <header className="h-12 sm:h-14 shrink-0 border-b border-purple-800 bg-gradient-to-r from-purple-600 to-purple-700 flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 z-10 shadow-md safe-area-inset">
       {/* Left: Hamburger (mobile) + Back + Title */}
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-1 sm:gap-2 min-w-0">
         {/* Mobile hamburger menu */}
         {isMobile && (
           <Button
             variant="ghost"
             size="icon"
-            className="w-9 h-9 hover:bg-white/10 cursor-pointer -ml-1 mr-1"
+            className="w-8 h-8 hover:bg-white/10 cursor-pointer -ml-1 mr-0.5 shrink-0"
             onClick={toggleSidebar}
             title="Open menu"
           >
@@ -46,41 +46,41 @@ function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigat
         <Button
           variant="ghost"
           size="icon"
-          className="w-8 h-8 hover:bg-white/10 cursor-pointer"
+          className="w-8 h-8 hover:bg-white/10 cursor-pointer shrink-0"
           onClick={() => navigate(-1)}
           title="Go Back"
         >
           <ChevronLeft className="w-5 h-5 text-white" />
         </Button>
-        <h1 className="text-base font-semibold text-white hidden sm:block">{title}</h1>
+        <h1 className="text-sm sm:text-base font-semibold text-white truncate hidden sm:block">{title}</h1>
         {isPractice && (
-          <span className="bg-white/20 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider">
-            Test Preparation
+          <span className="bg-white/20 text-white text-[9px] sm:text-[10px] px-1.5 sm:px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shrink-0">
+            Test Prep
           </span>
         )}
       </div>
       {/* Right: Notification + Profile */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2 sm:gap-3 shrink-0">
         <Button
           variant="ghost"
           size="icon"
-          className="relative w-9 h-9 hover:bg-white/10 cursor-pointer"
+          className="relative w-8 h-8 sm:w-9 sm:h-9 hover:bg-white/10 cursor-pointer"
           onClick={() => navigate("/dashboard/notifications")}
           title="Notifications"
         >
-          <Bell className="w-5 h-5 text-white" />
+          <Bell className="w-4 h-4 sm:w-5 sm:h-5 text-white" />
           {unreadCount > 0 && (
-            <span className="absolute top-1 right-1 min-w-[8px] h-2 px-1 flex items-center justify-center bg-red-500 text-white text-[8px] font-bold rounded-full border border-white">
+            <span className="absolute top-0.5 sm:top-1 right-0.5 sm:right-1 min-w-[8px] h-3.5 sm:h-4 px-1 flex items-center justify-center bg-red-500 text-white text-[8px] sm:text-[10px] font-bold rounded-full border border-white">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </Button>
         <button
           onClick={() => navigate("/dashboard/profile")}
-          className="w-9 h-9 rounded-full border-2 border-purple-400 overflow-hidden bg-purple-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-purple-400 overflow-hidden bg-purple-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
           title="Profile"
         >
-          <span className="text-white text-xs font-semibold">{userInitials}</span>
+          <span className="text-white text-[10px] sm:text-xs font-semibold">{userInitials}</span>
         </button>
       </div>
     </header>
@@ -104,7 +104,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
-    
+
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       // 30 minutes of inactivity
@@ -113,7 +113,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
 
     // List of events to track user activity
     const events = ["mousedown", "mousemove", "keypress", "scroll", "touchstart", "click"];
-    
+
     // Add event listeners
     events.forEach(event => {
       document.addEventListener(event, resetTimer, true);
@@ -194,7 +194,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
               navigate={navigate}
             />
           )}
-          <main className={mainClassName ?? "flex-1 p-4 sm:p-6 overflow-y-auto min-h-0 relative"}>
+          <main className={mainClassName ?? "flex-1 p-3 sm:p-4 md:p-6 overflow-y-auto min-h-0 relative pb-safe"}>
             {children}
           </main>
         </div>

@@ -3,7 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ChevronDown, ChevronUp,
   Clock, Loader2, Send,
-  Trophy,
+  Trophy, X,
 } from "lucide-react";
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
@@ -405,6 +405,7 @@ export default function TopicChat() {
   const [goalsOpen, setGoalsOpen] = useState(true);
   const [baseTime,  setBaseTime]  = useState(0);
   const [elapsed,   setElapsed]   = useState(0);
+  const [apiTopicTitle, setApiTopicTitle] = useState<string>("");
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
@@ -465,31 +466,17 @@ export default function TopicChat() {
         return { ...msg, sender, message_type: messageType };
       });
 
-      // DEBUG: Log loaded messages
-      console.log("📦 Loaded messages:", normalized.map(m => ({
-        id: m.id,
-        sender: m.sender,
-        type: m.message_type,
-        messagePreview: m.message?.slice(0, 60),
-        hasDiff: !!m.diff_html,
-        hasOptions: !!m.options?.length,
-      })));
-
       setMessages(normalized);
       setGoals(loadedGoals);
+      // Store topic title from API (fallback if URL param missing)
+      if (data.topic?.title) {
+        setApiTopicTitle(data.topic.title);
+      }
       // Topic is done if the topic flag is set OR all goals are completed
       const allGoalsDone = loadedGoals.length > 0 && loadedGoals.every(goalIsCompleted);
       setDone(data.topic.is_completed ?? allGoalsDone);
       setBaseTime(data.topic.time_spent_seconds ?? 0);
       setElapsed(0);
-
-      console.log("✅ Session loaded:", {
-        messageCount: normalized.length,
-        goalsCount: loadedGoals.length,
-        isCompleted: data.topic.is_completed,
-        allGoalsDone,
-        baseTime: data.topic.time_spent_seconds,
-      });
     } catch (e: unknown) {
       console.error("❌ Failed to load topic chat:", e);
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -512,8 +499,7 @@ export default function TopicChat() {
     setInput("");
     setSending(true);
     const tid = Date.now();
-    
-    console.log("📤 Sending message:", msg.slice(0, 80));
+
     setMessages((p) => [...p, { id: tid, message: msg, sender: "user", created_at: new Date().toISOString() }]);
     
     try {
@@ -521,13 +507,6 @@ export default function TopicChat() {
         Number(topicId!),
         { message: msg, session_time_seconds: baseTime + elapsed }
       );
-
-      console.log("📥 Received response:", {
-        aiMessageCount: res.messages?.length ?? res.aiMessages?.length ?? 0,
-        hasCorrection: !!res.userCorrection,
-        hasSummary: !!res.session_summary,
-        goalsCount: res.goals?.length,
-      });
 
       if (res.goals) {
         setGoals(res.goals);
@@ -545,7 +524,6 @@ export default function TopicChat() {
 
       const corr = res.userCorrection;
       if (corr) {
-        console.log("✏️ Applying correction:", corr);
         setMessages((p) => p.map((m) => m.id === realUserId || m.id === tid
           ? {
               ...m,
@@ -580,11 +558,6 @@ export default function TopicChat() {
         });
       }
 
-      console.log("🔄 Adding messages:", {
-        aiMessages: aiMsgs.length,
-        extras: extras.length,
-      });
-
       setMessages((p) => {
         const merged = [...p, ...aiMsgs.map((m: TopicChatMessage) => ({ ...m, id: m.id ?? Date.now() + Math.random() })), ...extras];
         const seen = new Set<number>();
@@ -603,16 +576,6 @@ export default function TopicChat() {
   };
 
   const renderMsg = (msg: TopicChatMessage) => {
-    // DEBUG: Log rendering
-    if (msg.message_type !== "score_prediction") {
-      console.log("🎨 Rendering message:", {
-        id: msg.id,
-        sender: msg.sender,
-        type: msg.message_type,
-        preview: msg.message?.slice(0, 40),
-      });
-    }
-
     if (msg.message_type === "score_prediction") return null;
     
     if (msg.message_type === "session_summary") {
@@ -623,7 +586,7 @@ export default function TopicChat() {
         (() => { try { return JSON.parse(msg.diff_html ?? "{}"); } catch { return {}; } })();
       
       if (!data.score_percent && !data.total_questions) {
-        console.warn("⚠️ Session summary has no valid data:", msg);
+        return null;
       }
       return <SummaryCard key={msg.id} data={data} />;
     }
@@ -641,27 +604,30 @@ export default function TopicChat() {
   };
 
   // ── Render ──
-  const pageTitle = loading ? "Loading…" : topicTitle;
+  // Use URL param first, then API response as fallback
+  const displayTopicTitle = topicTitle !== "Topic Chat" ? topicTitle : apiTopicTitle || "Topic Chat";
+  const pageTitle = loading ? "Loading…" : displayTopicTitle;
   const subTitle = (subjectName || chapterTitle) ? `${subjectName}${chapterTitle ? ` → ${chapterTitle}` : ""}` : "";
 
   return (
     <DashboardLayout title={pageTitle} mainClassName="flex flex-col p-0 overflow-hidden">
       {/* Topic info header with timer */}
-      <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-purple-50 border-b border-purple-200">
-        <div className="min-w-0 flex-1">
+      <div className="shrink-0 flex items-center justify-between px-3 sm:px-4 py-2 bg-purple-50 border-b border-purple-200">
+        <div className="min-w-0 flex-1 flex items-center gap-2">
+          <span className="text-sm font-semibold text-purple-800 truncate">{displayTopicTitle}</span>
           {subTitle && (
-            <p className="text-xs text-purple-600 truncate">{subTitle}</p>
+            <span className="hidden sm:inline text-xs text-purple-500 truncate">• {subTitle}</span>
           )}
         </div>
-        <div className="flex items-center gap-3 shrink-0">
-          <div className="flex items-center gap-1.5 bg-purple-100 rounded-full px-3 py-1">
-            <Clock className="w-3.5 h-3.5 text-purple-600" />
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <div className="flex items-center gap-1.5 bg-purple-100 rounded-full px-2.5 sm:px-3 py-1">
+            <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600" />
             <span className="text-xs font-bold text-purple-700 tabular-nums">
               {fmt(baseTime + elapsed)}
             </span>
           </div>
           {done && (
-            <span className="text-xs font-semibold text-purple-700 bg-purple-100 rounded-full px-3 py-1">
+            <span className="text-xs font-semibold text-purple-700 bg-purple-100 rounded-full px-2.5 sm:px-3 py-1">
               ✓ Done
             </span>
           )}
@@ -716,7 +682,7 @@ export default function TopicChat() {
           ) : (
             <form
               onSubmit={(e) => { e.preventDefault(); void send(); }}
-              className="flex gap-3 items-center"
+              className="flex gap-2 sm:gap-3 items-center"
             >
               <input
                 ref={inputRef}
@@ -732,8 +698,17 @@ export default function TopicChat() {
                   }
                 }}
                 disabled={sending}
-                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-4 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:bg-white transition-all disabled:opacity-60"
+                className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:bg-white transition-all disabled:opacity-60"
               />
+              {/* Stop/Cancel button - returns to session progress */}
+              <button
+                type="button"
+                onClick={() => navigate("/dashboard/sessions")}
+                className="w-9 h-9 sm:w-10 sm:h-10 rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 hover:text-gray-700 flex items-center justify-center shrink-0 transition-colors cursor-pointer"
+                title="Leave chat"
+              >
+                <X className="w-4 h-4" />
+              </button>
               <button
                 type="submit"
                 disabled={sending || !input.trim()}

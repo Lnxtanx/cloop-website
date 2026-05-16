@@ -30,23 +30,23 @@ export const Footer = (): JSX.Element => {
   };
 
   return (
-    <footer className="w-full max-w-[1200px] px-5 py-20 mx-auto">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12 mb-20">
-        <div className="flex flex-col gap-6">
-          <div className="w-[180px] h-[60px] bg-[#e9a4fa] rounded-2xl flex items-center justify-center p-2">
+    <footer className="w-full max-w-[1200px] px-4 md:px-5 py-10 md:py-20 mx-auto">
+      <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-12 mb-10 md:mb-20">
+        <div className="col-span-2 md:col-span-2 lg:col-span-1 flex flex-col gap-4 md:gap-6">
+          <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-[#e9a4fa] rounded-xl md:rounded-2xl flex items-center justify-center p-2">
             <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full" />
           </div>
-          <p className="text-gray-600 text-lg leading-relaxed text-left">
+          <p className="text-gray-600 text-sm md:text-lg leading-relaxed text-left">
             Transform your learning with AI-Powered personalized tutoring. Practice smarter and ace your exams with confidence.
           </p>
         </div>
 
-        <div className="flex flex-col gap-6 text-left">
-          <h2 className="text-2xl font-bold text-gray-900">Quick Links</h2>
-          <ul className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-6 text-left">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-900">Quick Links</h2>
+          <ul className="flex flex-col gap-2 md:gap-4">
             {quickLinks.map((link) => (
               <li key={link.label}>
-                <button onClick={() => scrollTo(link.href)} className="text-gray-600 hover:text-[#8d33ff] transition-colors text-lg text-left">
+                <button onClick={() => scrollTo(link.href)} className="text-gray-600 hover:text-[#8d33ff] transition-colors text-sm md:text-lg text-left">
                   {link.label}
                 </button>
               </li>
@@ -54,12 +54,12 @@ export const Footer = (): JSX.Element => {
           </ul>
         </div>
 
-        <div className="flex flex-col gap-6 text-left">
-          <h2 className="text-2xl font-bold text-gray-900">Company</h2>
-          <ul className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-6 text-left">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-900">Company</h2>
+          <ul className="flex flex-col gap-2 md:gap-4">
             {companyLinks.map((link) => (
               <li key={link.label}>
-                <Link to={link.href} className="text-gray-600 hover:text-[#8d33ff] transition-colors text-lg">
+                <Link to={link.href} className="text-gray-600 hover:text-[#8d33ff] transition-colors text-sm md:text-lg">
                   {link.label}
                 </Link>
               </li>
@@ -67,12 +67,12 @@ export const Footer = (): JSX.Element => {
           </ul>
         </div>
 
-        <div className="flex flex-col gap-6 text-left">
-          <h2 className="text-2xl font-bold text-gray-900">Connect</h2>
-          <div className="flex flex-col gap-4">
+        <div className="flex flex-col gap-3 md:gap-6 text-left">
+          <h2 className="text-lg md:text-2xl font-bold text-gray-900">Connect</h2>
+          <div className="flex flex-col gap-2 md:gap-4">
             {socialLinks.map((social) => (
-              <a key={social.label} href={social.href} className="flex items-center gap-3 text-gray-600 hover:text-[#8d33ff] transition-colors text-lg">
-                <img src={social.icon} alt={social.label} className="w-6 h-6" />
+              <a key={social.label} href={social.href} className="flex items-center gap-2 md:gap-3 text-gray-600 hover:text-[#8d33ff] transition-colors text-sm md:text-lg">
+                <img src={social.icon} alt={social.label} className="w-5 h-5 md:w-6 md:h-6" />
                 {social.label}
               </a>
             ))}
@@ -80,15 +80,15 @@ export const Footer = (): JSX.Element => {
         </div>
       </div>
 
-      <Separator className="mb-10" />
+      <Separator className="mb-6 md:mb-10" />
 
-      <div className="flex flex-col md:flex-row justify-between items-center gap-6">
-        <nav className="flex gap-8 text-gray-900 font-semibold">
-          <Link href="/privacy" className="hover:text-[#8d33ff]">Privacy Policy</Link>
-          <Link href="/terms" className="hover:text-[#8d33ff]">Terms & Conditions</Link>
-          <Link href="/support" className="hover:text-[#8d33ff]">Support</Link>
+      <div className="flex flex-col md:flex-row justify-between items-center gap-4 md:gap-6">
+        <nav className="flex flex-wrap justify-center gap-4 md:gap-8 text-gray-900 font-semibold text-sm md:text-base">
+          <Link to="/privacy" className="hover:text-[#8d33ff]">Privacy Policy</Link>
+          <Link to="/terms" className="hover:text-[#8d33ff]">Terms</Link>
+          <Link to="/support" className="hover:text-[#8d33ff]">Support</Link>
         </nav>
-        <p className="text-gray-600 text-lg">
+        <p className="text-gray-600 text-sm md:text-lg">
           © Copyright 2026, All Rights Reserved
         </p>
       </div>
