@@ -1,21 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
-const navigationItems = [
-  { label: "Features", href: "#features" },
-  { label: "AI Tutor", href: "#ai-tutor" },
-  { label: "Pricing", href: "#pricing" },
-];
-
 export const DownloadAppSection = (): JSX.Element => {
   const navigate = useNavigate();
   
-  const scrollTo = (id: string) => {
-    const element = document.getElementById(id.replace('#', ''));
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth' });
-    }
-  };
 
   return (
     <header className="flex items-center justify-between px-6 md:px-10 py-3 w-full max-w-[1440px] mx-auto">
@@ -32,15 +20,6 @@ export const DownloadAppSection = (): JSX.Element => {
         </div>
 
         <nav className="hidden md:flex items-center justify-end gap-9 flex-1">
-          {navigationItems.map((item, index) => (
-            <button
-              key={index}
-              onClick={() => scrollTo(item.href)}
-              className="[font-family:'Inter',Helvetica] font-medium text-[#110c1c] text-[18px] md:text-[21.7px] tracking-[0] leading-[32.5px] whitespace-nowrap hover:text-[#8d33ff] transition-colors"
-            >
-              {item.label}
-            </button>
-          ))}
           <button
             onClick={() => navigate("/login")}
             className="[font-family:'Inter',Helvetica] font-medium text-[#110c1c] text-[18px] md:text-[21.7px] tracking-[0] leading-[32.5px] whitespace-nowrap hover:text-[#8d33ff] transition-colors"

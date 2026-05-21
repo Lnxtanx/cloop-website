@@ -57,6 +57,11 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-white flex flex-col">
+      {/* Top sticky tagline bar */}
+      <div className="w-full bg-[#F0F2F8] py-2 px-4 text-center text-[11px] sm:text-xs text-gray-500 tracking-wide border-b border-gray-200">
+        <span>Conversation • Concept Mastery • Real-Time Correction • Score Prediction</span>
+      </div>
+
       <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
         <DownloadAppSection />
       </div>
@@ -101,7 +106,7 @@ const Login = () => {
         <div className="flex-1 flex items-center justify-center p-6 lg:p-12 bg-white">
           <div className="w-full max-w-md text-left">
             <div className="mb-10">
-              <h2 className="text-3xl font-extrabold text-gray-900 mb-3 tracking-tight">Welcome Back</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-3 tracking-tight">Sign In</h2>
               <p className="text-gray-500 font-medium">Log in to your Cloop Web dashboard</p>
             </div>
 
@@ -139,7 +144,7 @@ const Login = () => {
               <p className="text-gray-500 font-medium mb-4">New to Cloop?</p>
               <Link to="/signup">
                   <Button variant="outline" className="w-full h-14 rounded-2xl border-2 border-[#8d33ff]/20 text-[#8d33ff] font-bold hover:bg-[#8d33ff]/5 hover:border-[#8d33ff]/40 gap-2">
-                      Start Free <ArrowRight className="w-4 h-4" />
+                      Sign Up <ArrowRight className="w-4 h-4" />
                   </Button>
               </Link>
             </div>

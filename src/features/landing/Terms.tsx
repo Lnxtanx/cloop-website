@@ -3,6 +3,11 @@ import { DownloadAppSection } from "./sections/DownloadAppSection";
 export default function Terms() {
     return (
         <div className="min-h-screen bg-white">
+            {/* Top sticky tagline bar */}
+            <div className="w-full bg-[#F0F2F8] py-2 px-4 text-center text-[11px] sm:text-xs text-gray-500 tracking-wide border-b border-gray-200">
+                <span>Conversation • Concept Mastery • Real-Time Correction • Score Prediction</span>
+            </div>
+
             <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
                 <DownloadAppSection />
             </div>

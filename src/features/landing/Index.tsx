@@ -91,22 +91,21 @@ const Index = () => {
   ];
 
   const gradeLevels = [
-    { label: "5th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "6th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "7th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "8th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "9th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "10th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "11th", icon: <GraduationCap className="w-4 h-4" /> },
-    { label: "12th", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "CBSE", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "ICSE", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "State Board", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "IGCSE", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "JEE", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "NEET", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "KCET", icon: <GraduationCap className="w-4 h-4" /> },
+    { label: "CET", icon: <GraduationCap className="w-4 h-4" /> },
   ];
 
   return (
     <div className="min-h-screen bg-[#F0F2F8] font-['Inter',system-ui,sans-serif]">
       {/* Top sticky tagline bar */}
       <div className="w-full bg-[#F0F2F8] py-2 px-4 text-center text-[11px] sm:text-xs text-gray-500 tracking-wide border-b border-gray-200">
-        <span className="hidden sm:inline">Concept Mastery • Real-Time Correction • Predictable Scores</span>
-        <span className="sm:hidden">Learn Smarter • Score Better</span>
+        <span>Conversation • Concept Mastery • Real-Time Correction • Score Prediction</span>
       </div>
 
       {/* ── NAVBAR ── */}
@@ -143,7 +142,7 @@ const Index = () => {
             <span className="text-[#6B4EFF]">AI-powered learning</span>
           </h1>
           <p className="mt-2 md:mt-3 text-gray-500 text-sm md:text-base font-medium">
-            For Classes 5-12 • NEET • JEE • KCET Preparation
+            For Classes 5-12 and Competitive Exam Preparation
           </p>
           
           {/* Grade Level Pills */}
@@ -198,12 +197,32 @@ const Index = () => {
           className="w-full max-w-md bg-white rounded-2xl md:rounded-3xl shadow-lg border border-gray-100 px-5 md:px-8 py-6 md:py-8 animate-fade-up"
           style={{ "--animation-delay": "0.2s" } as React.CSSProperties}
         >
-          <div className="text-center mb-5 md:mb-6">
-            <h2 className="text-lg md:text-xl font-bold text-[#1a0a3c]">Welcome back!</h2>
-            <p className="text-gray-400 text-xs md:text-sm mt-1">Enter your Guest ID or email to continue learning.</p>
+          {/* Sign Up Section for New Users */}
+          <div className="text-center mb-5">
+            <h2 className="text-base md:text-lg font-bold text-[#1a0a3c]">New to Cloop?</h2>
+            <button
+              type="button"
+              onClick={() => navigate("/signup")}
+              className="mt-3 w-full py-3 md:py-3.5 bg-[#6B4EFF] hover:bg-[#5a3de0] text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+            >
+              Sign Up
+            </button>
           </div>
 
+          {/* Divider */}
+          <div className="flex items-center gap-3 my-5">
+            <div className="flex-1 h-px bg-gray-200" />
+            <span className="text-xs text-gray-400">or already have an account?</span>
+            <div className="flex-1 h-px bg-gray-200" />
+          </div>
+
+          {/* Sign In Section */}
           <form onSubmit={handleLogin} className="flex flex-col gap-4 md:gap-5">
+            <div className="text-center mb-2">
+              <h3 className="text-base font-bold text-[#1a0a3c]">Sign In</h3>
+              <p className="text-gray-400 text-xs mt-1">Enter your Guest ID or email to continue learning.</p>
+            </div>
+
             {/* Guest ID field */}
             <div className="flex flex-col gap-1.5">
               <label className="text-xs md:text-sm font-medium text-gray-700">
@@ -238,25 +257,6 @@ const Index = () => {
             >
               {isLoading ? "Redirecting…" : "Continue Learning"}
             </button>
-
-            {/* Divider */}
-            <div className="flex items-center gap-3">
-              <div className="flex-1 h-px bg-gray-200" />
-              <span className="text-xs text-gray-400">or</span>
-              <div className="flex-1 h-px bg-gray-200" />
-            </div>
-
-            {/* Sign up link */}
-            <p className="text-center text-sm text-gray-500">
-              New to Cloop?{" "}
-              <button
-                type="button"
-                onClick={() => navigate("/signup")}
-                className="text-[#6B4EFF] font-semibold hover:underline"
-              >
-                Start Free
-              </button>
-            </p>
           </form>
         </div>
 

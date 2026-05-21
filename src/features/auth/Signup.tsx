@@ -83,7 +83,33 @@ const Signup = () => {
             return { ...q, options: data.subjects.map((s) => ({ label: s.name, value: String(s.id) })) };
           }
           if (q.key === "preferred_language") {
-            return { ...q, options: data.languages.map((l) => ({ label: l.name, value: String(l.id) })) };
+            const targetLanguages = [
+              { code: "EN", label: "English", value: "2" },
+              { code: "HI", label: "Hindi (हिन्दी)", value: "1" },
+              { code: "MR", label: "Marathi (मराठी)", value: "marathi" },
+              { code: "KN", label: "Kannada (ಕನ್ನಡ)", value: "kannada" },
+              { code: "TA", label: "Tamil (தமிழ்)", value: "4" },
+              { code: "TE", label: "Telugu (తెలుగు)", value: "5" },
+              { code: "ML", label: "Malayalam (മലയാളം)", value: "malayalam" },
+              { code: "MN", label: "Manipuri (मणिपुरी)", value: "manipuri" },
+              { code: "BN", label: "Bengali (বাংলা)", value: "3" },
+              { code: "GU", label: "Gujarati (ગુજરાતી)", value: "gujarati" },
+              { code: "PA", label: "Punjabi (ਪੰਜਾਬੀ)", value: "punjabi" },
+              { code: "OR", label: "Odia (ଓଡ଼ିଆ)", value: "odia" },
+              { code: "AS", label: "Assamese (অসমীয়া)", value: "assamese" },
+              { code: "UR", label: "Urdu (اردو)", value: "urdu" },
+              { code: "SA", label: "Sanskrit (संस्कृतम्)", value: "sanskrit" },
+            ];
+            const mappedOptions = targetLanguages.map((t) => {
+              const dbLang = data.languages.find(
+                (l) => l.code.toUpperCase() === t.code.toUpperCase()
+              );
+              return {
+                label: t.label,
+                value: dbLang ? String(dbLang.id) : t.value,
+              };
+            });
+            return { ...q, options: mappedOptions };
           }
           return q;
         });
@@ -380,7 +406,7 @@ const Signup = () => {
             {/* Single/Multi Choice Options */}
             {(currentQuestion.type === "single-choice" || currentQuestion.type === "multi-choice") && (
               <div className="space-y-3">
-                <div className="flex flex-wrap gap-2 justify-center max-h-[40vh] overflow-y-auto px-1">
+                <div className="flex flex-wrap gap-2 justify-center items-center max-h-[40vh] overflow-y-auto px-1">
                   {currentQuestion.type === "multi-choice" && currentQuestion.options && (
                     <button
                       type="button"
@@ -397,12 +423,34 @@ const Signup = () => {
                   )}
                   {currentQuestion.options?.map((opt) => {
                     const selected = currentQuestion.type === "multi-choice" && currentMultiSelection.includes(opt.value);
+                    
+                    let isComingSoon = false;
+                    if (currentQuestion.key === "board") {
+                      isComingSoon = opt.value === "3" || opt.label.toLowerCase().includes("state");
+                    } else if (currentQuestion.key === "preferred_language") {
+                      isComingSoon = opt.value !== "2" && !opt.label.toLowerCase().startsWith("english");
+                    }
+
+                    if (isComingSoon) {
+                      return (
+                        <button
+                          key={opt.value}
+                          type="button"
+                          disabled
+                          className="px-3.5 py-1.5 sm:px-4.5 sm:py-2 rounded-2xl bg-gray-50 border border-gray-200 text-gray-400 opacity-60 cursor-not-allowed select-none text-center flex flex-col items-center justify-center shrink-0 min-h-[50px]"
+                        >
+                          <span className="text-xs sm:text-sm font-medium leading-tight">{opt.label}</span>
+                          <span className="text-[8px] text-gray-400 font-normal mt-0.5 leading-none">Coming soon</span>
+                        </button>
+                      );
+                    }
+
                     return (
                       <button
                         key={opt.value}
                         type="button"
                         onClick={() => handleOptionSelect(opt)}
-                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all ${
+                        className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all min-h-[38px] flex items-center justify-center ${
                           selected
                             ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
