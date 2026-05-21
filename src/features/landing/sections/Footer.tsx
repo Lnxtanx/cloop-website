@@ -33,11 +33,16 @@ export const Footer = (): JSX.Element => {
     <footer className="w-full max-w-[1200px] px-4 md:px-5 py-10 md:py-20 mx-auto">
       <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-12 mb-10 md:mb-20">
         <div className="col-span-2 md:col-span-2 lg:col-span-1 flex flex-col gap-4 md:gap-6">
-          <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-[#e9a4fa] rounded-xl md:rounded-2xl flex items-center justify-center p-2">
-            <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full" />
+          <div className="flex flex-col gap-2">
+            <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-[#e9a4fa] rounded-xl md:rounded-2xl flex items-center justify-center p-2">
+              <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full" />
+            </div>
+            <p className="text-purple-600 text-xs md:text-sm font-bold tracking-wide text-left">
+              Building India’s Concept Mastery Infrastructure
+            </p>
           </div>
           <p className="text-gray-600 text-sm md:text-lg leading-relaxed text-left">
-            Transform your learning with AI-Powered personalized tutoring. Practice smarter and ace your exams with confidence.
+            Predicting exam scores based on concept mastery, not memory. Making NCF’s vision for India’s education work on the ground.
           </p>
         </div>
 
