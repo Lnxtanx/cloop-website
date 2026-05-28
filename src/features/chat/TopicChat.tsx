@@ -11,6 +11,7 @@ import {
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import MermaidDiagram from "@/components/MermaidDiagram";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
@@ -577,6 +578,41 @@ export default function TopicChat() {
 
   const renderMsg = (msg: TopicChatMessage) => {
     if (msg.message_type === "score_prediction") return null;
+    
+    // Mermaid diagram message (persisted or real-time)
+    if (msg.message_type === "mermaid_diagram") {
+      let diagramCode = "";
+      let diagramTrigger: "correction" | "teaching" | "user_request" = "teaching";
+      const diagramTitle = msg.message || "Diagram";
+      
+      // Parse the mermaid data from diff_html (stored as JSON)
+      if (msg.diff_html) {
+        try {
+          const parsed = JSON.parse(msg.diff_html);
+          diagramCode = parsed.code || "";
+          diagramTrigger = parsed.trigger || "teaching";
+        } catch {
+          // Fallback: treat diff_html as raw mermaid code
+          diagramCode = msg.diff_html;
+        }
+      }
+      // Also check inline mermaid_diagram field (real-time responses)
+      if (!diagramCode && msg.mermaid_diagram) {
+        diagramCode = msg.mermaid_diagram.code;
+        diagramTrigger = msg.mermaid_diagram.trigger || "teaching";
+      }
+      
+      if (!diagramCode) return null;
+      
+      return (
+        <MermaidDiagram
+          key={msg.id}
+          code={diagramCode}
+          title={diagramTitle}
+          trigger={diagramTrigger}
+        />
+      );
+    }
     
     if (msg.message_type === "session_summary") {
       const summaryCandidate: SessionSummaryData = msg;

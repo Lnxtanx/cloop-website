@@ -82,11 +82,11 @@ const Index = () => {
       tags: ["Analytics", "Insights"],
     },
     {
-      icon: <BookOpen className="w-5 h-5 text-[#6B4EFF]" />,
+      icon: <Globe className="w-5 h-5 text-[#6B4EFF]" />,
       iconBg: "bg-[#EEE9FF]",
-      title: "Test Prep",
-      desc: "Comprehensive exam preparation",
-      tags: ["NEET", "JEE", "KCET"],
+      title: "Multilingual Support",
+      desc: "Available in 10 languages",
+      tags: ["English", "Regional"],
     },
   ];
 
@@ -105,7 +105,7 @@ const Index = () => {
     <div className="min-h-screen bg-[#F0F2F8] font-['Inter',system-ui,sans-serif]">
       {/* Top sticky tagline bar */}
       <div className="w-full bg-[#F0F2F8] py-2 px-4 text-center text-[11px] sm:text-xs text-gray-500 tracking-wide border-b border-gray-200">
-        <span>Conversation • Concept Mastery • Real-Time Correction • Score Prediction</span>
+        <span>Conversations • Real-Time Correction • Concept Mastery • Score Prediction</span>
       </div>
 
       {/* ── NAVBAR ── */}

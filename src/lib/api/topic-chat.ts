@@ -32,6 +32,11 @@ export interface TopicChatMessage {
   has_weak_areas?: boolean;
   complete_answer?: string;
   completeAnswer?: string;
+  mermaid_diagram?: {
+    title: string;
+    code: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
   created_at: string;
 }
 
@@ -130,6 +135,11 @@ export interface SendMessageResponse {
   };
   session_summary?: SessionSummaryData;
   score_prediction?: ScorePrediction;
+  mermaid_diagram?: {
+    title: string;
+    code: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
   all_goals_completed?: boolean;
 }
 

@@ -8,6 +8,7 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import remarkMath from "remark-math";
 import rehypeKatex from "rehype-katex";
+import MermaidDiagram from "@/components/MermaidDiagram";
 import { 
   fetchNormalChatMessages, 
   sendNormalChatMessage,
@@ -279,8 +280,35 @@ const Chat = () => {
                             h1: ({ children }) => <h1 className="text-lg font-bold mb-3 text-gray-900">{children}</h1>,
                             h2: ({ children }) => <h2 className="text-base font-bold mb-3 text-gray-900">{children}</h2>,
                             h3: ({ children }) => <h3 className="text-sm font-bold mb-2 text-gray-900">{children}</h3>,
-                            code: ({ children }) => <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-purple-700 font-mono text-[13px]">{children}</code>,
-                            pre: ({ children }) => <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 text-[12px] shadow-inner">{children}</pre>,
+                            code: ({ className, children, ...props }) => {
+                              const match = /language-(\w+)/.exec(className || "");
+                              if (match && match[1] === "mermaid") {
+                                const code = String(children).replace(/\n$/, "");
+                                return (
+                                  <div style={{ margin: "12px -16px" }}>
+                                    <MermaidDiagram
+                                      code={code}
+                                      title="Visual Diagram"
+                                      trigger="teaching"
+                                    />
+                                  </div>
+                                );
+                              }
+                              // Check if this is an inline code or a block code
+                              const isInline = !className;
+                              if (isInline) {
+                                return <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-purple-700 font-mono text-[13px]">{children}</code>;
+                              }
+                              return <code className={className} {...props}>{children}</code>;
+                            },
+                            pre: ({ children, ...preProps }) => {
+                              // If the child is a mermaid diagram (rendered as a div by code handler), don't wrap in pre
+                              const child = Array.isArray(children) ? children[0] : children;
+                              if (child && typeof child === "object" && "type" in child && child.type === "div") {
+                                return <>{children}</>;
+                              }
+                              return <pre className="bg-gray-900 text-gray-100 p-4 rounded-xl overflow-x-auto my-3 text-[12px] shadow-inner">{children}</pre>;
+                            },
                             strong: ({ children }) => <strong className="font-bold text-gray-900">{children}</strong>,
                           }}
                         >
