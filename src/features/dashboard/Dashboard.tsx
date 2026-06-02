@@ -187,17 +187,19 @@ const Dashboard = () => {
 
                 const genStatus = item.generation_status?.status;
                 const isGenerating = genStatus === "pending" || genStatus === "in_progress";
+                const isChaptersGenerated = item.generation_status?.chapters_generated || (item.total_chapters !== undefined && item.total_chapters > 0);
+                const isChapterGenerationInProgress = isGenerating && !isChaptersGenerated;
 
                 return (
                   <Card
                     key={item.subject_id}
                     className={`rounded-2xl sm:rounded-3xl border-purple-200 transition-all duration-300 flex flex-col h-full overflow-hidden group ${
-                      isGenerating
+                      isChapterGenerationInProgress
                         ? "opacity-80 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 cursor-not-allowed animate-pulse"
                         : "hover:shadow-xl hover:border-purple-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
                     }`}
                     onClick={() => {
-                      if (isGenerating) return;
+                      if (isChapterGenerationInProgress) return;
                       navigate(
                         `/chapters?subjectId=${encodeURIComponent(safeSubjectId)}&subjectName=${encodeURIComponent(item.subject?.name || "Untitled")}`
                       );
@@ -208,7 +210,7 @@ const Dashboard = () => {
                         <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
                           {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-purple-800" />}
                           {item.subject?.category || "General"}
-                          {isGenerating && " (Generating)"}
+                          {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : " (Generating Chapters)")}
                         </span>
                       </div>
 
@@ -230,7 +232,7 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      {isGenerating ? (
+                      {isChapterGenerationInProgress ? (
                         <Button
                           disabled
                           className="w-full h-10 sm:h-12 bg-purple-100 text-purple-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
