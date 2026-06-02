@@ -8,6 +8,14 @@ import { Button } from "@/components/ui/button";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import PracticeDashboard from "@/features/practice/PracticeDashboard";
 
+interface GenerationStatus {
+  status: "pending" | "in_progress" | "completed" | "failed";
+  chapters_generated?: boolean;
+  topics_generated?: boolean;
+  goals_generated?: boolean;
+  error_message?: string;
+}
+
 interface UserSubject {
   subject_id: number;
   subject?: {
@@ -17,6 +25,7 @@ interface UserSubject {
   completion_percent?: number;
   total_chapters?: number;
   completed_chapters?: number;
+  generation_status?: GenerationStatus | null;
 }
 
 interface UserProfile {
@@ -72,6 +81,44 @@ const Dashboard = () => {
 
     fetchProfile();
   }, [navigate]);
+
+  // Polling for live curriculum generation progress (self-terminating)
+  useEffect(() => {
+    if (!profile) return;
+
+    // Check if any subject is currently generating
+    const hasGeneratingSubjects = profile.user_subjects?.some((item) => {
+      const status = item.generation_status?.status;
+      return status === "pending" || status === "in_progress";
+    });
+
+    if (!hasGeneratingSubjects) return;
+
+    const token = localStorage.getItem("cloop_token");
+    if (!token) return;
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+
+    const intervalId = setInterval(async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/api/profile`, {
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setProfile(data);
+        }
+      } catch (err) {
+        console.error("Polling profile failed:", err);
+      }
+    }, 5000);
+
+    return () => clearInterval(intervalId);
+  }, [profile]);
 
   // Handle Practice Mode Home
   if (mode === "PRACTICE") {
@@ -138,20 +185,30 @@ const Dashboard = () => {
                 const pct = Math.round(item.completion_percent || 0);
                 const isNotStarted = pct === 0;
 
+                const genStatus = item.generation_status?.status;
+                const isGenerating = genStatus === "pending" || genStatus === "in_progress";
+
                 return (
                   <Card
                     key={item.subject_id}
-                    className="rounded-2xl sm:rounded-3xl border-purple-200 hover:shadow-xl hover:border-purple-300 transition-all duration-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 overflow-hidden group flex flex-col h-full"
-                    onClick={() =>
+                    className={`rounded-2xl sm:rounded-3xl border-purple-200 transition-all duration-300 flex flex-col h-full overflow-hidden group ${
+                      isGenerating
+                        ? "opacity-80 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 cursor-not-allowed animate-pulse"
+                        : "hover:shadow-xl hover:border-purple-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
+                    }`}
+                    onClick={() => {
+                      if (isGenerating) return;
                       navigate(
                         `/chapters?subjectId=${encodeURIComponent(safeSubjectId)}&subjectName=${encodeURIComponent(item.subject?.name || "Untitled")}`
-                      )
-                    }
+                      );
+                    }}
                   >
                     <CardContent className="p-4 sm:p-6 flex flex-col flex-1">
-                      <div className="mb-3 sm:mb-4">
-                        <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest">
+                      <div className="mb-3 sm:mb-4 flex items-center gap-2">
+                        <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
+                          {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-purple-800" />}
                           {item.subject?.category || "General"}
+                          {isGenerating && " (Generating)"}
                         </span>
                       </div>
 
@@ -173,11 +230,20 @@ const Dashboard = () => {
                         </div>
                       </div>
 
-                      <Button
-                        className="w-full h-10 sm:h-12 bg-white text-[#8d33ff] font-bold hover:bg-[#8d33ff] hover:text-white transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
-                      >
-                        <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
-                      </Button>
+                      {isGenerating ? (
+                        <Button
+                          disabled
+                          className="w-full h-10 sm:h-12 bg-purple-100 text-purple-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
+                        >
+                          <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-purple-400" /> Generating Chapters...
+                        </Button>
+                      ) : (
+                        <Button
+                          className="w-full h-10 sm:h-12 bg-white text-[#8d33ff] font-bold hover:bg-[#8d33ff] hover:text-white transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
+                        >
+                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
+                        </Button>
+                      )}
                     </CardContent>
                   </Card>
                 );
