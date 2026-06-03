@@ -43,7 +43,9 @@ const Dashboard = () => {
   const [error, setError] = useState("");
   const navigate = useNavigate();
 
-  useEffect(() => {
+  const fetchProfile = async (showLoading = true) => {
+    if (showLoading) setLoading(true);
+    setError("");
     const token = localStorage.getItem("cloop_token");
     if (!token) {
       navigate("/login");
@@ -51,36 +53,80 @@ const Dashboard = () => {
     }
 
     const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/profile`, {
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
 
-    const fetchProfile = async () => {
-      setLoading(true);
-      setError("");
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/profile`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (!response.ok) {
-          const err = await response.json().catch(() => null);
-          throw new Error(err?.error || `Profile fetch failed (${response.status})`);
-        }
-
-        const data = await response.json();
-        setProfile(data);
-      } catch (err: unknown) {
-        const message = err instanceof Error ? err.message : "Unable to fetch profile data.";
-        console.error("Profile fetch error", err);
-        setError(message);
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        const err = await response.json().catch(() => null);
+        throw new Error(err?.error || `Profile fetch failed (${response.status})`);
       }
-    };
 
+      const data = await response.json();
+      setProfile(data);
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : "Unable to fetch profile data.";
+      console.error("Profile fetch error", err);
+      setError(message);
+    } finally {
+      if (showLoading) setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchProfile();
   }, [navigate]);
+
+  const handleRetryGeneration = async (subjectId: number, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent card click navigation
+    const token = localStorage.getItem("cloop_token");
+    if (!token) return;
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
+    try {
+      // Optimistically update the UI to pending status so the user gets instant feedback
+      if (profile && profile.user_subjects) {
+        const updatedSubjects = profile.user_subjects.map(us => {
+          if (us.subject_id === subjectId) {
+            return {
+              ...us,
+              generation_status: {
+                status: "pending" as const,
+                chapters_generated: false,
+                topics_generated: false,
+                goals_generated: false
+              }
+            };
+          }
+          return us;
+        });
+        setProfile({ ...profile, user_subjects: updatedSubjects });
+      }
+
+      const response = await fetch(`${API_BASE_URL}/api/content-generation/retry/${subjectId}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to retry generation");
+      }
+
+      // Refresh state silently in the background
+      fetchProfile(false);
+    } catch (err) {
+      console.error("Retry generation failed:", err);
+      // Refresh to revert optimistic UI on failure
+      fetchProfile(false);
+    }
+  };
 
   // Polling for live curriculum generation progress (self-terminating)
   useEffect(() => {
@@ -187,19 +233,23 @@ const Dashboard = () => {
 
                 const genStatus = item.generation_status?.status;
                 const isGenerating = genStatus === "pending" || genStatus === "in_progress";
+                const isFailed = genStatus === "failed";
                 const isChaptersGenerated = item.generation_status?.chapters_generated || (item.total_chapters !== undefined && item.total_chapters > 0);
                 const isChapterGenerationInProgress = isGenerating && !isChaptersGenerated;
+                const isCardDisabled = isChapterGenerationInProgress || isFailed;
 
                 return (
                   <Card
                     key={item.subject_id}
-                    className={`rounded-2xl sm:rounded-3xl border-purple-200 transition-all duration-300 flex flex-col h-full overflow-hidden group ${
+                    className={`rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group ${
                       isChapterGenerationInProgress
                         ? "opacity-80 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 cursor-not-allowed animate-pulse"
-                        : "hover:shadow-xl hover:border-purple-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
+                        : isFailed
+                        ? "border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30 cursor-not-allowed"
+                        : "border-purple-200 hover:shadow-xl hover:border-purple-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
                     }`}
                     onClick={() => {
-                      if (isChapterGenerationInProgress) return;
+                      if (isCardDisabled) return;
                       navigate(
                         `/chapters?subjectId=${encodeURIComponent(safeSubjectId)}&subjectName=${encodeURIComponent(item.subject?.name || "Untitled")}`
                       );
@@ -207,11 +257,18 @@ const Dashboard = () => {
                   >
                     <CardContent className="p-4 sm:p-6 flex flex-col flex-1">
                       <div className="mb-3 sm:mb-4 flex items-center gap-2">
-                        <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
-                          {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-purple-800" />}
-                          {item.subject?.category || "General"}
-                          {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : " (Generating Chapters)")}
-                        </span>
+                        {isFailed ? (
+                          <span className="text-[9px] sm:text-[10px] font-black text-red-800 bg-red-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
+                            {item.subject?.category || "General"}
+                            {" (Generation Failed)"}
+                          </span>
+                        ) : (
+                          <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
+                            {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-purple-800" />}
+                            {item.subject?.category || "General"}
+                            {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : " (Generating Chapters)")}
+                          </span>
+                        )}
                       </div>
 
                       <h4 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4 sm:mb-6 group-hover:text-[#8d33ff] transition-colors leading-tight">{item.subject?.name || "Untitled"}</h4>
@@ -238,6 +295,13 @@ const Dashboard = () => {
                           className="w-full h-10 sm:h-12 bg-purple-100 text-purple-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
                         >
                           <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-purple-400" /> Generating Chapters...
+                        </Button>
+                      ) : isFailed ? (
+                        <Button
+                          onClick={(e) => handleRetryGeneration(item.subject_id, e)}
+                          className="w-full h-10 sm:h-12 bg-red-100 hover:bg-red-200 text-red-600 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
+                        >
+                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current rotate-90" /> Retry Generation
                         </Button>
                       ) : (
                         <Button
