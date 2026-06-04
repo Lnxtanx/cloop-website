@@ -17,6 +17,7 @@ interface GenerationStatus {
 }
 
 interface UserSubject {
+  id?: number;
   subject_id: number;
   subject?: {
     name?: string;
@@ -189,7 +190,7 @@ const Dashboard = () => {
     );
   }
 
-  const subjects = profile?.user_subjects ?? [];
+  const subjects = [...(profile?.user_subjects ?? [])].sort((a, b) => (a.id || 0) - (b.id || 0));
 
   return (
     <DashboardLayout title="Dashboard">
