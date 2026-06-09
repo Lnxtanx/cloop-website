@@ -37,6 +37,22 @@ export interface TopicChatMessage {
     code: string;
     trigger: "correction" | "teaching" | "user_request";
   } | null;
+  text_diagram?: {
+    title: string;
+    code: string;
+    diagram_type: "tree" | "arrow" | "table" | "ascii";
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
+  youtube_video?: {
+    search_query: string;
+    title: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
+  google_image?: {
+    search_query: string;
+    title: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
   created_at: string;
 }
 
@@ -140,6 +156,41 @@ export interface SendMessageResponse {
     code: string;
     trigger: "correction" | "teaching" | "user_request";
   } | null;
+  text_diagram?: {
+    title: string;
+    code: string;
+    diagram_type: "tree" | "arrow" | "table" | "ascii";
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
+  youtube_video?: {
+    search_query: string;
+    title: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
+  google_image?: {
+    search_query: string;
+    title: string;
+    trigger: "correction" | "teaching" | "user_request";
+  } | null;
+  // Fetched media results
+  youtube_results?: Array<{
+    id: string;
+    title: string;
+    thumbnail: string;
+    url: string;
+    embedUrl: string;
+    channel: string;
+    duration: string;
+    viewCount: number;
+  }>;
+  image_results?: Array<{
+    id: string;
+    title: string;
+    url: string;
+    thumbnail: string;
+    source: string;
+    sourceUrl: string;
+  }>;
   all_goals_completed?: boolean;
 }
 

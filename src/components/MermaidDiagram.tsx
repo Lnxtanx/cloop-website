@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
 
-// Initialize mermaid with a clean config
+// Initialize mermaid with full feature support
 mermaid.initialize({
   startOnLoad: false,
   theme: "base",
@@ -18,14 +18,119 @@ mermaid.initialize({
     clusterBkg: "#f5f3ff",
     clusterBorder: "#c4b5fd",
     edgeLabelBackground: "#ffffff",
+    // Additional theme variables for better visuals
+    mainBkg: "#ede9fe",
+    nodeTextColor: "#4c1d95",
+    branchLabelColor: "#5b21b6",
+    commitLabelColor: "#5b21b6",
+    commitLabelBackground: "#f5f3ff",
+    tagLabelColor: "#4c1d95",
+    tagLabelBackground: "#ede9fe",
+    git0: "#8b5cf6",
+    git1: "#a78bfa",
+    git2: "#c4b5fd",
+    git3: "#ddd6fe",
+    git4: "#ede9fe",
+    git5: "#f5f3ff",
+    git6: "#faf5ff",
+    git7: "#e9d5ff",
   },
   flowchart: {
     curve: "basis",
-    padding: 12,
+    padding: 15,
     htmlLabels: true,
     useMaxWidth: true,
+    defaultRenderer: "dagre",
+  },
+  sequence: {
+    diagramMarginX: 10,
+    diagramMarginY: 10,
+    actorMargin: 50,
+    width: 150,
+    height: 65,
+    boxMargin: 10,
+    boxTextMargin: 5,
+    noteMargin: 10,
+    messageMargin: 35,
+    mirrorActors: true,
+    bottomMarginAdj: 1,
+    useMaxWidth: true,
+    rightAngles: false,
+    showSequenceNumbers: false,
+  },
+  gantt: {
+    titleTopMargin: 25,
+    barHeight: 20,
+    barGap: 4,
+    topPadding: 50,
+    leftPadding: 75,
+    gridLineStartPadding: 35,
+    fontSize: 11,
+    sectionFontSize: 11,
+    numberSectionStyles: 4,
+    axisFormat: "%Y-%m-%d",
+    topAxis: false,
+  },
+  class: {
+    useMaxWidth: true,
+    hideEmptyMembersBox: true,
+  },
+  state: {
+    useMaxWidth: true,
+    labelHeight: 30,
+  },
+  er: {
+    useMaxWidth: true,
+    titleTopMargin: 25,
+    diagramPadding: 20,
+    layoutDirection: "TB",
+    minEntityWidth: 100,
+    minEntityHeight: 75,
+    entityPadding: 15,
+    stroke: "#a78bfa",
+    fill: "#ede9fe",
+    fontSize: 12,
+  },
+  pie: {
+    useMaxWidth: true,
+    textPosition: 0.75,
+  },
+  mindmap: {
+    useMaxWidth: true,
+    padding: 10,
+    maxNodeWidth: 200,
+  },
+  quadrantChart: {
+    chartWidth: 500,
+    chartHeight: 500,
+    titleTopMargin: 25,
+    titleFontSize: 20,
+    quadrantLabelFontSize: 16,
+    quadrantTextTopPadding: 5,
+    quadrantLabelPadding: 10,
+    labelFontSize: 14,
+    quadrant1Fill: "#ede9fe",
+    quadrant2Fill: "#f5f3ff",
+    quadrant3Fill: "#faf5ff",
+    quadrant4Fill: "#e9d5ff",
+    quadrant1TextFill: "#4c1d95",
+    quadrant2TextFill: "#5b21b6",
+    quadrant3TextFill: "#6b21a8",
+    quadrant4TextFill: "#7c3aed",
+    quadrantPointFill: "#4c1d95",
+    quadrantPointTextFill: "#4c1d95",
+  },
+  requirement: {
+    useMaxWidth: true,
+    rect_fill: "#f5f3ff",
+    text_color: "#4c1d95",
+    rect_border_size: "1",
+    rect_border_color: "#a78bfa",
+    rect_min_width: 200,
+    rect_min_height: 10,
   },
   securityLevel: "loose",
+  logLevel: "error",
 });
 
 interface MermaidDiagramProps {
@@ -50,12 +155,19 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
       setError("");
 
       try {
+        // Clean and validate the code
+        let cleanCode = code.trim();
+        
+        // Remove any existing ```mermaid fences if present
+        cleanCode = cleanCode.replace(/^```mermaid\s*\n?/i, "").replace(/\n?```$/i, "");
+        
         const uniqueId = `mermaid-${Date.now()}-${++diagramCounter}`;
-        const { svg } = await mermaid.render(uniqueId, code);
+        const { svg } = await mermaid.render(uniqueId, cleanCode);
         setSvgContent(svg);
       } catch (err: unknown) {
         console.error("Mermaid render error:", err);
-        setError("Could not render diagram");
+        const errorMessage = err instanceof Error ? err.message : "Could not render diagram";
+        setError(errorMessage);
       } finally {
         setIsRendering(false);
       }
@@ -110,8 +222,8 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
       {/* Diagram Card */}
       <div
         style={{
-          maxWidth: "75%",
-          minWidth: 240,
+          maxWidth: "85%",
+          minWidth: 280,
           borderRadius: 16,
           overflow: "hidden",
           border: "1.5px solid #e9d5ff",
@@ -163,13 +275,15 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
         {/* Diagram Body */}
         <div
           ref={containerRef}
+          className="mermaid-container"
           style={{
             padding: "16px 12px",
             display: "flex",
             justifyContent: "center",
             alignItems: "center",
-            minHeight: 100,
+            minHeight: 120,
             background: "#fefefe",
+            overflow: "auto",
           }}
         >
           {isRendering ? (
@@ -192,14 +306,29 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
           ) : error ? (
             <div
               style={{
-                padding: "12px 16px",
+                padding: "16px",
                 background: "#fef2f2",
                 borderRadius: 10,
                 fontSize: 12,
                 color: "#dc2626",
+                textAlign: "center",
               }}
             >
-              ⚠️ {error}
+              <div style={{ marginBottom: 8 }}>⚠️ {error}</div>
+              <div
+                style={{
+                  fontSize: 10,
+                  color: "#9ca3af",
+                  fontFamily: "monospace",
+                  background: "#f5f5f5",
+                  padding: 8,
+                  borderRadius: 6,
+                  maxWidth: 400,
+                  overflow: "auto",
+                }}
+              >
+                <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>{code}</pre>
+              </div>
             </div>
           ) : (
             <div
@@ -212,6 +341,36 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
           )}
         </div>
       </div>
+
+      {/* Global styles for mermaid diagrams */}
+      <style>{`
+        .mermaid-container svg {
+          max-width: 100%;
+          height: auto;
+        }
+        .mermaid-container .node rect,
+        .mermaid-container .node circle,
+        .mermaid-container .node ellipse,
+        .mermaid-container .node polygon,
+        .mermaid-container .node path {
+          stroke: #a78bfa !important;
+          stroke-width: 1.5px !important;
+        }
+        .mermaid-container .nodeLabel {
+          color: #4c1d95 !important;
+        }
+        .mermaid-container .edgePath .path {
+          stroke: #8b5cf6 !important;
+          stroke-width: 1.5px !important;
+        }
+        .mermaid-container .edgeLabel {
+          background-color: #f5f3ff !important;
+          color: #5b21b6 !important;
+        }
+        .mermaid-container .arrowheadPath {
+          fill: #8b5cf6 !important;
+        }
+      `}</style>
     </div>
   );
 }
