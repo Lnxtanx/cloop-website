@@ -561,76 +561,6 @@ export default function TopicChat() {
         });
       }
 
-      // Add mermaid diagram if present in response
-      if (res.mermaid_diagram) {
-        extras.push({
-          id: Date.now() + 10000, sender: "ai", message: res.mermaid_diagram.title,
-          message_type: "mermaid_diagram", 
-          diff_html: JSON.stringify(res.mermaid_diagram),
-          mermaid_diagram: res.mermaid_diagram,
-          created_at: new Date().toISOString(),
-        });
-      }
-
-      // Add text diagram if present in response
-      if (res.text_diagram) {
-        extras.push({
-          id: Date.now() + 10001, sender: "ai", message: res.text_diagram.title,
-          message_type: "text_diagram",
-          diff_html: JSON.stringify(res.text_diagram),
-          text_diagram: res.text_diagram,
-          created_at: new Date().toISOString(),
-        });
-      }
-
-      // Add YouTube video results if present
-      if (res.youtube_results && res.youtube_results.length > 0) {
-        res.youtube_results.forEach((video, idx) => {
-          extras.push({
-            id: Date.now() + 10002 + idx, sender: "ai", message: video.title,
-            message_type: "youtube_video",
-            youtube_video: {
-              search_query: res.youtube_video?.search_query || "",
-              title: video.title,
-              trigger: res.youtube_video?.trigger || "teaching"
-            },
-            created_at: new Date().toISOString(),
-          });
-        });
-      } else if (res.youtube_video) {
-        // Fallback: show suggestion card if no results fetched
-        extras.push({
-          id: Date.now() + 10002, sender: "ai", message: res.youtube_video.title,
-          message_type: "youtube_video",
-          youtube_video: res.youtube_video,
-          created_at: new Date().toISOString(),
-        });
-      }
-
-      // Add image results if present
-      if (res.image_results && res.image_results.length > 0) {
-        res.image_results.forEach((img, idx) => {
-          extras.push({
-            id: Date.now() + 10010 + idx, sender: "ai", message: img.title,
-            message_type: "google_image",
-            google_image: {
-              search_query: res.google_image?.search_query || "",
-              title: img.title,
-              trigger: res.google_image?.trigger || "teaching"
-            },
-            created_at: new Date().toISOString(),
-          });
-        });
-      } else if (res.google_image) {
-        // Fallback: show suggestion card if no results fetched
-        extras.push({
-          id: Date.now() + 10010, sender: "ai", message: res.google_image.title,
-          message_type: "google_image",
-          google_image: res.google_image,
-          created_at: new Date().toISOString(),
-        });
-      }
-
       setMessages((p) => {
         const merged = [...p, ...aiMsgs.map((m: TopicChatMessage) => ({ ...m, id: m.id ?? Date.now() + Math.random() })), ...extras];
         const seen = new Set<number>();
@@ -841,48 +771,6 @@ export default function TopicChat() {
     return <AIBubble key={msg.id} msg={msg} onOption={(v) => send(v)} />;
   };
 
-  // Render media cards (YouTube, Images) from AI response
-  const renderMediaCards = () => {
-    const cards: JSX.Element[] = [];
-    
-    // Find the last message with youtube_video or google_image
-    // These are rendered separately after the message bubbles
-    for (let i = messages.length - 1; i >= 0; i--) {
-      const msg = messages[i];
-      
-      // Check for youtube_video from AI response
-      if (msg.youtube_video) {
-        cards.push(
-          <MediaCard
-            key={`yt-${msg.id}`}
-            type="youtube"
-            searchQuery={msg.youtube_video.search_query}
-            title={msg.youtube_video.title}
-            trigger={msg.youtube_video.trigger}
-          />
-        );
-      }
-      
-      // Check for google_image from AI response
-      if (msg.google_image) {
-        cards.push(
-          <MediaCard
-            key={`img-${msg.id}`}
-            type="image"
-            searchQuery={msg.google_image.search_query}
-            title={msg.google_image.title}
-            trigger={msg.google_image.trigger}
-          />
-        );
-      }
-      
-      // Only render the most recent media cards
-      if (cards.length > 0) break;
-    }
-    
-    return cards;
-  };
-
   // ── Render ──
   // Use URL param first, then API response as fallback
   const displayTopicTitle = topicTitle !== "Topic Chat" ? topicTitle : apiTopicTitle || "Topic Chat";
@@ -939,7 +827,6 @@ export default function TopicChat() {
             </div>
           )}
           {messages.map((m) => renderMsg(m))}
-          {renderMediaCards()}
           {sending && <TypingDots />}
           <div ref={bottomRef} />
         </div>

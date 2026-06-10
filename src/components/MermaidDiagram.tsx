@@ -146,6 +146,7 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
   const [svgContent, setSvgContent] = useState<string>("");
   const [error, setError] = useState<string>("");
   const [isRendering, setIsRendering] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   useEffect(() => {
     if (!code || !containerRef.current) return;
@@ -176,13 +177,13 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
     void renderDiagram();
   }, [code]);
 
-  // Trigger label for the badge
+  // Trigger label for the badge without icons/emojis
   const triggerLabel =
     trigger === "correction"
-      ? "📝 Correction Aid"
+      ? "Correction Aid"
       : trigger === "user_request"
-        ? "🔍 Visual Explanation"
-        : "💡 Concept Visual";
+        ? "Visual Explanation"
+        : "Concept Visual";
 
   const triggerColor =
     trigger === "correction"
@@ -243,7 +244,6 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 14 }}>📊</span>
             <span
               style={{
                 fontSize: 12,
@@ -276,6 +276,12 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
         <div
           ref={containerRef}
           className="mermaid-container"
+          onClick={() => {
+            if (!isRendering && !error && svgContent) {
+              setIsModalOpen(true);
+            }
+          }}
+          title={!isRendering && !error && svgContent ? "Click to zoom in" : undefined}
           style={{
             padding: "16px 12px",
             display: "flex",
@@ -284,6 +290,7 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
             minHeight: 120,
             background: "#fefefe",
             overflow: "auto",
+            cursor: !isRendering && !error && svgContent ? "zoom-in" : "default",
           }}
         >
           {isRendering ? (
@@ -341,6 +348,114 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
           )}
         </div>
       </div>
+
+      {/* Zoom Dialog Modal Overlay */}
+      {isModalOpen && (
+        <div
+          onClick={() => setIsModalOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            cursor: "zoom-out",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              background: "#fff",
+              borderRadius: 20,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              border: "1px solid #e9d5ff",
+              cursor: "default",
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "16px 24px",
+                background: "#f9fafb",
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#1e1b4b",
+                }}
+              >
+                {title || "Visual Diagram"}
+              </span>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: 20,
+                  color: "#6b7280",
+                  cursor: "pointer",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              className="mermaid-modal-container"
+              style={{
+                padding: 32,
+                overflow: "auto",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                background: "#ffffff",
+                flex: 1,
+              }}
+            >
+              <div
+                dangerouslySetInnerHTML={{ __html: svgContent }}
+                style={{
+                  width: "100%",
+                  maxHeight: "70vh",
+                  display: "flex",
+                  justifyContent: "center",
+                }}
+              />
+            </div>
+          </div>
+          <style>{`
+            .mermaid-modal-container svg {
+              width: auto !important;
+              height: auto !important;
+              max-width: 100% !important;
+              max-height: 70vh !important;
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Global styles for mermaid diagrams */}
       <style>{`

@@ -33,8 +33,29 @@ interface ImageCardProps {
 
 // ─── Video Card ─────────────────────────────────────────────────────────────
 
+function getEmbedUrl(url: string, videoId?: string) {
+  if (!url) return "";
+  if (url.includes("/embed/")) return url;
+  
+  let id = videoId;
+  if (!id || id === "prefetched") {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|\&v=)([^#\&\?]*).*/;
+    const match = url.match(regExp);
+    if (match && match[2].length === 11) {
+      id = match[2];
+    }
+  }
+
+  if (id && id !== "prefetched") {
+    return `https://www.youtube.com/embed/${id}`;
+  }
+
+  return url;
+}
+
 function VideoCard({ video }: VideoCardProps) {
-  const [showPreview, setShowPreview] = useState(false);
+  const [isPlaying, setIsPlaying] = useState(false);
+  const embedUrl = getEmbedUrl(video.embedUrl || video.url, video.id);
 
   return (
     <div
@@ -76,90 +97,88 @@ function VideoCard({ video }: VideoCardProps) {
           boxShadow: "0 2px 12px rgba(124, 58, 237, 0.08)",
         }}
       >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 14px",
-            background: "linear-gradient(135deg, #fef2f2, #fee2e2)",
-            borderBottom: "1px solid #fecaca",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 14 }}>🎬</span>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#dc2626",
-              }}
-            >
-              Related Video
-            </span>
-          </div>
-        </div>
-
-        {/* Thumbnail */}
+        {/* Thumbnail or Video Player */}
         <div
           style={{
             position: "relative",
-            cursor: "pointer",
+            minHeight: 180,
+            background: "#000",
           }}
-          onClick={() => setShowPreview(!showPreview)}
         >
-          <img
-            src={video.thumbnail}
-            alt={video.title}
-            style={{
-              width: "100%",
-              height: 180,
-              objectFit: "cover",
-              display: "block",
-            }}
-          />
-          {/* Play overlay */}
-          <div
-            style={{
-              position: "absolute",
-              inset: 0,
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              background: "rgba(0,0,0,0.3)",
-            }}
-          >
+          {isPlaying && embedUrl ? (
+            <iframe
+              src={`${embedUrl}?autoplay=1`}
+              title={video.title}
+              frameBorder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+              allowFullScreen
+              style={{
+                width: "100%",
+                height: 180,
+                display: "block",
+              }}
+            />
+          ) : (
             <div
               style={{
-                width: 56,
-                height: 56,
-                borderRadius: "50%",
-                background: "rgba(255,0,0,0.9)",
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
+                position: "relative",
+                cursor: "pointer",
               }}
+              onClick={() => setIsPlaying(true)}
             >
-              <Play style={{ width: 28, height: 28, color: "#fff", marginLeft: 4 }} />
-            </div>
-          </div>
-          {/* Duration badge */}
-          {video.duration && (
-            <div
-              style={{
-                position: "absolute",
-                bottom: 8,
-                right: 8,
-                background: "rgba(0,0,0,0.8)",
-                color: "#fff",
-                fontSize: 11,
-                fontWeight: 600,
-                padding: "2px 6px",
-                borderRadius: 4,
-              }}
-            >
-              {formatDuration(video.duration)}
+              <img
+                src={video.thumbnail}
+                alt={video.title}
+                style={{
+                  width: "100%",
+                  height: 180,
+                  objectFit: "cover",
+                  display: "block",
+                }}
+              />
+              {/* Play overlay */}
+              <div
+                style={{
+                  position: "absolute",
+                  inset: 0,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  background: "rgba(0,0,0,0.3)",
+                }}
+              >
+                <div
+                  style={{
+                    width: 56,
+                    height: 56,
+                    borderRadius: "50%",
+                    background: "rgba(255,0,0,0.9)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                >
+                  <Play style={{ width: 28, height: 28, color: "#fff", marginLeft: 4 }} />
+                </div>
+              </div>
+              {/* Duration badge */}
+              {video.duration && (
+                <div
+                  style={{
+                    position: "absolute",
+                    bottom: 8,
+                    right: 8,
+                    background: "rgba(0,0,0,0.8)",
+                    color: "#fff",
+                    fontSize: 11,
+                    fontWeight: 600,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                  }}
+                >
+                  {formatDuration(video.duration)}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -221,7 +240,7 @@ function VideoCard({ video }: VideoCardProps) {
               textDecoration: "none",
             }}
           >
-            <Play style={{ width: 14, height: 14 }} />
+            <ExternalLink style={{ width: 14, height: 14 }} />
             Watch on YouTube
           </a>
         </div>
@@ -234,6 +253,7 @@ function VideoCard({ video }: VideoCardProps) {
 
 function ImageCard({ image }: ImageCardProps) {
   const [loaded, setLoaded] = useState(false);
+  const [hasError, setHasError] = useState(false);
 
   return (
     <div
@@ -275,61 +295,58 @@ function ImageCard({ image }: ImageCardProps) {
           boxShadow: "0 1px 4px rgba(0, 0, 0, 0.04)",
         }}
       >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 12px",
-            background: "#f9fafb",
-            borderBottom: "1px solid #f3f4f6",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <ImageIcon style={{ width: 13, height: 13, color: "#4b5563" }} />
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 600,
-                color: "#4b5563",
-              }}
-            >
-              Related Image
-            </span>
-          </div>
-        </div>
-
         {/* Image */}
         <div style={{ position: "relative", minHeight: 120, background: "#f9fafb" }}>
-          {!loaded && (
+          {hasError ? (
             <div
               style={{
-                position: "absolute",
-                inset: 0,
                 display: "flex",
+                flexDirection: "column",
                 alignItems: "center",
                 justifyContent: "center",
+                padding: 24,
+                gap: 8,
                 background: "#f9fafb",
               }}
             >
-              <Loader2
-                style={{ width: 18, height: 18, color: "#9ca3af", animation: "spin 1s linear infinite" }}
-              />
+              <ImageIcon style={{ width: 28, height: 28, color: "#9ca3af" }} />
+              <span style={{ fontSize: 11, color: "#6b7280", textAlign: "center" }}>
+                Preview not available
+              </span>
             </div>
+          ) : (
+            <>
+              {!loaded && (
+                <div
+                  style={{
+                    position: "absolute",
+                    inset: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: "#f9fafb",
+                  }}
+                >
+                  <Loader2
+                    style={{ width: 18, height: 18, color: "#9ca3af", animation: "spin 1s linear infinite" }}
+                  />
+                </div>
+              )}
+              <img
+                src={image.thumbnail || image.url}
+                alt={image.title}
+                onLoad={() => setLoaded(true)}
+                onError={() => setHasError(true)}
+                style={{
+                  width: "100%",
+                  maxHeight: 220,
+                  objectFit: "contain",
+                  display: loaded ? "block" : "none",
+                  margin: "0 auto",
+                }}
+              />
+            </>
           )}
-          <img
-            src={image.thumbnail || image.url}
-            alt={image.title}
-            onLoad={() => setLoaded(true)}
-            style={{
-              width: "100%",
-              maxHeight: 220,
-              objectFit: "contain",
-              display: loaded ? "block" : "none",
-              margin: "0 auto",
-            }}
-          />
         </div>
 
         {/* Info */}

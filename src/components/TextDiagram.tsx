@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 
 interface TextDiagramProps {
   code: string;
@@ -13,6 +13,7 @@ interface TextDiagramProps {
  * as an alternative to Mermaid when graphical rendering isn't needed or desired.
  */
 export default function TextDiagram({ code, title, trigger, diagramType = "auto" }: TextDiagramProps) {
+  const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Detect diagram type if auto
   const detectedType = useMemo(() => {
@@ -56,13 +57,13 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
     }
   }, [code, detectedType]);
 
-  // Trigger label for the badge
+  // Trigger label for the badge without emojis
   const triggerLabel =
     trigger === "correction"
-      ? "📝 Quick Visual"
+      ? "Quick Visual"
       : trigger === "user_request"
-        ? "🔍 Text Diagram"
-        : "💡 Quick Reference";
+        ? "Text Diagram"
+        : "Quick Reference";
 
   const triggerColor =
     trigger === "correction"
@@ -70,13 +71,6 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
       : trigger === "user_request"
         ? { bg: "#eff6ff", text: "#2563eb", border: "#bfdbfe" }
         : { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" };
-
-  const typeIcon = {
-    ascii: "📝",
-    tree: "🌳",
-    table: "📊",
-    arrow: "➡️",
-  }[detectedType] || "📝";
 
   return (
     <div
@@ -130,7 +124,6 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
           }}
         >
           <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span style={{ fontSize: 13 }}>{typeIcon}</span>
             <span
               style={{
                 fontSize: 11,
@@ -160,14 +153,105 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
 
         {/* Diagram Body */}
         <div
+          onClick={() => setIsModalOpen(true)}
+          title="Click to zoom in"
           style={{
             padding: "12px 14px",
             background: "#fefefe",
+            cursor: "zoom-in",
           }}
         >
           {renderedContent}
         </div>
       </div>
+
+      {/* Zoom Dialog Modal Overlay */}
+      {isModalOpen && (
+        <div
+          onClick={() => setIsModalOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 9999,
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(8px)",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: 24,
+            cursor: "zoom-out",
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: "relative",
+              width: "100%",
+              maxWidth: "90vw",
+              maxHeight: "90vh",
+              background: "#fff",
+              borderRadius: 20,
+              boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
+              display: "flex",
+              flexDirection: "column",
+              overflow: "hidden",
+              border: "1px solid #e9d5ff",
+              cursor: "default",
+            }}
+          >
+            {/* Modal Header */}
+            <div
+              style={{
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                padding: "16px 24px",
+                background: "#f9fafb",
+                borderBottom: "1px solid #e5e7eb",
+              }}
+            >
+              <span
+                style={{
+                  fontSize: 16,
+                  fontWeight: 700,
+                  color: "#1e1b4b",
+                }}
+              >
+                {title || "Text Diagram"}
+              </span>
+              <button
+                onClick={() => setIsModalOpen(false)}
+                style={{
+                  background: "transparent",
+                  border: "none",
+                  fontSize: 20,
+                  color: "#6b7280",
+                  cursor: "pointer",
+                  padding: 4,
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  lineHeight: 1,
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Modal Body */}
+            <div
+              style={{
+                padding: 32,
+                overflow: "auto",
+                background: "#ffffff",
+                flex: 1,
+              }}
+            >
+              {renderedContent}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
