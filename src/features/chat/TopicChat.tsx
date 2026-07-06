@@ -462,20 +462,31 @@ export default function TopicChat() {
   });
   const [speakingMessageId, setSpeakingMessageId] = useState<number | string | null>(null);
   const [isListening, setIsListening] = useState(false);
+  const [isWaitingToSend, setIsWaitingToSend] = useState(false);
   const [isSpeechSupported, setIsSpeechSupported] = useState(false);
   const recognitionRef = useRef<any>(null);
   const speakQueueRef = useRef<TopicChatMessage[]>([]);
+  const sendTimeoutRef = useRef<any>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
   // Sync voice enabled to localStorage
+  const isVoiceEnabledRef = useRef(isVoiceEnabled);
   useEffect(() => {
+    isVoiceEnabledRef.current = isVoiceEnabled;
     localStorage.setItem("cloop_voice_enabled", String(isVoiceEnabled));
-    if (!isVoiceEnabled && 'speechSynthesis' in window) {
-      window.speechSynthesis.cancel();
-      speakQueueRef.current = [];
-      setSpeakingMessageId(null);
+    if (!isVoiceEnabled) {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        speakQueueRef.current = [];
+        setSpeakingMessageId(null);
+      }
+      if (sendTimeoutRef.current) {
+        clearTimeout(sendTimeoutRef.current);
+        sendTimeoutRef.current = null;
+        setIsWaitingToSend(false);
+      }
     }
   }, [isVoiceEnabled]);
 
@@ -490,6 +501,9 @@ export default function TopicChat() {
     return () => {
       if ('speechSynthesis' in window) {
         window.speechSynthesis.cancel();
+      }
+      if (sendTimeoutRef.current) {
+        clearTimeout(sendTimeoutRef.current);
       }
     };
   }, []);
@@ -595,6 +609,12 @@ export default function TopicChat() {
     speakNext();
   }, [speakNext]);
 
+  // Keep speakMultipleRef updated with the latest speakMultiple function
+  const speakMultipleRef = useRef(speakMultiple);
+  useEffect(() => {
+    speakMultipleRef.current = speakMultiple;
+  }, [speakMultiple]);
+
   // Ref wrapper for send function to avoid dependency cycles in SpeechRecognition useEffect
   const sendRef = useRef<any>(null);
 
@@ -605,11 +625,12 @@ export default function TopicChat() {
       setIsSpeechSupported(true);
       const rec = new SpeechRecognition();
       rec.continuous = false;
-      rec.interimResults = false;
+      rec.interimResults = true; // Enable real-time updates as the user speaks
       rec.lang = "en-US";
 
       rec.onstart = () => {
         setIsListening(true);
+        setIsWaitingToSend(false);
       };
 
       rec.onend = () => {
@@ -619,6 +640,7 @@ export default function TopicChat() {
       rec.onerror = (e: any) => {
         console.error("Speech recognition error:", e.error);
         setIsListening(false);
+        setIsWaitingToSend(false);
         if (e.error === "not-allowed") {
           toast({
             title: "Microphone Access Denied",
@@ -635,12 +657,38 @@ export default function TopicChat() {
       };
 
       rec.onresult = (event: any) => {
-        const transcript = event.results[0][0].transcript;
-        if (transcript && transcript.trim()) {
-          setInput(transcript);
-          if (sendRef.current) {
-            void sendRef.current(transcript);
+        let interimTranscript = "";
+        let finalTranscript = "";
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            finalTranscript += event.results[i][0].transcript;
+          } else {
+            interimTranscript += event.results[i][0].transcript;
           }
+        }
+
+        const currentText = finalTranscript || interimTranscript;
+        if (currentText && currentText.trim()) {
+          setInput(currentText);
+        }
+
+        if (finalTranscript && finalTranscript.trim()) {
+          // Clear any scheduled send timeout
+          if (sendTimeoutRef.current) {
+            clearTimeout(sendTimeoutRef.current);
+          }
+
+          setInput(finalTranscript);
+          setIsWaitingToSend(true);
+
+          // Wait 1.5 seconds so user can see transcription and edit/cancel if needed
+          sendTimeoutRef.current = setTimeout(() => {
+            setIsWaitingToSend(false);
+            if (sendRef.current) {
+              void sendRef.current(finalTranscript);
+            }
+          }, 1500);
         }
       };
 
@@ -659,6 +707,16 @@ export default function TopicChat() {
   }, [toast]);
 
   const toggleListening = () => {
+    // If waiting to send, click mic to cancel auto-send and start editing
+    if (sendTimeoutRef.current) {
+      clearTimeout(sendTimeoutRef.current);
+      sendTimeoutRef.current = null;
+      setIsWaitingToSend(false);
+      setIsListening(false);
+      setTimeout(() => inputRef.current?.focus(), 50);
+      return;
+    }
+
     if (!recognitionRef.current) return;
 
     if (isListening) {
@@ -743,6 +801,29 @@ export default function TopicChat() {
       setDone(data.topic.is_completed ?? allGoalsDone);
       setBaseTime(data.topic.time_spent_seconds ?? 0);
       setElapsed(0);
+
+      // Automatically speak the trailing AI messages (e.g. initial question) on load if voice is active
+      if (isVoiceEnabledRef.current && normalized.length > 0) {
+        const trailingAiMsgs: TopicChatMessage[] = [];
+        for (let i = normalized.length - 1; i >= 0; i--) {
+          const m = normalized[i];
+          if (m.sender === "ai") {
+            if (m.message_type !== "session_summary" && m.message_type !== "score_prediction") {
+              trailingAiMsgs.unshift(m);
+            }
+          } else {
+            break;
+          }
+        }
+        
+        if (trailingAiMsgs.length > 0) {
+          setTimeout(() => {
+            if (speakMultipleRef.current) {
+              speakMultipleRef.current(trailingAiMsgs);
+            }
+          }, 800); // 800ms delay to allow browser voice lists and component mounts to finalize
+        }
+      }
     } catch (e: unknown) {
       console.error("❌ Failed to load topic chat:", e);
       setError(e instanceof Error ? e.message : "Failed to load");
@@ -1138,23 +1219,49 @@ export default function TopicChat() {
             </div>
           ) : (
             <form
-              onSubmit={(e) => { e.preventDefault(); void send(); }}
+              onSubmit={(e) => {
+                e.preventDefault();
+                if (sendTimeoutRef.current) {
+                  clearTimeout(sendTimeoutRef.current);
+                  sendTimeoutRef.current = null;
+                  setIsWaitingToSend(false);
+                }
+                void send();
+              }}
               className="flex gap-2 sm:gap-3 items-center"
             >
               <input
                 ref={inputRef}
                 type="text"
                 autoFocus
-                placeholder={isListening ? "Listening... Speak now" : "Type your answer…"}
+                placeholder={
+                  isWaitingToSend 
+                    ? "Sending in 1.5s... Click Mic or type to edit" 
+                    : isListening 
+                      ? "Listening... Speak now" 
+                      : "Type your answer…"
+                }
                 value={input}
-                onChange={(e) => setInput(e.target.value)}
+                onChange={(e) => {
+                  setInput(e.target.value);
+                  if (sendTimeoutRef.current) {
+                    clearTimeout(sendTimeoutRef.current);
+                    sendTimeoutRef.current = null;
+                    setIsWaitingToSend(false);
+                  }
+                }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey && !sending) {
                     e.preventDefault();
+                    if (sendTimeoutRef.current) {
+                      clearTimeout(sendTimeoutRef.current);
+                      sendTimeoutRef.current = null;
+                      setIsWaitingToSend(false);
+                    }
                     void send();
                   }
                 }}
-                disabled={sending || isListening}
+                disabled={sending}
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:bg-white transition-all disabled:opacity-60"
               />
               {/* Microphone trigger button */}
@@ -1164,13 +1271,27 @@ export default function TopicChat() {
                   onClick={toggleListening}
                   disabled={sending}
                   className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer ${
-                    isListening
-                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                    isWaitingToSend
+                      ? "bg-amber-500 hover:bg-amber-600 text-white shadow-md animate-pulse"
+                      : isListening
+                        ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
                   }`}
-                  title={isListening ? "Stop listening" : "Talk to AI"}
+                  title={
+                    isWaitingToSend 
+                      ? "Click to cancel auto-send and edit" 
+                      : isListening 
+                        ? "Stop listening" 
+                        : "Talk to AI"
+                  }
                 >
-                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                  {isWaitingToSend ? (
+                    <X className="w-4 h-4" />
+                  ) : isListening ? (
+                    <MicOff className="w-4 h-4" />
+                  ) : (
+                    <Mic className="w-4 h-4" />
+                  )}
                 </button>
               )}
               {/* Stop/Cancel button - returns to session progress */}
@@ -1184,7 +1305,7 @@ export default function TopicChat() {
               </button>
               <button
                 type="submit"
-                disabled={sending || !input.trim() || isListening}
+                disabled={sending || !input.trim()}
                 className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-purple-500 text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow cursor-pointer"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
