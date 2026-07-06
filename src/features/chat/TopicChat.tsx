@@ -4,6 +4,7 @@ import {
   ChevronDown, ChevronUp,
   Clock, Loader2, Send,
   Trophy, X,
+  Mic, MicOff, Volume2, VolumeX,
 } from "lucide-react";
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
@@ -14,6 +15,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
 import MediaCard from "@/components/MediaCard";
+import { useToast } from "@/hooks/use-toast";
 
 // ─── Small helpers ────────────────────────────────────────────────────────────
 
@@ -85,7 +87,17 @@ function UserBubble({ msg }: { msg: TopicChatMessage }) {
   );
 }
 
-function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: string) => void }) {
+function AIBubble({ 
+  msg, 
+  onOption, 
+  onSpeak, 
+  isSpeaking 
+}: { 
+  msg: TopicChatMessage; 
+  onOption: (v: string) => void;
+  onSpeak?: (msg: TopicChatMessage) => void;
+  isSpeaking?: boolean;
+}) {
   return (
     <div style={{ display: "flex", alignItems: "flex-end", gap: 8, marginBottom: 16 }}>
       {/* Avatar */}
@@ -96,12 +108,44 @@ function AIBubble({ msg, onOption }: { msg: TopicChatMessage; onOption: (v: stri
         color: "#fff", fontSize: 10, fontWeight: 700,
       }}>C.</div>
       <div style={{ maxWidth: "65%" }}>
-        <div style={{
-          padding: "10px 16px", borderRadius: "18px 18px 18px 4px",
-          background: "#f3f4f6", color: "#111827",
-          fontSize: 14, lineHeight: 1.55,
-        }}>
-          {msg.message}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <div style={{
+            padding: "10px 16px", borderRadius: "18px 18px 18px 4px",
+            background: "#f3f4f6", color: "#111827",
+            fontSize: 14, lineHeight: 1.55,
+          }}>
+            {msg.message}
+          </div>
+          {onSpeak && msg.message && msg.message.trim() && (
+            <button
+              type="button"
+              onClick={() => onSpeak(msg)}
+              style={{
+                background: "transparent",
+                border: "none",
+                color: isSpeaking ? "#7c3aed" : "#9ca3af",
+                cursor: "pointer",
+                padding: "6px",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                borderRadius: "50%",
+                transition: "all 0.2s",
+              }}
+              className="hover:bg-purple-100/50 hover:text-purple-600 focus:outline-none shrink-0"
+              title={isSpeaking ? "Stop listening" : "Listen to response"}
+            >
+              {isSpeaking ? (
+                <span className="flex gap-0.5 items-center justify-center h-4 w-4">
+                  <span className="w-0.5 h-2 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-0.5 h-3.5 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-0.5 h-2.5 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '300ms' }} />
+                </span>
+              ) : (
+                <Volume2 className="w-4 h-4" />
+              )}
+            </button>
+          )}
         </div>
         {msg.options && msg.options.length > 0 && (
           <div style={{ marginTop: 8, display: "flex", flexDirection: "column", gap: 6 }}>
@@ -410,8 +454,227 @@ export default function TopicChat() {
   const [elapsed,   setElapsed]   = useState(0);
   const [apiTopicTitle, setApiTopicTitle] = useState<string>("");
 
+  // Voice Mode States
+  const { toast } = useToast();
+  const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(() => {
+    const saved = localStorage.getItem("cloop_voice_enabled");
+    return saved !== null ? saved === "true" : true; // Default to true if not set
+  });
+  const [speakingMessageId, setSpeakingMessageId] = useState<number | string | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
+  const recognitionRef = useRef<any>(null);
+  const speakQueueRef = useRef<TopicChatMessage[]>([]);
+
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
+
+  // Sync voice enabled to localStorage
+  useEffect(() => {
+    localStorage.setItem("cloop_voice_enabled", String(isVoiceEnabled));
+    if (!isVoiceEnabled && 'speechSynthesis' in window) {
+      window.speechSynthesis.cancel();
+      speakQueueRef.current = [];
+      setSpeakingMessageId(null);
+    }
+  }, [isVoiceEnabled]);
+
+  // Clean-up voice synthesis on unmount & populate voices for Chrome/Edge
+  useEffect(() => {
+    if ('speechSynthesis' in window) {
+      window.speechSynthesis.getVoices();
+      window.speechSynthesis.onvoiceschanged = () => {
+        window.speechSynthesis.getVoices();
+      };
+    }
+    return () => {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, []);
+
+  const speakNext = useCallback(() => {
+    if (!('speechSynthesis' in window)) return;
+    
+    if (speakQueueRef.current.length === 0) {
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    const msg = speakQueueRef.current.shift()!;
+    const cleanText = msg.message
+      .replace(/<[^>]+>/g, "") // strip HTML tags
+      .replace(/\*\*([^*]+)\*\*/g, "$1") // strip markdown bold
+      .replace(/_([^_]+)_/g, "$1") // strip markdown italic
+      .trim();
+
+    if (!cleanText) {
+      speakNext();
+      return;
+    }
+
+    const utterance = new SpeechSynthesisUtterance(cleanText);
+    
+    // Prioritize natural sounding and clear voices on Windows/Chrome/Edge
+    const voices = window.speechSynthesis.getVoices();
+    let voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Natural"));
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Zira")); // Microsoft Zira (Female, clear)
+    }
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google") && v.name.includes("US")); // Google US English
+    }
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("David")); // Microsoft David (Male, clear)
+    }
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google"));
+    }
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Microsoft"));
+    }
+    if (!voice) {
+      voice = voices.find(v => v.lang.startsWith("en"));
+    }
+    
+    if (voice) {
+      utterance.voice = voice;
+    }
+
+    utterance.rate = 1.0;
+    utterance.pitch = 1.05; // Slightly higher pitch for clear educational speech
+
+    utterance.onend = () => {
+      speakNext();
+    };
+    utterance.onerror = (e) => {
+      console.error("Speech utterance error:", e);
+      speakNext();
+    };
+
+    setSpeakingMessageId(msg.id);
+    window.speechSynthesis.speak(utterance);
+  }, []);
+
+  const speak = useCallback((msg: TopicChatMessage) => {
+    if (!('speechSynthesis' in window)) return;
+
+    // Toggle off if clicking the currently speaking message
+    if (speakingMessageId === msg.id) {
+      window.speechSynthesis.cancel();
+      speakQueueRef.current = [];
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    window.speechSynthesis.cancel();
+    speakQueueRef.current = [msg];
+    speakNext();
+  }, [speakingMessageId, speakNext]);
+
+  const speakMultiple = useCallback((msgs: TopicChatMessage[]) => {
+    if (!('speechSynthesis' in window)) return;
+
+    window.speechSynthesis.cancel();
+
+    // Filter AI text messages
+    const filtered = msgs.filter(m => 
+      m.message_type !== "session_summary" && 
+      m.message_type !== "score_prediction" && 
+      m.message && 
+      m.message.trim()
+    );
+
+    if (filtered.length === 0) {
+      setSpeakingMessageId(null);
+      return;
+    }
+
+    speakQueueRef.current = [...filtered];
+    speakNext();
+  }, [speakNext]);
+
+  // Ref wrapper for send function to avoid dependency cycles in SpeechRecognition useEffect
+  const sendRef = useRef<any>(null);
+
+  // Initialize speech recognition
+  useEffect(() => {
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (SpeechRecognition) {
+      setIsSpeechSupported(true);
+      const rec = new SpeechRecognition();
+      rec.continuous = false;
+      rec.interimResults = false;
+      rec.lang = "en-US";
+
+      rec.onstart = () => {
+        setIsListening(true);
+      };
+
+      rec.onend = () => {
+        setIsListening(false);
+      };
+
+      rec.onerror = (e: any) => {
+        console.error("Speech recognition error:", e.error);
+        setIsListening(false);
+        if (e.error === "not-allowed") {
+          toast({
+            title: "Microphone Access Denied",
+            description: "Please enable microphone permission in your browser settings to use voice input.",
+            variant: "destructive",
+          });
+        } else if (e.error !== "no-speech") {
+          toast({
+            title: "Voice Error",
+            description: `Speech recognition error: ${e.error}`,
+            variant: "destructive",
+          });
+        }
+      };
+
+      rec.onresult = (event: any) => {
+        const transcript = event.results[0][0].transcript;
+        if (transcript && transcript.trim()) {
+          setInput(transcript);
+          if (sendRef.current) {
+            void sendRef.current(transcript);
+          }
+        }
+      };
+
+      recognitionRef.current = rec;
+    }
+
+    return () => {
+      if (recognitionRef.current) {
+        try {
+          recognitionRef.current.abort();
+        } catch {
+          // ignore
+        }
+      }
+    };
+  }, [toast]);
+
+  const toggleListening = () => {
+    if (!recognitionRef.current) return;
+
+    if (isListening) {
+      recognitionRef.current.stop();
+    } else {
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+        setSpeakingMessageId(null);
+      }
+      try {
+        recognitionRef.current.start();
+      } catch (e) {
+        console.error("Failed to start speech recognition:", e);
+      }
+    }
+  };
 
   // Timer
   useEffect(() => {
@@ -566,6 +829,15 @@ export default function TopicChat() {
         const seen = new Set<number>();
         return merged.filter((m) => { if (seen.has(m.id)) return false; seen.add(m.id); return true; });
       });
+
+      // Automatically speak the AI response if Voice Mode is enabled
+      if (isVoiceEnabled && aiMsgs.length > 0) {
+        // Provide a tiny delay to ensure state and DOM updates are processed
+        setTimeout(() => {
+          speakMultiple(aiMsgs);
+        }, 100);
+      }
+
       inputRef.current?.focus();
     } catch (err) {
       console.error("❌ Failed to send message:", err);
@@ -577,6 +849,11 @@ export default function TopicChat() {
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   };
+
+  // Keep sendRef updated with the latest send function
+  useEffect(() => {
+    sendRef.current = send;
+  }, [send]);
 
   const renderMsg = (msg: TopicChatMessage) => {
     if (msg.message_type === "score_prediction") return null;
@@ -768,7 +1045,7 @@ export default function TopicChat() {
     }
 
     // Default to AI for safety (handles missing sender)
-    return <AIBubble key={msg.id} msg={msg} onOption={(v) => send(v)} />;
+    return <AIBubble key={msg.id} msg={msg} onOption={(v) => send(v)} onSpeak={speak} isSpeaking={speakingMessageId === msg.id} />;
   };
 
   // ── Render ──
@@ -788,6 +1065,18 @@ export default function TopicChat() {
           )}
         </div>
         <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <button
+            onClick={() => setIsVoiceEnabled((p) => !p)}
+            className={`flex items-center gap-1.5 rounded-full px-2.5 sm:px-3 py-1 text-xs font-semibold transition-all cursor-pointer ${
+              isVoiceEnabled 
+                ? "bg-purple-600 hover:bg-purple-700 text-white shadow-sm" 
+                : "bg-purple-100 hover:bg-purple-200 text-purple-700"
+            }`}
+            title={isVoiceEnabled ? "Mute voice assistant (read aloud)" : "Unmute voice assistant (read aloud)"}
+          >
+            {isVoiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
+            <span className="hidden sm:inline">{isVoiceEnabled ? "Voice On" : "Voice Off"}</span>
+          </button>
           <div className="flex items-center gap-1.5 bg-purple-100 rounded-full px-2.5 sm:px-3 py-1">
             <Clock className="w-3 h-3 sm:w-3.5 sm:h-3.5 text-purple-600" />
             <span className="text-xs font-bold text-purple-700 tabular-nums">
@@ -856,7 +1145,7 @@ export default function TopicChat() {
                 ref={inputRef}
                 type="text"
                 autoFocus
-                placeholder="Type your answer…"
+                placeholder={isListening ? "Listening... Speak now" : "Type your answer…"}
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -865,9 +1154,25 @@ export default function TopicChat() {
                     void send();
                   }
                 }}
-                disabled={sending}
+                disabled={sending || isListening}
                 className="flex-1 rounded-xl border border-gray-200 bg-gray-50 px-3 sm:px-4 py-2.5 text-sm outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 focus:bg-white transition-all disabled:opacity-60"
               />
+              {/* Microphone trigger button */}
+              {isSpeechSupported && (
+                <button
+                  type="button"
+                  onClick={toggleListening}
+                  disabled={sending}
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer ${
+                    isListening
+                      ? "bg-red-500 hover:bg-red-600 text-white animate-pulse shadow-md"
+                      : "bg-gray-100 hover:bg-gray-200 text-gray-600 hover:text-gray-800"
+                  }`}
+                  title={isListening ? "Stop listening" : "Talk to AI"}
+                >
+                  {isListening ? <MicOff className="w-4 h-4" /> : <Mic className="w-4 h-4" />}
+                </button>
+              )}
               {/* Stop/Cancel button - returns to session progress */}
               <button
                 type="button"
@@ -879,7 +1184,7 @@ export default function TopicChat() {
               </button>
               <button
                 type="submit"
-                disabled={sending || !input.trim()}
+                disabled={sending || !input.trim() || isListening}
                 className="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-purple-500 text-white flex items-center justify-center shrink-0 disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-md transition-shadow cursor-pointer"
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

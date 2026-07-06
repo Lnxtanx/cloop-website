@@ -53,6 +53,18 @@ export interface TopicChatMessage {
     title: string;
     trigger: "correction" | "teaching" | "user_request";
   } | null;
+  videos?: Array<{
+    id: string;
+    thumbnail?: string;
+    url: string;
+    embedUrl?: string;
+    channel?: string;
+  }>;
+  images?: Array<{
+    thumbnail?: string;
+    url: string;
+    source?: string;
+  }>;
   created_at: string;
 }
 
