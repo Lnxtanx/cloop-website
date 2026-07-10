@@ -530,6 +530,10 @@ export default function TopicChat() {
       // Fetch high-quality Indian English female voice (priya) from our backend
       const audioBase64 = await convertTextToSpeech(cleanText, "priya", "en-IN");
       
+      if (!audioBase64) {
+        throw new Error("No audio data returned from server");
+      }
+
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
@@ -544,14 +548,20 @@ export default function TopicChat() {
       
       audio.onerror = (e) => {
         console.error("Sarvam audio playback error:", e);
-        speakNext();
+        // Wait 1 second before trying next to prevent fast-fail loops
+        setTimeout(() => {
+          speakNext();
+        }, 1000);
       };
       
       await audio.play();
     } catch (e) {
       console.error("Sarvam TTS synthesis failed:", e);
       setSpeakingMessageId(null);
-      speakNext();
+      // Wait 1 second before trying next to prevent fast-fail loops
+      setTimeout(() => {
+        speakNext();
+      }, 1000);
     }
   }, []);
 
