@@ -11,6 +11,7 @@ import {
   TopicChatMessage, TopicGoal, TopicChatResponse,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
+import { convertTextToSpeech } from "@/lib/api/sarvam";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
@@ -467,6 +468,7 @@ export default function TopicChat() {
   const recognitionRef = useRef<any>(null);
   const speakQueueRef = useRef<TopicChatMessage[]>([]);
   const sendTimeoutRef = useRef<any>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
@@ -477,11 +479,12 @@ export default function TopicChat() {
     isVoiceEnabledRef.current = isVoiceEnabled;
     localStorage.setItem("cloop_voice_enabled", String(isVoiceEnabled));
     if (!isVoiceEnabled) {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        speakQueueRef.current = [];
-        setSpeakingMessageId(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
+      speakQueueRef.current = [];
+      setSpeakingMessageId(null);
       if (sendTimeoutRef.current) {
         clearTimeout(sendTimeoutRef.current);
         sendTimeoutRef.current = null;
@@ -490,17 +493,12 @@ export default function TopicChat() {
     }
   }, [isVoiceEnabled]);
 
-  // Clean-up voice synthesis on unmount & populate voices for Chrome/Edge
+  // Clean-up voice synthesis on unmount
   useEffect(() => {
-    if ('speechSynthesis' in window) {
-      window.speechSynthesis.getVoices();
-      window.speechSynthesis.onvoiceschanged = () => {
-        window.speechSynthesis.getVoices();
-      };
-    }
     return () => {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
       if (sendTimeoutRef.current) {
         clearTimeout(sendTimeoutRef.current);
@@ -508,9 +506,7 @@ export default function TopicChat() {
     };
   }, []);
 
-  const speakNext = useCallback(() => {
-    if (!('speechSynthesis' in window)) return;
-    
+  const speakNext = useCallback(async () => {
     if (speakQueueRef.current.length === 0) {
       setSpeakingMessageId(null);
       return;
@@ -528,69 +524,62 @@ export default function TopicChat() {
       return;
     }
 
-    const utterance = new SpeechSynthesisUtterance(cleanText);
-    
-    // Prioritize natural sounding and clear voices on Windows/Chrome/Edge
-    const voices = window.speechSynthesis.getVoices();
-    let voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Natural"));
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Zira")); // Microsoft Zira (Female, clear)
-    }
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google") && v.name.includes("US")); // Google US English
-    }
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("David")); // Microsoft David (Male, clear)
-    }
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Google"));
-    }
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en") && v.name.includes("Microsoft"));
-    }
-    if (!voice) {
-      voice = voices.find(v => v.lang.startsWith("en"));
-    }
-    
-    if (voice) {
-      utterance.voice = voice;
-    }
+    try {
+      setSpeakingMessageId(msg.id);
+      
+      // Fetch high-quality Indian English female voice (priya) from our backend
+      const audioBase64 = await convertTextToSpeech(cleanText, "priya", "en-IN");
+      
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
 
-    utterance.rate = 1.0;
-    utterance.pitch = 1.05; // Slightly higher pitch for clear educational speech
-
-    utterance.onend = () => {
+      const audio = new Audio(`data:audio/wav;base64,${audioBase64}`);
+      audioRef.current = audio;
+      
+      audio.onended = () => {
+        speakNext();
+      };
+      
+      audio.onerror = (e) => {
+        console.error("Sarvam audio playback error:", e);
+        speakNext();
+      };
+      
+      await audio.play();
+    } catch (e) {
+      console.error("Sarvam TTS synthesis failed:", e);
+      setSpeakingMessageId(null);
       speakNext();
-    };
-    utterance.onerror = (e) => {
-      console.error("Speech utterance error:", e);
-      speakNext();
-    };
-
-    setSpeakingMessageId(msg.id);
-    window.speechSynthesis.speak(utterance);
+    }
   }, []);
 
   const speak = useCallback((msg: TopicChatMessage) => {
-    if (!('speechSynthesis' in window)) return;
-
     // Toggle off if clicking the currently speaking message
     if (speakingMessageId === msg.id) {
-      window.speechSynthesis.cancel();
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
+      }
       speakQueueRef.current = [];
       setSpeakingMessageId(null);
       return;
     }
 
-    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
     speakQueueRef.current = [msg];
     speakNext();
   }, [speakingMessageId, speakNext]);
 
   const speakMultiple = useCallback((msgs: TopicChatMessage[]) => {
-    if (!('speechSynthesis' in window)) return;
-
-    window.speechSynthesis.cancel();
+    if (audioRef.current) {
+      audioRef.current.pause();
+      audioRef.current = null;
+    }
 
     // Filter AI text messages
     const filtered = msgs.filter(m => 
@@ -626,7 +615,7 @@ export default function TopicChat() {
       const rec = new SpeechRecognition();
       rec.continuous = false;
       rec.interimResults = true; // Enable real-time updates as the user speaks
-      rec.lang = "en-US";
+      rec.lang = "en-IN"; // Target Indian English accent specifically
 
       rec.onstart = () => {
         setIsListening(true);
@@ -722,10 +711,11 @@ export default function TopicChat() {
     if (isListening) {
       recognitionRef.current.stop();
     } else {
-      if ('speechSynthesis' in window) {
-        window.speechSynthesis.cancel();
-        setSpeakingMessageId(null);
+      if (audioRef.current) {
+        audioRef.current.pause();
+        audioRef.current = null;
       }
+      setSpeakingMessageId(null);
       try {
         recognitionRef.current.start();
       } catch (e) {

@@ -22,7 +22,7 @@ function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigat
   isPractice: boolean;
   userInitials: string;
   unreadCount: number;
-  navigate: (path: string) => void;
+  navigate: (path: string | number) => void;
 }) {
   const { toggleSidebar, openMobile } = useSidebar();
   const isMobile = useIsMobile();
@@ -140,6 +140,15 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
         return;
       }
       const payload = JSON.parse(atob(token.split(".")[1]));
+
+      // Check if token is expired
+      if (payload.exp && payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem("cloop_token");
+        localStorage.removeItem("cloop_user");
+        navigate("/login", { replace: true });
+        return;
+      }
+
       const name: string = payload.name ?? payload.email ?? "";
       const parts = name.trim().split(/\s+/);
       if (parts.length >= 2) {
@@ -148,7 +157,9 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
         setUserInitials(name.slice(0, 2).toUpperCase() || "U");
       }
     } catch {
-      navigate("/login");
+      localStorage.removeItem("cloop_token");
+      localStorage.removeItem("cloop_user");
+      navigate("/login", { replace: true });
     }
   }, [navigate]);
 
