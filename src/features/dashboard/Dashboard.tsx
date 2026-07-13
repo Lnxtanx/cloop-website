@@ -49,7 +49,7 @@ const Dashboard = () => {
     setError("");
     const token = localStorage.getItem("cloop_token");
     if (!token) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 

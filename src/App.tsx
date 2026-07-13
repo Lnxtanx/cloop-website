@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, useLocation } from "react-router-dom";
+import { BrowserRouter, Route, Routes, useLocation, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -10,7 +10,7 @@ import Contact from "./features/landing/Contact";
 import Privacy from "./features/landing/Privacy";
 import Support from "./features/landing/Support";
 import Terms from "./features/landing/Terms";
-import Login from "./features/auth/Login";
+
 import Signup from "./features/auth/Signup";
 import Dashboard from "./features/dashboard/Dashboard";
 import Chapters from "./features/subjects/Chapters";
@@ -19,6 +19,7 @@ import TopicChat from "./features/chat/TopicChat";
 import Sessions from "./features/sessions/Sessions";
 import Statistics from "./features/statistics/Statistics";
 import Chat from "./features/chat/Chat";
+import VoiceChat from "./features/chat/VoiceChat";
 import Profile from "./features/profile/Profile";
 import PracticeTest from "./features/practice/PracticeTest";
 import PracticeDashboard from "./features/practice/PracticeDashboard";
@@ -56,7 +57,7 @@ const App = () => {
               <Route path="/privacy" element={<Privacy />} />
               <Route path="/support" element={<Support />} />
               <Route path="/terms" element={<Terms />} />
-              <Route path="/login" element={<Login />} />
+              <Route path="/login" element={<Navigate to="/" replace />} />
               <Route path="/signup" element={<Signup />} />
               <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/dashboard/practice" element={<PracticeDashboard />} />
@@ -66,6 +67,7 @@ const App = () => {
               <Route path="/dashboard/sessions" element={<Sessions />} />
               <Route path="/dashboard/statistics" element={<Statistics />} />
               <Route path="/dashboard/chat" element={<Chat />} />
+              <Route path="/dashboard/voice-chat" element={<VoiceChat />} />
               <Route path="/dashboard/profile" element={<Profile />} />
               <Route path="/dashboard/test-your-self" element={<PracticeTest />} />
               <Route path="/dashboard/notifications" element={<Notifications />} />

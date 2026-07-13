@@ -21,7 +21,13 @@ export const DownloadAppSection = (): JSX.Element => {
 
         <nav className="hidden md:flex items-center justify-end gap-9 flex-1">
           <button
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              navigate("/");
+              setTimeout(() => {
+                document.getElementById("guest-id")?.focus();
+                document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
+              }, 100);
+            }}
             className="[font-family:'Inter',Helvetica] font-medium text-[#110c1c] text-[18px] md:text-[21.7px] tracking-[0] leading-[32.5px] whitespace-nowrap hover:text-[#8d33ff] transition-colors"
           >
             Login

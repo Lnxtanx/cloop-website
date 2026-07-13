@@ -34,13 +34,13 @@ const Profile = () => {
   const logout = () => {
     localStorage.removeItem("cloop_token");
     localStorage.removeItem("cloop_user");
-    navigate("/login");
+    navigate("/");
   };
 
   useEffect(() => {
     const token = localStorage.getItem("cloop_token");
     if (!token) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 

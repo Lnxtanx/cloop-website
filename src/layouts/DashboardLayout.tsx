@@ -99,7 +99,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
   const logoutTimeout = useCallback(() => {
     localStorage.removeItem("cloop_token");
     localStorage.removeItem("cloop_user");
-    navigate("/login", { replace: true });
+    navigate("/", { replace: true });
   }, [navigate]);
 
   useEffect(() => {
@@ -136,7 +136,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
     try {
       const token = localStorage.getItem("cloop_token");
       if (!token) {
-        navigate("/login");
+        navigate("/");
         return;
       }
       const payload = JSON.parse(atob(token.split(".")[1]));
@@ -145,7 +145,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
       if (payload.exp && payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("cloop_token");
         localStorage.removeItem("cloop_user");
-        navigate("/login", { replace: true });
+        navigate("/", { replace: true });
         return;
       }
 
@@ -159,7 +159,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
     } catch {
       localStorage.removeItem("cloop_token");
       localStorage.removeItem("cloop_user");
-      navigate("/login", { replace: true });
+      navigate("/", { replace: true });
     }
   }, [navigate]);
 

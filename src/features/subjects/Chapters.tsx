@@ -65,7 +65,7 @@ const Chapters = () => {
     const token = localStorage.getItem("cloop_token");
 
     if (!token || !subjectId) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 

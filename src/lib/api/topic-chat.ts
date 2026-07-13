@@ -65,6 +65,7 @@ export interface TopicChatMessage {
     url: string;
     source?: string;
   }>;
+  audio?: string;
   created_at: string;
 }
 
@@ -250,6 +251,7 @@ export const sendTopicChatMessage = async (
   messageData: {
     message: string;
     session_time_seconds?: number;
+    voice_enabled?: boolean;
   },
   options?: FetchOptions
 ): Promise<SendMessageResponse> => {

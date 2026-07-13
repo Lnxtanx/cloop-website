@@ -11,7 +11,7 @@ import {
   TopicChatMessage, TopicGoal, TopicChatResponse,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
-import { convertTextToSpeech } from "@/lib/api/sarvam";
+import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
@@ -457,282 +457,38 @@ export default function TopicChat() {
 
   // Voice Mode States
   const { toast } = useToast();
-  const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem("cloop_voice_enabled");
-    return saved !== null ? saved === "true" : true; // Default to true if not set
-  });
-  const [speakingMessageId, setSpeakingMessageId] = useState<number | string | null>(null);
-  const [isListening, setIsListening] = useState(false);
-  const [isWaitingToSend, setIsWaitingToSend] = useState(false);
-  const [isSpeechSupported, setIsSpeechSupported] = useState(false);
-  const recognitionRef = useRef<any>(null);
-  const speakQueueRef = useRef<TopicChatMessage[]>([]);
-  const sendTimeoutRef = useRef<any>(null);
-  const audioRef = useRef<HTMLAudioElement | null>(null);
-
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef  = useRef<HTMLInputElement>(null);
 
-  // Sync voice enabled to localStorage
+  const {
+    isVoiceEnabled,
+    setIsVoiceEnabled,
+    speakingMessageId,
+    isListening,
+    isWaitingToSend,
+    isSpeechSupported,
+    speak,
+    speakMultiple,
+    toggleListening,
+    cancelSpeech,
+    cancelAutoSend,
+  } = useVoiceAssistant({
+    setInput,
+    inputRef,
+    onAutoSend: (text) => {
+      void send(text);
+    },
+  });
+
   const isVoiceEnabledRef = useRef(isVoiceEnabled);
   useEffect(() => {
     isVoiceEnabledRef.current = isVoiceEnabled;
-    localStorage.setItem("cloop_voice_enabled", String(isVoiceEnabled));
-    if (!isVoiceEnabled) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      speakQueueRef.current = [];
-      setSpeakingMessageId(null);
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-        sendTimeoutRef.current = null;
-        setIsWaitingToSend(false);
-      }
-    }
   }, [isVoiceEnabled]);
 
-  // Clean-up voice synthesis on unmount
-  useEffect(() => {
-    return () => {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      if (sendTimeoutRef.current) {
-        clearTimeout(sendTimeoutRef.current);
-      }
-    };
-  }, []);
-
-  const speakNext = useCallback(async () => {
-    if (speakQueueRef.current.length === 0) {
-      setSpeakingMessageId(null);
-      return;
-    }
-
-    const msg = speakQueueRef.current.shift()!;
-    const cleanText = msg.message
-      .replace(/<[^>]+>/g, "") // strip HTML tags
-      .replace(/\*\*([^*]+)\*\*/g, "$1") // strip markdown bold
-      .replace(/_([^_]+)_/g, "$1") // strip markdown italic
-      .trim();
-
-    if (!cleanText) {
-      speakNext();
-      return;
-    }
-
-    try {
-      setSpeakingMessageId(msg.id);
-      
-      // Fetch high-quality Indian English female voice (priya) from our backend
-      const audioBase64 = await convertTextToSpeech(cleanText, "priya", "en-IN");
-      
-      if (!audioBase64) {
-        throw new Error("No audio data returned from server");
-      }
-
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-
-      const audio = new Audio(`data:audio/wav;base64,${audioBase64}`);
-      audioRef.current = audio;
-      
-      audio.onended = () => {
-        speakNext();
-      };
-      
-      audio.onerror = (e) => {
-        console.error("Sarvam audio playback error:", e);
-        // Wait 1 second before trying next to prevent fast-fail loops
-        setTimeout(() => {
-          speakNext();
-        }, 1000);
-      };
-      
-      await audio.play();
-    } catch (e) {
-      console.error("Sarvam TTS synthesis failed:", e);
-      setSpeakingMessageId(null);
-      // Wait 1 second before trying next to prevent fast-fail loops
-      setTimeout(() => {
-        speakNext();
-      }, 1000);
-    }
-  }, []);
-
-  const speak = useCallback((msg: TopicChatMessage) => {
-    // Toggle off if clicking the currently speaking message
-    if (speakingMessageId === msg.id) {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      speakQueueRef.current = [];
-      setSpeakingMessageId(null);
-      return;
-    }
-
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-    speakQueueRef.current = [msg];
-    speakNext();
-  }, [speakingMessageId, speakNext]);
-
-  const speakMultiple = useCallback((msgs: TopicChatMessage[]) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current = null;
-    }
-
-    // Filter AI text messages
-    const filtered = msgs.filter(m => 
-      m.message_type !== "session_summary" && 
-      m.message_type !== "score_prediction" && 
-      m.message && 
-      m.message.trim()
-    );
-
-    if (filtered.length === 0) {
-      setSpeakingMessageId(null);
-      return;
-    }
-
-    speakQueueRef.current = [...filtered];
-    speakNext();
-  }, [speakNext]);
-
-  // Keep speakMultipleRef updated with the latest speakMultiple function
   const speakMultipleRef = useRef(speakMultiple);
   useEffect(() => {
     speakMultipleRef.current = speakMultiple;
   }, [speakMultiple]);
-
-  // Ref wrapper for send function to avoid dependency cycles in SpeechRecognition useEffect
-  const sendRef = useRef<any>(null);
-
-  // Initialize speech recognition
-  useEffect(() => {
-    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (SpeechRecognition) {
-      setIsSpeechSupported(true);
-      const rec = new SpeechRecognition();
-      rec.continuous = false;
-      rec.interimResults = true; // Enable real-time updates as the user speaks
-      rec.lang = "en-IN"; // Target Indian English accent specifically
-
-      rec.onstart = () => {
-        setIsListening(true);
-        setIsWaitingToSend(false);
-      };
-
-      rec.onend = () => {
-        setIsListening(false);
-      };
-
-      rec.onerror = (e: any) => {
-        console.error("Speech recognition error:", e.error);
-        setIsListening(false);
-        setIsWaitingToSend(false);
-        if (e.error === "not-allowed") {
-          toast({
-            title: "Microphone Access Denied",
-            description: "Please enable microphone permission in your browser settings to use voice input.",
-            variant: "destructive",
-          });
-        } else if (e.error !== "no-speech") {
-          toast({
-            title: "Voice Error",
-            description: `Speech recognition error: ${e.error}`,
-            variant: "destructive",
-          });
-        }
-      };
-
-      rec.onresult = (event: any) => {
-        let interimTranscript = "";
-        let finalTranscript = "";
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-
-        const currentText = finalTranscript || interimTranscript;
-        if (currentText && currentText.trim()) {
-          setInput(currentText);
-        }
-
-        if (finalTranscript && finalTranscript.trim()) {
-          // Clear any scheduled send timeout
-          if (sendTimeoutRef.current) {
-            clearTimeout(sendTimeoutRef.current);
-          }
-
-          setInput(finalTranscript);
-          setIsWaitingToSend(true);
-
-          // Wait 1.5 seconds so user can see transcription and edit/cancel if needed
-          sendTimeoutRef.current = setTimeout(() => {
-            setIsWaitingToSend(false);
-            if (sendRef.current) {
-              void sendRef.current(finalTranscript);
-            }
-          }, 1500);
-        }
-      };
-
-      recognitionRef.current = rec;
-    }
-
-    return () => {
-      if (recognitionRef.current) {
-        try {
-          recognitionRef.current.abort();
-        } catch {
-          // ignore
-        }
-      }
-    };
-  }, [toast]);
-
-  const toggleListening = () => {
-    // If waiting to send, click mic to cancel auto-send and start editing
-    if (sendTimeoutRef.current) {
-      clearTimeout(sendTimeoutRef.current);
-      sendTimeoutRef.current = null;
-      setIsWaitingToSend(false);
-      setIsListening(false);
-      setTimeout(() => inputRef.current?.focus(), 50);
-      return;
-    }
-
-    if (!recognitionRef.current) return;
-
-    if (isListening) {
-      recognitionRef.current.stop();
-    } else {
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current = null;
-      }
-      setSpeakingMessageId(null);
-      try {
-        recognitionRef.current.start();
-      } catch (e) {
-        console.error("Failed to start speech recognition:", e);
-      }
-    }
-  };
 
   // Timer
   useEffect(() => {
@@ -835,7 +591,7 @@ export default function TopicChat() {
 
   useEffect(() => {
     const token = localStorage.getItem("cloop_token");
-    if (!token || !topicId) { navigate("/login"); return; }
+    if (!token || !topicId) { navigate("/"); return; }
     void load();
   }, [topicId, navigate, load]);
 
@@ -852,7 +608,11 @@ export default function TopicChat() {
     try {
       const res: SendMessageResponse = await sendTopicChatMessage(
         Number(topicId!),
-        { message: msg, session_time_seconds: baseTime + elapsed }
+        { 
+          message: msg, 
+          session_time_seconds: baseTime + elapsed,
+          voice_enabled: isVoiceEnabled
+        }
       );
 
       if (res.goals) {
@@ -931,10 +691,7 @@ export default function TopicChat() {
     }
   };
 
-  // Keep sendRef updated with the latest send function
-  useEffect(() => {
-    sendRef.current = send;
-  }, [send]);
+
 
   const renderMsg = (msg: TopicChatMessage) => {
     if (msg.message_type === "score_prediction") return null;
@@ -1221,11 +978,7 @@ export default function TopicChat() {
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                if (sendTimeoutRef.current) {
-                  clearTimeout(sendTimeoutRef.current);
-                  sendTimeoutRef.current = null;
-                  setIsWaitingToSend(false);
-                }
+                cancelAutoSend();
                 void send();
               }}
               className="flex gap-2 sm:gap-3 items-center"
@@ -1244,20 +997,12 @@ export default function TopicChat() {
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
-                  if (sendTimeoutRef.current) {
-                    clearTimeout(sendTimeoutRef.current);
-                    sendTimeoutRef.current = null;
-                    setIsWaitingToSend(false);
-                  }
+                  cancelAutoSend();
                 }}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !e.shiftKey && !sending) {
                     e.preventDefault();
-                    if (sendTimeoutRef.current) {
-                      clearTimeout(sendTimeoutRef.current);
-                      sendTimeoutRef.current = null;
-                      setIsWaitingToSend(false);
-                    }
+                    cancelAutoSend();
                     void send();
                   }
                 }}

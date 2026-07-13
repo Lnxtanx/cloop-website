@@ -44,7 +44,7 @@ const Topics = () => {
     const user = localStorage.getItem("cloop_user");
 
     if (!token || !user || !chapterId) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 
@@ -52,7 +52,7 @@ const Topics = () => {
     const selectedUserId = parsedUser?.user_id;
 
     if (!selectedUserId) {
-      navigate("/login");
+      navigate("/");
       return;
     }
 

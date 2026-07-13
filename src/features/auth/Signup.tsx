@@ -267,7 +267,7 @@ const Signup = () => {
         </Link>
 
         <Link 
-          to="/login" 
+          to="/" 
           className="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
         >
           Log in
@@ -359,7 +359,7 @@ const Signup = () => {
                   ⚠️ Save this ID to login next time
                 </p>
                 <Button
-                  onClick={() => navigate("/login")}
+                  onClick={() => navigate("/")}
                   className="w-full h-11 sm:h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base"
                 >
                   Continue to Login

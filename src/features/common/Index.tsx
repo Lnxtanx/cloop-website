@@ -79,7 +79,7 @@ const Index = () => {
             <a href="#testimonials" className="text-sm font-medium text-gray-600 hover:text-purple-600 transition-colors">Testimonials</a>
           </div>
           <div className="hidden md:flex items-center gap-3">
-            <Link to="/login">
+            <Link to="/">
               <Button variant="ghost" size="sm" className="text-gray-700 hover:text-purple-600 hover:bg-purple-50">Log in</Button>
             </Link>
             <Link to="/signup">
@@ -99,7 +99,7 @@ const Index = () => {
             <a href="#features" className="block text-sm font-medium text-gray-600 hover:text-purple-600">Features</a>
             <a href="#testimonials" className="block text-sm font-medium text-gray-600 hover:text-purple-600">Testimonials</a>
             <div className="flex flex-col gap-3 pt-4 border-t border-purple-100">
-              <Link to="/login"><Button variant="ghost" className="w-full justify-start">Log in</Button></Link>
+              <Link to="/"><Button variant="ghost" className="w-full justify-start">Log in</Button></Link>
               <Link to="/signup"><Button className="w-full bg-gradient-to-r from-purple-600 to-violet-600">Get Started</Button></Link>
             </div>
           </div>

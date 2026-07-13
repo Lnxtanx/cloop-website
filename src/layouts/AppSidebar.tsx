@@ -1,4 +1,4 @@
-import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen, MessageSquare, BookOpen } from "lucide-react";
+import { Home, Video, BarChart3, MessageCircle, User, Bell, PanelLeftClose, PanelLeftOpen, MessageSquare, BookOpen, Headphones } from "lucide-react";
 import { NavLink } from "@/components/NavLink";
 import { useLocation, useNavigate } from "react-router-dom";
 import favicon from "/favicon.ico";
@@ -25,6 +25,7 @@ const navItems = [
   { title: "Session Progress", url: "/dashboard/sessions", icon: Video },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
   { title: "Chat with AI Tutor", url: "/dashboard/chat", icon: MessageCircle },
+  { title: "Voice Tutor", url: "/dashboard/voice-chat", icon: Headphones },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Feedback", url: "/feedback", icon: MessageSquare },

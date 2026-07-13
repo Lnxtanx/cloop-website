@@ -64,7 +64,13 @@ export const HeroSection = (): JSX.Element => {
           </a>
 
           <Button 
-            onClick={() => navigate("/login")}
+            onClick={() => {
+              navigate("/");
+              setTimeout(() => {
+                document.getElementById("guest-id")?.focus();
+                document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
+              }, 100);
+            }}
             className="h-[59px] min-w-[200px] bg-white text-[#8d33ff] hover:bg-purple-50 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
           >
             <Monitor className="w-5 h-5" /> Try Web Version

@@ -24,12 +24,12 @@ if (typeof window !== "undefined") {
           localStorage.removeItem("cloop_token");
           localStorage.removeItem("cloop_user");
 
-          // Only redirect if the user is not currently navigating login or signup routes
+          // Only redirect if the user is not currently on the landing page or signup page
           if (
-            !window.location.pathname.includes("/login") && 
+            window.location.pathname !== "/" && 
             !window.location.pathname.includes("/signup")
           ) {
-            window.location.href = "/login";
+            window.location.href = "/";
           }
         }
       } catch {

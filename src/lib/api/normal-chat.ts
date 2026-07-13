@@ -23,6 +23,7 @@ export interface NormalChatMessage {
   videos?: string[];
   links?: string[];
   emoji?: string;
+  audio?: string;
   created_at: string;
 }
 
@@ -98,6 +99,7 @@ export const sendNormalChatMessage = async (
     session_id?: number;
     from_report_id?: number;
     from_q_index?: string;
+    voice_enabled?: boolean;
   }
 ): Promise<SendNormalMessageResponse & { session_id: number }> => {
   const token = getToken();
@@ -124,5 +126,36 @@ export const deleteChatSession = async (id: number): Promise<{ message: string }
     headers: { Authorization: `Bearer ${token}` },
   });
   if (!response.ok) throw new Error("Failed to delete session");
+  return response.json();
+};
+
+/**
+ * Fetch voice chat messages history
+ */
+export const fetchVoiceChatMessages = async (): Promise<{ messages: NormalChatMessage[] }> => {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/api/voice-chat/history`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+  if (!response.ok) throw new Error("Failed to fetch voice history");
+  return response.json();
+};
+
+/**
+ * Send message to voice chat endpoint
+ */
+export const sendVoiceChatMessage = async (
+  messageData: { message: string }
+): Promise<{ userMessage: NormalChatMessage; aiMessage: NormalChatMessage & { audio?: string } }> => {
+  const token = getToken();
+  const response = await fetch(`${API_BASE_URL}/api/voice-chat/message`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+    body: JSON.stringify(messageData),
+  });
+  if (!response.ok) throw new Error("Failed to send voice message");
   return response.json();
 };

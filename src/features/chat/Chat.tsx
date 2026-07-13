@@ -22,6 +22,7 @@ interface Message {
   timestamp: Date;
   fromReportId?: number | null;
   fromQIndex?: string | null;
+  audio?: string;
 }
 
 const Chat = () => {
@@ -51,6 +52,12 @@ const Chat = () => {
   }, [messages, isLoading]);
 
   const fetchChatHistory = useCallback(async (sid?: string) => {
+    if (sid === "new") {
+      setMessages([]);
+      setIsFetchingHistory(false);
+      return null;
+    }
+
     setIsFetchingHistory(true);
     try {
       const data: NormalChatResponse = await fetchNormalChatMessages(
@@ -67,6 +74,8 @@ const Chat = () => {
           fromQIndex: msg.from_q_index,
         }));
         setMessages(formattedMessages);
+
+
 
         if (!sid && data.session_id) {
           setSearchParams({ session: String(data.session_id) }, { replace: true });
@@ -88,7 +97,7 @@ const Chat = () => {
   useEffect(() => {
     const token = localStorage.getItem("cloop_token");
     if (!token) {
-      navigate("/login");
+      navigate("/");
       return;
     }
     
@@ -113,7 +122,7 @@ const Chat = () => {
     };
 
     void initializeChat();
-  }, []);
+  }, [sessionId, navigate, fetchChatHistory]);
 
   const handleSendMessage = async (
     customMessage?: string, 
