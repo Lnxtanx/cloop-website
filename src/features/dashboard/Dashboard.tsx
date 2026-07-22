@@ -176,7 +176,7 @@ const Dashboard = () => {
     return (
       <DashboardLayout title="Dashboard">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-[#8d33ff]" />
+          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
         </div>
       </DashboardLayout>
     );
@@ -200,7 +200,7 @@ const Dashboard = () => {
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
             Hi {profile?.name ? profile.name.split(" ")[0] : "Learner"},
           </h2>
-          <p className="text-sm sm:text-base lg:text-lg text-[#8d33ff] font-bold mt-1">
+            <p className="text-sm sm:text-base lg:text-lg text-blue-600 font-bold mt-1">
             <button 
               onClick={() => navigate("/dashboard/statistics")}
               className="hover:underline cursor-pointer"
@@ -215,14 +215,14 @@ const Dashboard = () => {
         {/* Enrolled Subjects */}
         <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-purple-100 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-[#8d33ff]" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-blue-100 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
             </div>
             <h3 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-gray-900">Learning Progress Overview</h3>
           </div>
 
           {subjects.length === 0 ? (
-            <div className="text-center py-12 sm:py-20 bg-purple-50/50 rounded-2xl sm:rounded-3xl border border-purple-100">
+            <div className="text-center py-12 sm:py-20 bg-blue-50/50 rounded-2xl sm:rounded-3xl border border-blue-100">
               <p className="text-base sm:text-lg text-gray-500 font-medium">No subjects enrolled yet.</p>
             </div>
           ) : (
@@ -244,10 +244,10 @@ const Dashboard = () => {
                     key={item.subject_id}
                     className={`rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group ${
                       isChapterGenerationInProgress
-                        ? "opacity-80 border-purple-300 bg-gradient-to-br from-purple-50 to-purple-100 cursor-not-allowed animate-pulse"
+                        ? "opacity-80 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 cursor-not-allowed animate-pulse"
                         : isFailed
                         ? "border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30 cursor-not-allowed"
-                        : "border-purple-200 hover:shadow-xl hover:border-purple-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50"
+                        : "border-blue-200 hover:shadow-xl hover:border-blue-300 cursor-pointer bg-gradient-to-br from-blue-100 to-blue-50"
                     }`}
                     onClick={() => {
                       if (isCardDisabled) return;
@@ -264,27 +264,27 @@ const Dashboard = () => {
                             {" (Generation Failed)"}
                           </span>
                         ) : (
-                          <span className="text-[9px] sm:text-[10px] font-black text-purple-800 bg-purple-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
-                            {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-purple-800" />}
+                            <span className="text-[9px] sm:text-[10px] font-black text-blue-800 bg-blue-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
+                              {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-blue-800" />}
                             {item.subject?.category || "General"}
                             {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : " (Generating Chapters)")}
                           </span>
                         )}
                       </div>
 
-                      <h4 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4 sm:mb-6 group-hover:text-[#8d33ff] transition-colors leading-tight">{item.subject?.name || "Untitled"}</h4>
+                      <h4 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4 sm:mb-6 group-hover:text-blue-600 transition-colors leading-tight">{item.subject?.name || "Untitled"}</h4>
 
                       <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-8 flex-1">
                         <div>
                           <div className="flex justify-between text-[10px] sm:text-xs mb-1.5 sm:mb-2">
                             <span className="font-bold text-gray-500 uppercase tracking-tighter">Concept Mastery:</span>
-                            <span className={`font-extrabold ${isNotStarted ? "text-gray-400" : "text-[#8d33ff]"}`}>
+                            <span className={`font-extrabold ${isNotStarted ? "text-gray-400" : "text-blue-600"}`}>
                               {isNotStarted ? "Not Started" : `${pct}%`}
                             </span>
                           </div>
                           <Progress value={pct} className="h-1.5 sm:h-2 bg-white/50" />
                         </div>
-                        <div className="flex justify-between text-[10px] sm:text-xs pb-1.5 sm:pb-2 border-b border-purple-200/50">
+                        <div className="flex justify-between text-[10px] sm:text-xs pb-1.5 sm:pb-2 border-b border-blue-200/50">
                           <span className="font-bold text-gray-500 uppercase tracking-tighter">Chapters:</span>
                           <span className="font-bold text-gray-900">{item.completed_chapters || 0} / {item.total_chapters || 0}</span>
                         </div>
@@ -293,9 +293,9 @@ const Dashboard = () => {
                       {isChapterGenerationInProgress ? (
                         <Button
                           disabled
-                          className="w-full h-10 sm:h-12 bg-purple-100 text-purple-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
-                        >
-                          <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-purple-400" /> Generating Chapters...
+                           className="w-full h-10 sm:h-12 bg-blue-100 text-blue-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
+                         >
+                           <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-blue-400" /> Generating Chapters...
                         </Button>
                       ) : isFailed ? (
                         <Button
@@ -306,7 +306,7 @@ const Dashboard = () => {
                         </Button>
                       ) : (
                         <Button
-                          className="w-full h-10 sm:h-12 bg-white text-[#8d33ff] font-bold hover:bg-[#8d33ff] hover:text-white transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
+                           className="w-full h-10 sm:h-12 bg-white text-blue-600 font-bold hover:bg-blue-600 hover:text-white transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
                         >
                           <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
                         </Button>

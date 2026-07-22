@@ -240,7 +240,7 @@ const Chat = () => {
         <div className="max-w-3xl mx-auto">
           {isFetchingHistory ? (
             <div className="flex flex-col items-center justify-center py-20 text-gray-400 gap-2">
-              <Loader2 className="w-6 h-6 animate-spin text-purple-500" />
+              <Loader2 className="w-6 h-6 animate-spin text-blue-500" />
               <p className="text-xs font-medium">Loading history...</p>
             </div>
           ) : messages.length === 0 ? (
@@ -260,8 +260,8 @@ const Chat = () => {
                   key={message.id}
                   className={`flex gap-4 ${message.role === "user" ? "flex-row-reverse" : "flex-row"}`}
                 >
-                  <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold shadow-sm self-start mt-1 ${
-                    message.role === "user" ? "bg-purple-100 text-purple-700" : "bg-gray-100 text-gray-600 border border-gray-200"
+                   <div className={`w-8 h-8 rounded-full flex-shrink-0 flex items-center justify-center text-[10px] font-bold shadow-sm self-start mt-1 ${
+                     message.role === "user" ? "bg-blue-100 text-blue-700" : "bg-gray-100 text-gray-600 border border-gray-200"
                   }`}>
                     {message.role === "user" ? "ME" : "AI"}
                   </div>
@@ -269,7 +269,7 @@ const Chat = () => {
                     <div
                       className={`p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative ${
                         message.role === "user"
-                          ? "bg-purple-600 text-white rounded-tr-none"
+                           ? "bg-blue-600 text-white rounded-tr-none"
                           : "bg-white text-gray-800 border border-gray-100"
                       }`}
                     >
@@ -306,7 +306,7 @@ const Chat = () => {
                               // Check if this is an inline code or a block code
                               const isInline = !className;
                               if (isInline) {
-                                return <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-purple-700 font-mono text-[13px]">{children}</code>;
+                                 return <code className="bg-gray-200/50 px-1.5 py-0.5 rounded text-blue-700 font-mono text-[13px]">{children}</code>;
                               }
                               return <code className={className} {...props}>{children}</code>;
                             },
@@ -329,7 +329,7 @@ const Chat = () => {
                       <div className="mt-2 flex items-center gap-3">
                         <button
                           onClick={() => handleCopyMessage(message.id, message.content)}
-                          className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-purple-600 transition-colors"
+                           className="flex items-center gap-1.5 text-[10px] font-semibold text-gray-400 hover:text-blue-600 transition-colors"
                         >
                           {copiedId === message.id ? (
                             <><Check className="w-3 h-3" /> Copied</>
@@ -346,7 +346,7 @@ const Chat = () => {
                               const qPart = qIndex ? `&fromQ=${qIndex}` : "";
                               navigate(`/dashboard/test-your-self?reportId=${reportId}${qPart}`);
                             }}
-                            className="flex items-center gap-1.5 text-[10px] font-semibold text-purple-600 hover:text-purple-700 transition-colors"
+                             className="flex items-center gap-1.5 text-[10px] font-semibold text-blue-600 hover:text-blue-700 transition-colors"
                             title="Go back to original question"
                           >
                             <GitBranch className="w-3 h-3" /> 
@@ -397,7 +397,7 @@ const Chat = () => {
                 className={`w-8 h-8 rounded-xl p-0 flex items-center justify-center transition-all ${
                   isLoading || !inputValue.trim()
                     ? "bg-gray-100 text-gray-300"
-                    : "bg-purple-600 text-white hover:bg-purple-700 shadow-sm"
+                    : "bg-blue-600 text-white hover:bg-blue-700 shadow-sm"
                 }`}
               >
                 {isLoading ? (

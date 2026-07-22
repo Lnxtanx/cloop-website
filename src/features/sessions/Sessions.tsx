@@ -189,7 +189,7 @@ export default function Sessions() {
           <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
             Learning Sessions & Concept Tracking
           </h2>
-          <p className="text-base text-[#8d33ff] font-bold mt-1.5 flex items-center gap-2">
+            <p className="text-base text-[#3b82f6] font-bold mt-1.5 flex items-center gap-2">
             <Sparkles className="w-4 h-4" /> Monitor your progress and master every concept
           </p>
         </div>
@@ -203,7 +203,7 @@ export default function Sessions() {
                 onClick={() => setFilter(tab.value)}
                 className={`px-5 py-2 rounded-lg text-xs font-bold transition-all ${
                   filter === tab.value 
-                    ? "bg-white text-[#8d33ff] shadow-sm" 
+                    ? "bg-white text-[#3b82f6] shadow-sm" 
                     : "text-gray-500 hover:text-gray-700"
                 }`}
               >
@@ -218,7 +218,7 @@ export default function Sessions() {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search concepts or sessions..."
-              className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-100 bg-white focus:ring-2 focus:ring-[#8d33ff] focus:border-transparent text-sm font-medium shadow-sm"
+              className="w-full h-11 pl-10 pr-4 rounded-xl border border-gray-100 bg-white focus:ring-2 focus:ring-[#3b82f6] focus:border-transparent text-sm font-medium shadow-sm"
             />
             {search && (
               <button 
@@ -235,12 +235,12 @@ export default function Sessions() {
         <div className="space-y-4">
           {loading || (filter === "saved" && savedLoading) ? (
             <div className="flex items-center justify-center py-20">
-              <Loader2 className="w-8 h-8 animate-spin text-[#8d33ff]" />
+              <Loader2 className="w-8 h-8 animate-spin text-[#3b82f6]" />
             </div>
           ) : filtered.length === 0 ? (
-            <div className="text-center py-20 bg-purple-50/50 rounded-3xl border border-purple-100 space-y-4">
-              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-md shadow-purple-100">
-                <FolderOpen className="w-8 h-8 text-purple-200" />
+            <div className="text-center py-20 bg-blue-50/50 rounded-3xl border border-blue-100 space-y-4">
+              <div className="w-16 h-16 bg-white rounded-2xl flex items-center justify-center mx-auto shadow-md shadow-blue-100">
+                <FolderOpen className="w-8 h-8 text-blue-200" />
               </div>
               <div>
                 <h4 className="text-xl font-extrabold text-gray-900 mb-1">
@@ -255,7 +255,7 @@ export default function Sessions() {
               {filter !== "saved" && (
                 <Button 
                     onClick={() => navigate("/dashboard")}
-                    className="h-12 px-8 bg-[#8d33ff] hover:bg-[#7a2de0] text-white rounded-xl text-base font-bold shadow-lg shadow-purple-200"
+                    className="h-12 px-8 bg-[#3b82f6] hover:bg-[#2563eb] text-white rounded-xl text-base font-bold shadow-lg shadow-blue-200"
                 >
                     Start Learning Session
                 </Button>
@@ -268,20 +268,20 @@ export default function Sessions() {
                 return (
                   <div key={session.topic_id}
                     onClick={() => navigateToTopic(session.topic_id)}
-                    className="group bg-white rounded-xl p-4 border border-gray-100 hover:border-[#8d33ff] hover:shadow-lg hover:shadow-purple-50 transition-all cursor-pointer flex items-center gap-4"
+                    className="group bg-white rounded-xl p-4 border border-gray-100 hover:border-[#3b82f6] hover:shadow-lg hover:shadow-blue-50 transition-all cursor-pointer flex items-center gap-4"
                   >
                     <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 transition-colors ${
-                      session.is_completed ? "bg-green-100" : "bg-purple-100"
+                      session.is_completed ? "bg-green-100" : "bg-blue-100"
                     }`}>
                       {session.is_completed ? (
                         <CheckCircle2 className="w-5 h-5 text-green-600" />
                       ) : (
-                        <Clock className="w-5 h-5 text-[#8d33ff]" />
+                        <Clock className="w-5 h-5 text-[#3b82f6]" />
                       )}
                     </div>
                     
                     <div className="flex-1 min-w-0">
-                      <h4 className="text-base font-extrabold text-gray-900 truncate group-hover:text-[#8d33ff] transition-colors">{session.title}</h4>
+                      <h4 className="text-base font-extrabold text-gray-900 truncate group-hover:text-[#3b82f6] transition-colors">{session.title}</h4>
                       <p className="text-[10px] font-bold text-gray-400 mt-0.5 uppercase tracking-wider">
                         {session.subject}{session.chapter ? ` • ${session.chapter}` : ""}
                       </p>
@@ -291,7 +291,7 @@ export default function Sessions() {
                       <div className="hidden md:block w-36 space-y-1.5">
                         <div className="flex justify-between text-[10px] font-bold text-gray-400">
                           <span>MASTERY</span>
-                          <span className="text-[#8d33ff]">{Math.round(session.completion_percent || 0)}%</span>
+                            <span className="text-[#3b82f6]">{Math.round(session.completion_percent || 0)}%</span>
                         </div>
                         <Progress value={session.completion_percent || 0} className="h-1.5 bg-gray-50" />
                       </div>
@@ -308,8 +308,8 @@ export default function Sessions() {
                           <Bookmark className={`w-4 h-4 ${saved ? "fill-current" : ""}`} />
                         </button>
                         
-                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-purple-100 transition-colors">
-                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#8d33ff]" />
+                        <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center group-hover:bg-blue-100 transition-colors">
+                            <ChevronRight className="w-4 h-4 text-gray-400 group-hover:text-[#3b82f6]" />
                         </div>
                     </div>
                   </div>
@@ -322,8 +322,8 @@ export default function Sessions() {
         {/* Subjects with Active Learning Data */}
         <div className="space-y-6 pt-8 border-t border-gray-100">
           <div className="flex items-center gap-3">
-            <div className="w-9 h-9 rounded-xl bg-purple-100 flex items-center justify-center">
-                <TrendingUp className="w-5 h-5 text-[#8d33ff]" />
+            <div className="w-9 h-9 rounded-xl bg-blue-100 flex items-center justify-center">
+                <TrendingUp className="w-5 h-5 text-[#3b82f6]" />
             </div>
             <h3 className="text-xl lg:text-2xl font-extrabold text-gray-900">Subjects with Active Learning Data</h3>
           </div>
@@ -337,16 +337,16 @@ export default function Sessions() {
                 return (
                   <Card
                     key={s.id}
-                    className="rounded-3xl border-purple-200 hover:shadow-xl hover:border-[#8d33ff] transition-all duration-300 cursor-pointer bg-gradient-to-br from-purple-100 to-purple-50 overflow-hidden group"
+                    className="rounded-3xl border-blue-200 hover:shadow-xl hover:border-[#3b82f6] transition-all duration-300 cursor-pointer bg-gradient-to-br from-blue-100 to-blue-50 overflow-hidden group"
                     onClick={() => navigate(`/chapters?subjectId=${s.id}&subjectName=${encodeURIComponent(s.name)}`)}
                   >
                     <CardContent className="p-6">
-                      <h4 className="text-xl font-extrabold text-gray-900 mb-5 group-hover:text-[#8d33ff] transition-colors leading-tight">{s.name}</h4>
+                      <h4 className="text-xl font-extrabold text-gray-900 mb-5 group-hover:text-[#3b82f6] transition-colors leading-tight">{s.name}</h4>
                       
                       <div className="space-y-3 mb-8">
                         <div className="flex items-center justify-between p-3.5 bg-white/60 rounded-xl border border-white">
                            <span className="text-xs font-bold text-gray-500">Predicted Score:</span>
-                           <span className="text-lg font-black text-[#8d33ff]">{score}%</span>
+                            <span className="text-lg font-black text-[#3b82f6]">{score}%</span>
                         </div>
                         
                         <div className="flex items-center justify-between p-3.5 bg-white/60 rounded-xl border border-white">
@@ -355,7 +355,7 @@ export default function Sessions() {
                         </div>
                       </div>
 
-                      <Button className="w-full h-11 bg-white text-[#8d33ff] font-bold hover:bg-[#8d33ff] hover:text-white transition-all rounded-xl gap-2 text-xs shadow-sm border-0">
+                      <Button className="w-full h-11 bg-white text-[#3b82f6] font-bold hover:bg-[#3b82f6] hover:text-white transition-all rounded-xl gap-2 text-xs shadow-sm border-0">
                         <Play className="w-4 h-4 fill-current" /> Continue Learning
                       </Button>
                     </CardContent>

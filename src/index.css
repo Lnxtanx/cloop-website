@@ -16,7 +16,7 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 47.4% 11.2%;
 
-    --primary: 271 81% 60%;
+    --primary: 212 100% 50%;
     --primary-foreground: 0 0% 100%;
 
     --secondary: 210 40% 96.1%;
@@ -25,31 +25,31 @@
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 271 100% 96%;
-    --accent-foreground: 271 81% 30%;
+    --accent: 212 100% 96%;
+    --accent-foreground: 212 100% 30%;
 
     --destructive: 0 100% 50%;
     --destructive-foreground: 210 40% 98%;
 
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 271 81% 60%;
+    --ring: 212 100% 50%;
 
     --radius: 0.75rem;
 
     --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 210 10% 40%;
-    --sidebar-primary: 271 81% 60%;
+    --sidebar-primary: 212 100% 50%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 271 100% 96%;
-    --sidebar-accent-foreground: 271 81% 30%;
+    --sidebar-accent: 212 100% 96%;
+    --sidebar-accent-foreground: 212 100% 30%;
     --sidebar-border: 210 15% 94%;
-    --sidebar-ring: 271 81% 60%;
+    --sidebar-ring: 212 100% 50%;
 
     --nav-dark: 210 30% 15%;
     --nav-dark-foreground: 0 0% 100%;
-    --hero-gradient-start: 271 81% 60%;
-    --hero-gradient-end: 280 70% 55%;
+    --hero-gradient-start: 212 100% 50%;
+    --hero-gradient-end: 220 100% 45%;
     --success: 152 60% 45%;
     --warning: 38 92% 50%;
     --info: 200 80% 55%;
@@ -91,7 +91,7 @@
 
 @layer utilities {
   .hero-gradient {
-    background: linear-gradient(135deg, hsl(271, 81%, 60%) 0%, hsl(280, 70%, 55%) 100%);
+    background: linear-gradient(135deg, hsl(212, 100%, 50%) 0%, hsl(220, 100%, 45%) 100%);
   }
 
   .glass-card {
@@ -101,7 +101,7 @@
   }
 
   .text-gradient {
-    background: linear-gradient(135deg, hsl(271, 81%, 60%) 0%, hsl(280, 70%, 55%) 100%);
+    background: linear-gradient(135deg, hsl(212, 100%, 50%) 0%, hsl(220, 100%, 45%) 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
@@ -215,13 +215,13 @@
 
   @keyframes voice-pulse-ring {
     0% {
-      box-shadow: 0 0 0 0 rgba(147, 51, 234, 0.4);
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4);
     }
     70% {
-      box-shadow: 0 0 0 35px rgba(147, 51, 234, 0);
+      box-shadow: 0 0 0 35px rgba(59, 130, 246, 0);
     }
     100% {
-      box-shadow: 0 0 0 0 rgba(147, 51, 234, 0);
+      box-shadow: 0 0 0 0 rgba(59, 130, 246, 0);
     }
   }
 

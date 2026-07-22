@@ -133,14 +133,14 @@ function AIBubble({
                 borderRadius: "50%",
                 transition: "all 0.2s",
               }}
-              className="hover:bg-purple-100/50 hover:text-purple-600 focus:outline-none shrink-0"
+              className="hover:bg-blue-100/50 hover:text-blue-600 focus:outline-none shrink-0"
               title={isSpeaking ? "Stop listening" : "Listen to response"}
             >
               {isSpeaking ? (
                 <span className="flex gap-0.5 items-center justify-center h-4 w-4">
-                  <span className="w-0.5 h-2 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-0.5 h-3.5 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-0.5 h-2.5 bg-purple-600 rounded animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-0.5 h-2 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-0.5 h-3.5 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-0.5 h-2.5 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '300ms' }} />
                 </span>
               ) : (
                 <Volume2 className="w-4 h-4" />
@@ -264,7 +264,7 @@ function SummaryCard({ data }: { data: SessionSummaryData }) {
         </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
-            { label: "Total", val: data.total_questions ?? 0, bg: "bg-purple-100", c: "text-purple-700" },
+            { label: "Total", val: data.total_questions ?? 0, bg: "bg-blue-100", c: "text-blue-700" },
             { label: "Correct", val: data.correct_answers ?? 0, bg: "bg-green-100", c: "text-green-700" },
             { label: "Wrong", val: data.incorrect_answers ?? 0, bg: "bg-red-100", c: "text-red-600" },
           ].map(({ label, val, bg, c }) => (
@@ -313,7 +313,7 @@ function ScorePredictionCard({ data }: { data: ScorePrediction }) {
         <div className="grid grid-cols-2 gap-2">
           {[
             { label: "Concept", val: concept, bg2: "bg-blue-50", c2: "text-blue-700" },
-            { label: "Exam", val: exam, bg2: "bg-purple-50", c2: "text-purple-700" },
+            { label: "Exam", val: exam, bg2: "bg-blue-50", c2: "text-blue-700" },
           ].map(({ label, val, bg2, c2 }) => (
             <div key={label} className={`${bg2} rounded-xl py-2 text-center`}>
               <p className={`text-base font-extrabold ${c2}`}>{val}%</p>
@@ -337,52 +337,52 @@ function goalIsCompleted(g: TopicGoal): boolean {
 function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean; onToggle: () => void }) {
   const doneCount = goals.filter(goalIsCompleted).length;
   return (
-    <div style={{ background: "#f3e8ff", borderBottom: "1px solid #e9d5ff", flexShrink: 0 }}>
+      <div style={{ background: "#eff6ff", borderBottom: "1px solid #bfdbfe", flexShrink: 0 }}>
       <button onClick={onToggle} style={{
         width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 16px", height: 40, border: "none", background: "transparent", cursor: "pointer",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-          <Trophy style={{ width: 15, height: 15, color: "#7c3aed" }} />
+             <Trophy style={{ width: 15, height: 15, color: "#3b82f6" }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Learning Goals</span>
           <span style={{ fontSize: 12, color: "#9ca3af" }}>{doneCount}/{goals.length}</span>
         </div>
         {open
           ? <ChevronUp style={{ width: 15, height: 15, color: "#7c3aed" }} />
-          : <ChevronDown style={{ width: 15, height: 15, color: "#7c3aed" }} />}
+           : <ChevronDown style={{ width: 15, height: 15, color: "#3b82f6" }} />}
       </button>
       {open && (
-        <div style={{ overflowX: "auto", paddingBottom: 12 }}>
-          <div style={{ display: "flex", gap: 10, padding: "0 16px", width: "max-content" }}>
-            {goals.map((g, i) => {
-              const completed = goalIsCompleted(g);
-              const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
-              const progress = g.chat_goal_progress?.[0];
-              const numQ: number = progress?.num_questions ?? 0;
-              const numC: number = progress?.num_correct ?? 0;
-              const score = progress?.score_percent
-                ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
-              // Phase heuristic: if goal has ≥2 questions and not yet complete, likely in exam phase
-              const phase: "concept" | "exam" | null = active
-                ? numQ >= 2 ? "exam" : "concept"
-                : null;
+      <div style={{ overflowX: "auto", paddingBottom: 12 }}>
+        <div style={{ display: "flex", gap: 10, padding: "0 16px", width: "max-content" }}>
+          {goals.map((g, i) => {
+            const completed = goalIsCompleted(g);
+            const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
+            const progress = g.chat_goal_progress?.[0];
+            const numQ: number = progress?.num_questions ?? 0;
+            const numC: number = progress?.num_correct ?? 0;
+            const score = progress?.score_percent
+              ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
+            // Phase heuristic: if goal has ≥2 questions and not yet complete, likely in exam phase
+            const phase: "concept" | "exam" | null = active
+              ? numQ >= 2 ? "exam" : "concept"
+              : null;
 
-              return (
-                <div key={g.id} style={{
-                  width: 116, borderRadius: 12, padding: 10,
-                  border: `2px solid ${completed ? "#a78bfa" : active ? "#7c3aed" : "#d1d5db"}`,
-                  background: completed ? "#f3e8ff" : active ? "#fafafa" : "#f9fafb",
-                  boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-                }}>
+          return (
+            <div key={g.id} style={{
+              width: 116, borderRadius: 12, padding: 10,
+              border: `2px solid ${completed ? "#6366f1" : active ? "#3b82f6" : "#d1d5db"}`,
+              background: completed ? "#eff6ff" : active ? "#fafafa" : "#f9fafb",
+              boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+            }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       {completed
-                        ? <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#a78bfa", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
+                        ?                    <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
                         : active
-                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #7c3aed", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "#7c3aed" }} /></div>
+                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "#3b82f6" }} /></div>
                           : <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #d1d5db" }} />
                       }
-                      <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#7c3aed" : active ? "#7c3aed" : "#9ca3af" }}>{i + 1}</span>
+                        <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#3b82f6" : active ? "#3b82f6" : "#9ca3af" }}>{i + 1}</span>
                     </div>
                     {/* Phase badge — only on active goal */}
                     {phase && (
@@ -400,8 +400,8 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
                   </p>
                   {score > 0 && (
                     <div style={{ marginTop: 6 }}>
-                      <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#a78bfa" : "#7c3aed", borderRadius: 2, transition: "width 0.4s ease" }} />
+                       <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                         <div style={{ height: "100%", width: `${score}%`, background: completed ? "#6366f1" : "#3b82f6", borderRadius: 2, transition: "width 0.4s ease" }} />
                       </div>
                       <span style={{ fontSize: 10, color: "#6b7280" }}>{score}%</span>
                     </div>

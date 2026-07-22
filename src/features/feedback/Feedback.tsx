@@ -74,7 +74,7 @@ export default function Feedback() {
   return (
     <DashboardLayout title="Feedback">
       <div className="max-w-2xl mx-auto py-8 px-4">
-        <div className="bg-white rounded-2xl shadow-sm border border-purple-200 p-6">
+            <div className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">We'd love your feedback!</h2>
           <p className="text-gray-600 mb-6">Help us make Cloop better for everyone.</p>
 
@@ -106,7 +106,7 @@ export default function Feedback() {
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-purple-300 bg-purple-50 text-gray-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-blue-300 bg-blue-50 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
               >
                 <option value="general">💬 General Feedback</option>
                 <option value="feature">✨ Feature Request</option>
@@ -123,7 +123,7 @@ export default function Feedback() {
                 onChange={(e) => setFeedback(e.target.value)}
                 placeholder="Tell us what you think..."
                 rows={5}
-                className="w-full px-4 py-2.5 rounded-lg border border-purple-300 bg-purple-50 text-gray-900 placeholder-gray-400 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none resize-none"
+                className="w-full px-4 py-2.5 rounded-lg border border-blue-300 bg-blue-50 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
                 required
               />
             </div>

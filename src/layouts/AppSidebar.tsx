@@ -62,7 +62,7 @@ export function AppSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200 bg-white">
       {/* Header with logo and toggle */}
-      <div className="h-14 flex items-center gap-2 px-3 border-b border-purple-600 bg-gradient-to-r from-purple-600 to-purple-700 shrink-0">
+      <div className="h-14 flex items-center gap-2 px-3 border-b border-blue-600 bg-gradient-to-r from-blue-600 to-blue-700 shrink-0">
         <button
           onClick={() => handleNavClick("/dashboard")}
           className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
@@ -73,7 +73,7 @@ export function AppSidebar() {
         </button>
         {/* Desktop toggle button - hidden on mobile */}
         {!isMobile && (
-          <SidebarTrigger className="text-purple-200 hover:text-white hover:bg-purple-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
+          <SidebarTrigger className="text-blue-200 hover:text-white hover:bg-blue-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
             {collapsed
               ? <PanelLeftOpen className="w-5 h-5" />
               : <PanelLeftClose className="w-5 h-5" />
@@ -98,7 +98,7 @@ export function AppSidebar() {
                       <SidebarMenuButton asChild tooltip={collapsed && !isMobile ? item.title : undefined}>
                         <button
                           onClick={() => handleNavClick(item.url)}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-base sm:text-lg transition-all w-full ${isActive ? "bg-purple-100 text-purple-800 font-bold" : "text-gray-800 hover:bg-purple-50 hover:text-purple-700"}`}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-base sm:text-lg transition-all w-full ${isActive ? "bg-blue-100 text-blue-800 font-bold" : "text-gray-800 hover:bg-blue-50 hover:text-blue-700"}`}
                         >
                           <item.icon className="w-5 h-5 sm:w-[22px] sm:h-[22px] shrink-0" />
                           {(!collapsed || isMobile) && <span className="font-semibold text-sm sm:text-base">{item.title}</span>}
@@ -117,7 +117,7 @@ export function AppSidebar() {
       <SidebarFooter className="p-3 sm:p-4 bg-white border-t border-gray-100 pb-safe">
         <Button
           onClick={handleModeSwitch}
-          className={`w-full justify-center gap-2 h-10 sm:h-11 px-3 bg-purple-50 hover:bg-purple-100 text-purple-700 border border-purple-200 shadow-none transition-all text-sm sm:text-base ${collapsed && !isMobile ? 'p-0' : ''}`}
+          className={`w-full justify-center gap-2 h-10 sm:h-11 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shadow-none transition-all text-sm sm:text-base ${collapsed && !isMobile ? 'p-0' : ''}`}
           title={collapsed && !isMobile ? "Go to Test Preparation" : ""}
         >
           <BookOpen className="w-4 h-4 sm:w-5 sm:h-5" />

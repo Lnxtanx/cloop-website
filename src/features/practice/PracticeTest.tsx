@@ -228,11 +228,11 @@ const PracticeTest = () => {
       <DashboardLayout title="Processing">
         <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] space-y-6 sm:space-y-8 px-4">
           <div className="relative">
-            <div className="w-16 h-16 sm:w-20 md:w-24 sm:h-20 md:h-24 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin"></div>
-            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-purple-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 sm:w-20 md:w-24 sm:h-20 md:h-24 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <div className="text-center space-y-2 sm:space-y-3">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-purple-950 text-center px-4">{loadingMessages[loadingMessageIndex]}</h3>
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-950 text-center px-4">{loadingMessages[loadingMessageIndex]}</h3>
             <p className="text-xs sm:text-sm text-muted-foreground">Our AI is preparing your unique practice session.</p>
           </div>
         </div>
@@ -284,7 +284,7 @@ const PracticeTest = () => {
     <DashboardLayout title={isHistoryTab ? "Past Performance" : "Practice Dashboard"}>
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-8 sm:pb-12 px-2 sm:px-4">
         <div className="text-center space-y-1.5 sm:space-y-2">
-          <h2 className="text-xl sm:text-2xl font-bold text-purple-950 tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-bold text-blue-950 tracking-tight">
             {isHistoryTab ? "Your Test History" : "Test Preparation Engine"}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground px-4">
