@@ -84,7 +84,7 @@ export default function Notifications() {
         {/* Header row */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 24 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-            <Bell style={{ width: 22, height: 22, color: "#7c3aed" }} />
+            <Bell style={{ width: 22, height: 22, color: "#000000" }} />
             <h2 style={{ fontSize: 20, fontWeight: 700, color: "#1F2937", margin: 0 }}>Notifications</h2>
             {unread > 0 && (
               <span style={{
@@ -101,8 +101,8 @@ export default function Notifications() {
               style={{
                 display: "flex", alignItems: "center", gap: 6,
                 padding: "7px 14px", borderRadius: 10,
-                border: "1.5px solid #7c3aed",
-                background: "#fff", color: "#7c3aed",
+                border: "1.5px solid #000000",
+                background: "#fff", color: "#000000",
                 fontSize: 13, fontWeight: 600, cursor: "pointer",
               }}
             >
@@ -114,7 +114,7 @@ export default function Notifications() {
         {/* Content */}
         {loading ? (
           <div style={{ display: "flex", justifyContent: "center", padding: "60px 0" }}>
-            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#7c3aed" }} />
+            <Loader2 className="animate-spin" style={{ width: 28, height: 28, color: "#000000" }} />
           </div>
         ) : notifications.length === 0 ? (
           <div style={{ display: "flex", flexDirection: "column", alignItems: "center", padding: "64px 0" }}>
@@ -125,14 +125,14 @@ export default function Notifications() {
           <div style={{ display: "flex", flexDirection: "column", gap: 10 }}>
             {notifications.map((n) => {
               const isWelcome = n.type === "welcome";
-              const bg = n.is_read ? "#fff" : "#f3e8ff";
+              const bg = n.is_read ? "#fff" : "#f4f4f5";
               return (
                 <div key={n.id}
                   style={{
                     background: bg, borderRadius: 16,
                     boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
                     display: "flex", alignItems: "flex-start",
-                    border: n.is_read ? "1px solid #F3F4F6" : "1.5px solid #c4b5fd",
+                    border: n.is_read ? "1px solid #F3F4F6" : "1.5px solid #d4d4d8",
                     overflow: "hidden",
                   }}
                 >
@@ -144,12 +144,12 @@ export default function Notifications() {
                     {/* Icon */}
                     <div style={{
                       width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
-                      background: isWelcome ? "#FEF3C7" : "#ede9fe",
-                      display: "flex", alignItems: "center", justifyContent: "center",
+                      background: isWelcome ? "#FEF3C7" : "#f4f4f5",
+                      display: "flex", alignItems: "center", justifyCenter: "center",
                     }}>
                       {isWelcome
                         ? <Star style={{ width: 20, height: 20, color: "#F59E0B" }} />
-                        : <Info style={{ width: 20, height: 20, color: "#7c3aed" }} />
+                        : <Info style={{ width: 20, height: 20, color: "#000000" }} />
                       }
                     </div>
                     {/* Text */}
@@ -174,7 +174,7 @@ export default function Notifications() {
                         {n.message}
                       </p>
                       {n.message.length > 100 && (
-                        <span style={{ fontSize: 12, color: "#7c3aed", fontWeight: 600 }}>Read more...</span>
+                        <span style={{ fontSize: 12, color: "#000000", fontWeight: 600 }}>Read more...</span>
                       )}
                       {!n.is_read && (
                         <span style={{
@@ -225,12 +225,12 @@ export default function Notifications() {
             <div style={{ display: "flex", justifyContent: "center", marginBottom: 16 }}>
               <div style={{
                 width: 64, height: 64, borderRadius: "50%",
-                background: selected.type === "welcome" ? "#FEF3C7" : "#ede9fe",
+                background: selected.type === "welcome" ? "#FEF3C7" : "#f4f4f5",
                 display: "flex", alignItems: "center", justifyContent: "center",
               }}>
                 {selected.type === "welcome"
                   ? <Star style={{ width: 28, height: 28, color: "#F59E0B" }} />
-                  : <Info style={{ width: 28, height: 28, color: "#7c3aed" }} />
+                  : <Info style={{ width: 28, height: 28, color: "#000000" }} />
                 }
               </div>
             </div>
@@ -244,7 +244,7 @@ export default function Notifications() {
               onClick={() => setSelected(null)}
               style={{
                 width: "100%", marginTop: 24,
-                background: "#7c3aed", color: "#fff",
+                background: "#000000", color: "#fff",
                 border: "none", borderRadius: 12, padding: "14px 0",
                 fontSize: 15, fontWeight: 600, cursor: "pointer",
               }}

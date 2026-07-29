@@ -1,38 +1,46 @@
 import { useState, useEffect, useCallback } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
+import { BookOpen } from "lucide-react";
 import {
+  fetchStandardExams,
+  fetchStandardSubjects,
+  fetchStandardChapters,
   generatePracticeTest,
   submitPracticeTest,
   fetchPracticeHistory,
   fetchPracticeTestDetails,
-  fetchStandardExams,
-  fetchStandardSubjects,
-  fetchStandardChapters,
   StandardExam,
   StandardSubject,
   StandardChapter,
-  PracticeQuestion,
-  PracticeTest as PracticeTestType
+  PracticeQuestion
 } from "@/lib/api/practice";
-import { toast } from "sonner";
-import { BookOpen } from "lucide-react";
-
-// Sub-components
 import { PracticeSelection } from "./components/PracticeSelection";
 import { ActiveTest } from "./components/ActiveTest";
 import { TestReport } from "./components/TestReport";
 import { PracticeHistory } from "./components/PracticeHistory";
 
 type TestState = "selection" | "loading" | "testing" | "reporting";
-type SelectionStep = "exams" | "subjects" | "chapters";
 
-const PracticeTest = () => {
+const loadingMessages = [
+  "Gathering curriculum standards...",
+  "Analyzing your historical weak points...",
+  "Synthesizing high-yield questions...",
+  "Calibrating difficulty vector...",
+  "Finalizing practice environment..."
+];
+
+export const PracticeTest = () => {
+  const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
-  const [state, setState] = useState<TestState>("selection");
-  const isHistoryTab = searchParams.get("tab") === "history";
+  const activeTabParam = searchParams.get("tab");
+  const reportIdParam = searchParams.get("reportId");
 
-  const [step, setStep] = useState<SelectionStep>("exams");
+  const [state, setState] = useState<TestState>("selection");
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+
+  // Selection States
+  const [step, setStep] = useState<"exams" | "subjects" | "chapters">("exams");
   const [exams, setExams] = useState<StandardExam[]>([]);
   const [subjects, setSubjects] = useState<StandardSubject[]>([]);
   const [chapters, setChapters] = useState<StandardChapter[]>([]);
@@ -41,161 +49,177 @@ const PracticeTest = () => {
   const [selectedSubject, setSelectedSubject] = useState<StandardSubject | null>(null);
   const [selectedChapters, setSelectedChapters] = useState<number[]>([]);
 
-  const [testId, setTestId] = useState<number | null>(null);
+  // Testing States
   const [questions, setQuestions] = useState<PracticeQuestion[]>([]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<Record<number, string>>({});
   const [timeSpentPerQuestion, setTimeSpentPerQuestion] = useState<Record<number, number>>({});
-  const [timeLeft, setTimeLeft] = useState(600);
-  const [history, setHistory] = useState<PracticeTestType[]>([]);
-  const [loadingHistory, setLoadingHistory] = useState(false);
+  const [timeLeft, setTimeLeft] = useState(0);
+  const [testId, setTestId] = useState<number | null>(null);
+
+  // Reporting States
   const [report, setReport] = useState<{
     score: number;
     total_questions: number;
     time_taken_sec: number;
     questions: PracticeQuestion[];
   } | null>(null);
-  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
-  const loadingMessages = [
-    "Analyzing curriculum standards...",
-    "Curating high-quality questions...",
-    "Applying difficulty levels...",
-    "Generating expert explanations...",
-    "Finalizing your practice session...",
-    "Almost ready, hang tight!"
-  ];
+  // History State
+  const [history, setHistory] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState(false);
 
-  // Load Exams and Deep-linked Report on mount
+  const isHistoryTab = activeTabParam === "history";
+
+  // Check auth
   useEffect(() => {
-    const init = async () => {
-      // 1. Load Exams
-      try {
-        const data = await fetchStandardExams();
-        setExams(data);
-      } catch (err) {
-        toast.error("Failed to load competitive exams");
-      }
+    const token = localStorage.getItem("cloop_token");
+    if (!token) navigate("/");
+  }, [navigate]);
 
-      // 2. Check for Deep-linked Report
-      const reportId = searchParams.get("reportId");
-      if (reportId) {
-        handleViewDetails(parseInt(reportId));
-      }
-    };
-    init();
-  }, [searchParams]); // Re-run if search params change
-
-  // Cycle loading messages
+  // Load initial exams or history based on tab
   useEffect(() => {
-    let interval: NodeJS.Timeout;
-    if (state === "loading") {
-      interval = setInterval(() => {
-        setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
-      }, 3500);
+    if (isHistoryTab) {
+      loadHistory();
+    } else {
+      loadExams();
     }
-    return () => clearInterval(interval);
-  }, [state]);
+  }, [isHistoryTab]);
 
-  const handleSubmit = useCallback(async () => {
-    if (!testId) return;
-    setState("loading");
+  // Load deep-linked report card if URL contains reportId
+  useEffect(() => {
+    if (reportIdParam) {
+      const id = Number(reportIdParam);
+      if (!isNaN(id)) {
+        fetchReportCard(id);
+      }
+    }
+  }, [reportIdParam]);
 
-    const formattedAnswers = questions.map(q => ({
-      question_id: q.id,
-      user_answer: userAnswers[q.id] || null,
-      time_spent_sec: timeSpentPerQuestion[q.id] || 0
-    }));
-
+  const loadExams = async () => {
     try {
-      const timeTaken = 600 - timeLeft;
-      const data = await submitPracticeTest(testId, formattedAnswers, timeTaken);
-      setReport(data);
-      setState("reporting");
-    } catch (error: any) {
-      toast.error(error.message || "Failed to submit test");
-      setState("testing");
+      const data = await fetchStandardExams();
+      setExams(data);
+    } catch (err) {
+      console.error("Failed to load exams", err);
     }
-  }, [testId, questions, userAnswers, timeLeft]);
+  };
 
-  const loadHistory = useCallback(async () => {
+  const loadHistory = async () => {
     setLoadingHistory(true);
     try {
       const data = await fetchPracticeHistory();
       setHistory(data);
-    } catch (error: any) {
-      toast.error("Failed to load history");
+    } catch (err) {
+      console.error("Failed to load history", err);
     } finally {
       setLoadingHistory(false);
     }
-  }, []);
+  };
 
-  useEffect(() => {
-    if (isHistoryTab && state === "selection") {
-      loadHistory();
-    }
-  }, [isHistoryTab, state, loadHistory]);
-
-  const handleExamSelect = async (exam: StandardExam) => {
-    setSelectedExam(exam);
+  const fetchReportCard = async (reportId: number) => {
     try {
-      const data = await fetchStandardSubjects(exam.id);
-      setSubjects(data);
-      setStep("subjects");
+      setState("loading");
+      const rep = await fetchPracticeTestDetails(reportId);
+      setReport({
+        score: rep.score || 0,
+        total_questions: rep.total_questions || 0,
+        time_taken_sec: rep.time_taken_sec || 0,
+        questions: rep.questions || []
+      });
+      setTestId(reportId);
+      setState("reporting");
     } catch (err) {
-      toast.error("Failed to load subjects");
+      console.error("Failed to fetch report", err);
+      setState("selection");
     }
   };
 
-  const handleSubjectSelect = async (sub: StandardSubject) => {
-    setSelectedSubject(sub);
+  const handleExamSelect = async (exam: StandardExam) => {
+    setSelectedExam(exam);
+    setStep("subjects");
     try {
-      const data = await fetchStandardChapters(sub.id);
-      setChapters(data);
-      setStep("chapters");
+      const data = await fetchStandardSubjects(exam.id);
+      setSubjects(data);
     } catch (err) {
-      toast.error("Failed to load chapters");
+      console.error("Failed to load subjects", err);
+    }
+  };
+
+  const handleSubjectSelect = async (subject: StandardSubject) => {
+    setSelectedSubject(subject);
+    setStep("chapters");
+    try {
+      const data = await fetchStandardChapters(subject.id);
+      setChapters(data);
+    } catch (err) {
+      console.error("Failed to load chapters", err);
     }
   };
 
   const handleStartTest = async () => {
-    if (!selectedExam || !selectedSubject) return;
+    if (!selectedExam || !selectedSubject || selectedChapters.length === 0) return;
+
     setState("loading");
+    setLoadingMessageIndex(0);
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 2500);
+
     try {
-      const data = await generatePracticeTest(selectedExam.code, selectedSubject.name, selectedChapters);
-      setTestId(data.test_id);
-      setQuestions(data.questions);
-      setTimeLeft(data.time_limit_sec);
-      setState("testing");
+      const session = await generatePracticeTest(
+        selectedExam.code,
+        selectedSubject.name,
+        selectedChapters
+      );
+      clearInterval(interval);
+      setTestId(session.test_id);
+      setQuestions(session.questions);
       setCurrentIndex(0);
       setUserAnswers({});
-    } catch (error: any) {
-      toast.error(error.message || "Failed to start test");
+      setTimeSpentPerQuestion({});
+      setTimeLeft(session.time_limit_sec || 10 * 60);
+      setState("testing");
+    } catch (err) {
+      clearInterval(interval);
+      console.error("Failed to create test session", err);
+      alert("Failed to create practice session. Please try again.");
       setState("selection");
     }
   };
 
-  const handleViewDetails = async (id: number) => {
+  const handleSubmit = useCallback(async () => {
+    if (!testId) return;
+
     setState("loading");
+    setLoadingMessageIndex(0);
+
+    const answersPayload = questions.map((q) => ({
+      question_id: q.id,
+      user_answer: userAnswers[q.id] || null
+    }));
+
+    const totalTimeSpent = Object.values(timeSpentPerQuestion).reduce((a, b) => a + b, 0);
+
     try {
-      const data = await fetchPracticeTestDetails(id);
-      setTestId(id);
-
-      // Ensure the header info is available for TestReport
-      setSelectedExam({ code: data.exam_type, name: data.exam_type } as any);
-      setSelectedSubject({ name: data.subject } as any);
-
-      setReport({
-        score: data.score || 0,
-        total_questions: data.total_questions,
-        time_taken_sec: data.time_taken_sec || 0,
-        questions: data.questions || []
-      });
+      const result = await submitPracticeTest(
+        testId,
+        answersPayload,
+        totalTimeSpent
+      );
+      setReport(result);
+      setSearchParams({ reportId: testId.toString() });
       setState("reporting");
-    } catch (error: any) {
-      toast.error("Failed to load test details");
-      setState("selection");
+    } catch (err) {
+      console.error("Failed to submit answers", err);
+      alert("Failed to calculate report. Please try again.");
+      setState("testing");
     }
+  }, [testId, questions, userAnswers, timeSpentPerQuestion, setSearchParams]);
+
+  const handleViewDetails = (reportId: number) => {
+    setSearchParams({ reportId: reportId.toString() });
   };
 
   // Timer logic
@@ -228,11 +252,11 @@ const PracticeTest = () => {
       <DashboardLayout title="Processing">
         <div className="flex flex-col items-center justify-center min-h-[50vh] sm:min-h-[60vh] space-y-6 sm:space-y-8 px-4">
           <div className="relative">
-            <div className="w-16 h-16 sm:w-20 md:w-24 sm:h-20 md:h-24 border-4 border-blue-100 border-t-blue-600 rounded-full animate-spin"></div>
-            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-blue-600 absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
+            <div className="w-16 h-16 sm:w-20 md:w-24 sm:h-20 md:h-24 border-4 border-zinc-200 border-t-black rounded-full animate-spin"></div>
+            <BookOpen className="w-8 h-8 sm:w-10 sm:h-10 text-black absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2" />
           </div>
           <div className="text-center space-y-2 sm:space-y-3">
-            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-blue-950 text-center px-4">{loadingMessages[loadingMessageIndex]}</h3>
+            <h3 className="text-lg sm:text-xl md:text-2xl font-bold text-gray-900 text-center px-4">{loadingMessages[loadingMessageIndex]}</h3>
             <p className="text-xs sm:text-sm text-muted-foreground">Our AI is preparing your unique practice session.</p>
           </div>
         </div>
@@ -284,7 +308,7 @@ const PracticeTest = () => {
     <DashboardLayout title={isHistoryTab ? "Past Performance" : "Practice Dashboard"}>
       <div className="max-w-5xl mx-auto space-y-6 sm:space-y-8 pb-8 sm:pb-12 px-2 sm:px-4">
         <div className="text-center space-y-1.5 sm:space-y-2">
-            <h2 className="text-xl sm:text-2xl font-bold text-blue-950 tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-gray-900 tracking-tight">
             {isHistoryTab ? "Your Test History" : "Test Preparation Engine"}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground px-4">

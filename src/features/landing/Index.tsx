@@ -61,8 +61,8 @@ const Index = () => {
 
   const features = [
     {
-      icon: <MessageSquare className="w-5 h-5 text-[#6B4EFF]" />,
-      iconBg: "bg-[#EEE9FF]",
+      icon: <MessageSquare className="w-5 h-5 text-black" />,
+      iconBg: "bg-zinc-100",
       title: "AI Tutor",
       desc: "Personalized help for concept clarity",
       tags: ["24/7", "Doubts"],
@@ -82,8 +82,8 @@ const Index = () => {
       tags: ["Analytics", "Insights"],
     },
     {
-      icon: <Globe className="w-5 h-5 text-[#6B4EFF]" />,
-      iconBg: "bg-[#EEE9FF]",
+      icon: <Globe className="w-5 h-5 text-black" />,
+      iconBg: "bg-zinc-100",
       title: "Multilingual Support",
       desc: "Available in 10 languages",
       tags: ["English", "Regional"],
@@ -115,7 +115,7 @@ const Index = () => {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <div className="w-10 h-10 bg-[#e9a4fa] rounded-xl flex items-center justify-center">
+          <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
             <img
               src="/figmaAssets/logo.png"
               alt="Cloop Logo"
@@ -126,8 +126,8 @@ const Index = () => {
         </div>
 
         {/* Beta pill */}
-        <div className="flex items-center gap-1.5 md:gap-2 bg-white border border-[#d0c8f5] text-[#6B4EFF] rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium shadow-sm whitespace-nowrap">
-          <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4" />
+        <div className="flex items-center gap-1.5 md:gap-2 bg-white border border-zinc-300 text-black rounded-full px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-medium shadow-sm whitespace-nowrap">
+          <Sparkles className="w-3.5 h-3.5 md:w-4 md:h-4 text-black" />
           <span className="hidden sm:inline">Beta –</span> Free
         </div>
       </header>
@@ -139,7 +139,7 @@ const Index = () => {
           <h1 className="text-[1.75rem] md:text-[2.5rem] font-extrabold text-[#1a0a3c] leading-tight tracking-tight">
             Master your subjects<br />
             with{" "}
-            <span className="text-[#6B4EFF]">AI-powered learning</span>
+            <span className="text-black underline underline-offset-4 decoration-zinc-400">AI-powered learning</span>
           </h1>
           <p className="mt-2 md:mt-3 text-gray-500 text-sm md:text-base font-medium">
             For Classes 5-12 and Competitive Exam Preparation
@@ -150,7 +150,7 @@ const Index = () => {
             {gradeLevels.map((grade, i) => (
               <span
                 key={i}
-                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 bg-white border border-purple-200 text-purple-600 rounded-full text-[11px] sm:text-xs font-medium shadow-sm"
+                className="inline-flex items-center gap-1 px-2.5 sm:px-3 py-0.5 sm:py-1 bg-white border border-zinc-200 text-zinc-900 rounded-full text-[11px] sm:text-xs font-medium shadow-sm"
               >
                 <GraduationCap className="w-3 h-3 sm:w-4 sm:h-4" />
                 {grade.label}
@@ -177,8 +177,8 @@ const Index = () => {
                   <span
                     key={j}
                     className={`text-[9px] sm:text-[10px] md:text-[11px] px-1.5 sm:px-2 py-0.5 rounded-full font-medium ${
-                      f.iconBg === "bg-[#EEE9FF]"
-                        ? "bg-purple-50 text-purple-600"
+                      f.iconBg === "bg-zinc-100"
+                        ? "bg-zinc-100 text-zinc-900"
                         : f.iconBg === "bg-[#E9FBF0]"
                         ? "bg-green-50 text-green-600"
                         : "bg-amber-50 text-amber-600"
@@ -203,7 +203,7 @@ const Index = () => {
             <button
               type="button"
               onClick={() => navigate("/signup")}
-              className="mt-3 w-full py-3 md:py-3.5 bg-[#6B4EFF] hover:bg-[#5a3de0] text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
+              className="mt-3 w-full py-3 md:py-3.5 bg-black hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98]"
             >
               Sign Up
             </button>
@@ -236,7 +236,7 @@ const Index = () => {
                   value={guestId}
                   onChange={(e) => setGuestId(e.target.value)}
                   placeholder="Enter email or phone number"
-                  className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6B4EFF]/30 focus:border-[#6B4EFF] transition"
+                  className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition"
                 />
               </div>
             </div>
@@ -253,7 +253,7 @@ const Index = () => {
               id="login-btn"
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 md:py-3.5 bg-[#6B4EFF] hover:bg-[#5a3de0] text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
+              className="w-full py-3 md:py-3.5 bg-black hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-all duration-200 shadow-md hover:shadow-lg active:scale-[0.98] disabled:opacity-70"
             >
               {isLoading ? "Redirecting…" : "Continue Learning"}
             </button>
@@ -263,7 +263,7 @@ const Index = () => {
         {/* ── VISIT STRIP ── */}
         <div className="mt-6 md:mt-10 flex flex-col items-center gap-2 md:gap-3 animate-fade-up" style={{ "--animation-delay": "0.3s" } as React.CSSProperties}>
           <div className="w-9 h-9 md:w-10 md:h-10 bg-white rounded-full flex items-center justify-center shadow-sm border border-gray-100">
-            <Globe className="w-4 h-4 md:w-5 md:h-5 text-[#6B4EFF]" />
+            <Globe className="w-4 h-4 md:w-5 md:h-5 text-black" />
           </div>
           <p className="text-gray-500 text-xs md:text-sm">
             Visit website:{" "}
@@ -271,7 +271,7 @@ const Index = () => {
               href="https://www.cloopapp.com"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-[#6B4EFF] font-semibold hover:underline"
+              className="text-black font-semibold hover:underline"
             >
               www.cloopapp.com
             </a>

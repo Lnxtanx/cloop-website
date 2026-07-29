@@ -13,7 +13,7 @@ export default function Privacy() {
             </div>
             <div className="py-20 px-5 lg:px-20">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-gray-900 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-black">
                         Privacy Policy
                     </h1>
 
@@ -49,7 +49,7 @@ export default function Privacy() {
 
                         <h2 className="text-2xl font-bold text-gray-800 mt-10 mb-4">4. Contact Information</h2>
                         <p className="mb-6 leading-relaxed">
-                            If you have any questions about this privacy policy or our privacy practices for the Cloop Web version, please contact our data privacy team at <a href="mailto:support@cloopapp.com" className="text-purple-600 font-bold underline">support@cloopapp.com</a>.
+                            If you have any questions about this privacy policy or our privacy practices for the Cloop Web version, please contact our data privacy team at <a href="mailto:support@cloopapp.com" className="text-black font-bold underline">support@cloopapp.com</a>.
                         </p>
                     </div>
                 </div>

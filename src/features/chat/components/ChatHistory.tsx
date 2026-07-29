@@ -70,7 +70,7 @@ export const ChatHistory = ({ collapsed }: ChatHistoryProps) => {
           onClick={handleNewChat}
           className="w-full justify-start gap-2 bg-white hover:bg-gray-50 text-gray-700 border border-gray-200 shadow-sm font-medium text-sm h-9 rounded-lg transition-all active:scale-[0.98]"
         >
-          <Plus className="w-3.5 h-3.5 text-purple-600" />
+          <Plus className="w-3.5 h-3.5 text-black" />
           <span>New Chat</span>
         </Button>
       </div>
@@ -98,13 +98,13 @@ export const ChatHistory = ({ collapsed }: ChatHistoryProps) => {
                     className={cn(
                       "group relative flex items-center gap-2.5 px-3 py-2 rounded-lg cursor-pointer transition-all hover:bg-gray-50",
                       currentSessionId === String(session.id) 
-                        ? "bg-purple-50 text-purple-700 font-medium" 
+                        ? "bg-zinc-100 text-black font-medium" 
                         : "text-gray-600 hover:text-gray-900"
                     )}
                   >
                     <MessageSquare className={cn(
                       "w-3.5 h-3.5 shrink-0",
-                      currentSessionId === String(session.id) ? "text-purple-600" : "text-gray-400"
+                      currentSessionId === String(session.id) ? "text-black" : "text-gray-400"
                     )} />
                     <span className="text-[13px] truncate pr-6">{session.title || "Untitled Chat"}</span>
                     

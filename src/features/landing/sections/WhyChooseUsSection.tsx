@@ -6,7 +6,7 @@ export const WhyChooseUsSection = (): JSX.Element => {
   const navigate = useNavigate();
 
   return (
-    <section className="flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-[70px] px-5 py-10 lg:py-[50px] w-full min-h-[600px] lg:min-h-screen bg-[linear-gradient(180deg,rgba(234,165,251,1)_0%,rgba(159,124,251,1)_100%)]">
+    <section className="flex flex-col lg:flex-row items-center justify-center gap-10 lg:gap-[70px] px-5 py-10 lg:py-[50px] w-full min-h-[600px] lg:min-h-screen bg-[linear-gradient(180deg,#09090b_0%,#18181b_60%,#000000_100%)]">
       <div className="relative w-full max-w-[420px] lg:w-[480px] aspect-[368/706] hidden lg:block">
         <img
           src="/1.png"
@@ -21,11 +21,11 @@ export const WhyChooseUsSection = (): JSX.Element => {
         </div>
 
         <h1 className="w-full font-bold text-4xl md:text-6xl lg:text-7xl tracking-tight leading-tight">
-          <span className="text-[#101566]">Improve Your Grades with Cloop&apos;s Real Time </span>
+          <span className="text-zinc-300">Improve Your Grades with Cloop&apos;s Real Time </span>
           <span className="text-white">Score Predictor</span>
         </h1>
 
-        <p className="w-full font-medium text-[#39343f] text-lg md:text-2xl lg:text-3xl leading-relaxed">
+        <p className="w-full font-medium text-zinc-400 text-lg md:text-2xl lg:text-3xl leading-relaxed">
           Cloop combines AI Tutor with a real time Error Corrections to predict
           real time scores and increase your grades.
         </p>
@@ -95,7 +95,7 @@ export const WhyChooseUsSection = (): JSX.Element => {
                     document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
                   }, 100);
                 }}
-                className="h-[59px] min-w-[185px] bg-white text-[#8d33ff] hover:bg-purple-50 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
+                className="h-[59px] min-w-[185px] bg-white text-black hover:bg-zinc-100 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
             >
                 <Monitor className="w-5 h-5" /> Try Web Version
             </Button>

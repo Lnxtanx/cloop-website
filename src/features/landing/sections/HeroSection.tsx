@@ -8,7 +8,7 @@ export const HeroSection = (): JSX.Element => {
 
   return (
     <section id="pricing" className="flex flex-col items-center w-full bg-white">
-      <div className="w-full max-w-[1440px] px-5 lg:px-20 py-20 bg-[linear-gradient(137deg,rgba(104,59,218,1)_0%,rgba(180,129,230,1)_100%)] rounded-b-[40px] shadow-xl text-center text-white">
+      <div className="w-full max-w-[1440px] px-5 lg:px-20 py-20 bg-[linear-gradient(137deg,#09090b_0%,#18181b_60%,#000000_100%)] rounded-b-[40px] shadow-xl text-center text-white">
         <h1 className="text-4xl lg:text-6xl font-bold mb-10 leading-tight">
           Join 10,000+ students who are improving their grades with Cloop&apos;s Score Predictor.
         </h1>
@@ -71,7 +71,7 @@ export const HeroSection = (): JSX.Element => {
                 document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
               }, 100);
             }}
-            className="h-[59px] min-w-[200px] bg-white text-[#8d33ff] hover:bg-purple-50 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
+            className="h-[59px] min-w-[200px] bg-white text-black hover:bg-zinc-100 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
           >
             <Monitor className="w-5 h-5" /> Try Web Version
           </Button>

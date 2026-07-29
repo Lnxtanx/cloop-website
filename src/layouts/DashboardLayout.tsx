@@ -28,7 +28,7 @@ function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigat
   const isMobile = useIsMobile();
 
   return (
-    <header className="h-12 sm:h-14 shrink-0 border-b border-blue-800 bg-gradient-to-r from-blue-600 to-blue-700 flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 z-10 shadow-md safe-area-inset">
+      <header className="h-12 sm:h-14 shrink-0 border-b border-zinc-800 bg-gradient-to-r from-black via-zinc-900 to-zinc-950 flex items-center justify-between px-3 sm:px-6 gap-2 sm:gap-4 z-10 shadow-md safe-area-inset">
       {/* Left: Hamburger (mobile) + Back + Title */}
       <div className="flex items-center gap-1 sm:gap-2 min-w-0">
         {/* Mobile hamburger menu */}
@@ -77,7 +77,7 @@ function DashboardHeader({ title, isPractice, userInitials, unreadCount, navigat
         </Button>
         <button
           onClick={() => navigate("/dashboard/profile")}
-          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-blue-400 overflow-hidden bg-blue-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
+          className="w-8 h-8 sm:w-9 sm:h-9 rounded-full border-2 border-gray-400 overflow-hidden bg-gray-800 cursor-pointer hover:opacity-90 transition-opacity flex items-center justify-center"
           title="Profile"
         >
           <span className="text-white text-[10px] sm:text-xs font-semibold">{userInitials}</span>
@@ -192,7 +192,7 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
 
   return (
     <SidebarProvider>
-      <div className={`h-screen flex w-full overflow-hidden ${isPractice ? 'bg-blue-50/30' : 'bg-secondary/30'}`}>
+      <div className={`h-screen flex w-full overflow-hidden ${isPractice ? 'bg-gray-900/30' : 'bg-secondary/30'}`}>
         {isPractice ? <PracticeSidebar /> : <AppSidebar />}
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden h-full">
           {/* Header */}

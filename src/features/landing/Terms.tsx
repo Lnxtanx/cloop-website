@@ -13,12 +13,12 @@ export default function Terms() {
             </div>
             <div className="py-20 px-5 lg:px-20">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-gray-900 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-black">
                         Terms & Conditions
                     </h1>
 
                     <div className="prose prose-lg text-gray-600 max-w-none">
-                        <div className="bg-purple-50 border border-purple-100 p-4 rounded-xl mb-10 text-purple-800 text-sm font-medium">
+                        <div className="bg-zinc-100 border border-zinc-200 p-4 rounded-xl mb-10 text-zinc-900 text-sm font-medium">
                             These Terms and Conditions apply specifically to the usage of the Cloop Web platform.
                         </div>
 
@@ -38,7 +38,7 @@ export default function Terms() {
 
                         <h2 className="text-2xl font-bold text-gray-800 mt-10 mb-4">3. User Accounts & IDs</h2>
                         <p className="mb-6 leading-relaxed">
-                            Access to Cloop Web is managed through unique User IDs. You are responsible for maintaining the confidentiality of your ID. You agree to notify us immediately at <a href="mailto:support@cloopapp.com" className="text-purple-600 font-bold underline">support@cloopapp.com</a> if you suspect any unauthorized use of your account.
+                            Access to Cloop Web is managed through unique User IDs. You are responsible for maintaining the confidentiality of your ID. You agree to notify us immediately at <a href="mailto:support@cloopapp.com" className="text-black font-bold underline">support@cloopapp.com</a> if you suspect any unauthorized use of your account.
                         </p>
 
                         <h2 className="text-2xl font-bold text-gray-800 mt-10 mb-4">4. Intellectual Property</h2>

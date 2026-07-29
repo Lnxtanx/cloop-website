@@ -143,10 +143,8 @@ const Topics = () => {
     return `${seconds}s`;
   };
 
-  const getCompletionColor = (percent: number) => {
-    if (percent >= 80) return "text-blue-700";
-    if (percent >= 50) return "text-blue-600";
-    return "text-blue-500";
+  const getCompletionColor = (_percent: number) => {
+    return "text-black font-bold";
   };
 
   const user = localStorage.getItem("cloop_user") ? JSON.parse(localStorage.getItem("cloop_user")!) : null;
@@ -188,12 +186,12 @@ const Topics = () => {
           const totalCount = topics.length || chapter.total_topics;
           const computedPercent = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
           return (
-            <Card className="border-blue-200 bg-gradient-to-r from-blue-100 to-blue-50">
+            <Card className="border-zinc-200 bg-gradient-to-r from-zinc-100 to-zinc-50 shadow-sm">
               <CardContent className="p-3 sm:p-4 lg:p-5">
                 <div className="space-y-2 sm:space-y-3">
                   <div className="flex items-center justify-between">
                     <span className="text-xs sm:text-sm font-medium">Chapter Progress</span>
-                    <span className="text-sm sm:text-lg font-bold text-blue-700">{computedPercent}%</span>
+                    <span className="text-sm sm:text-lg font-bold text-black">{computedPercent}%</span>
                   </div>
                   <Progress value={computedPercent} className="h-1.5 sm:h-2" />
                   <p className="text-[10px] sm:text-xs text-muted-foreground">
@@ -210,8 +208,8 @@ const Topics = () => {
           {topics.map((topic, index) => (
             <Card
               key={topic.id}
-              className={`border-gray-200 hover:border-blue-300 transition-all hover:shadow-md cursor-pointer ${
-                topic.is_completed ? "bg-blue-50/50" : "bg-white"
+              className={`border-gray-200 hover:border-black transition-all hover:shadow-md cursor-pointer ${
+                topic.is_completed ? "bg-zinc-100/60" : "bg-white"
               }`}
               onClick={() => handleTopicPress(topic)}
             >
@@ -219,10 +217,10 @@ const Topics = () => {
                 {/* Status Icon */}
                 <div
                    className={`w-8 h-8 sm:w-10 sm:h-10 rounded-full flex items-center justify-center shrink-0 ${
-                     topic.is_completed ? "bg-blue-100" : "bg-blue-50"
+                     topic.is_completed ? "bg-zinc-200" : "bg-zinc-100"
                    }`}
                  >
-                   <span className={`text-xs sm:text-sm font-bold ${topic.is_completed ? "text-blue-700" : "text-blue-600"}`}>
+                   <span className={`text-xs sm:text-sm font-bold ${topic.is_completed ? "text-black font-black" : "text-black"}`}>
                     {index + 1}
                   </span>
                 </div>
@@ -230,10 +228,10 @@ const Topics = () => {
                 {/* Content */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
-                     <h4 className={`font-semibold text-xs sm:text-sm truncate ${topic.is_completed ? "text-blue-700" : ""}`}>
+                     <h4 className={`font-semibold text-xs sm:text-sm truncate ${topic.is_completed ? "text-black font-bold" : ""}`}>
                       {topic.title}
                     </h4>
-                    {topic.is_completed && <span className="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-blue-100 text-blue-700 rounded-full">Done</span>}
+                    {topic.is_completed && <span className="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-zinc-200 text-black font-bold rounded-full">Done</span>}
                   </div>
 
                   {/* Metrics */}
@@ -269,7 +267,7 @@ const Topics = () => {
                     className="w-7 h-7 sm:w-8 sm:h-8"
                   >
                     {savedTopicIds.has(topic.id) ? (
-                      <BookmarkCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                      <BookmarkCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-black" />
                     ) : (
                       <BookmarkPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                     )}
@@ -279,7 +277,7 @@ const Topics = () => {
                   <Button
                     variant="default"
                     size="sm"
-                    className="bg-blue-600 hover:bg-blue-700 text-white border-0 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
+                    className="bg-black hover:bg-zinc-800 text-white border-0 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTopicPress(topic);

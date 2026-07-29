@@ -14,10 +14,10 @@ export const Footer = (): JSX.Element => {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-10 md:mb-20">
         <div className="flex flex-col gap-4 md:gap-6">
           <div className="flex flex-col gap-2">
-            <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-[#e9a4fa] rounded-xl md:rounded-2xl flex items-center justify-center p-2">
+            <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-black rounded-xl md:rounded-2xl flex items-center justify-center p-2 shadow-md">
               <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full" />
             </div>
-            <p className="text-purple-600 text-xs md:text-sm font-bold tracking-wide text-left">
+            <p className="text-black text-xs md:text-sm font-bold tracking-wide text-left">
               Building India’s Concept Mastery Infrastructure
             </p>
           </div>
@@ -31,7 +31,7 @@ export const Footer = (): JSX.Element => {
           <ul className="flex flex-col gap-2 md:gap-4">
             {companyLinks.map((link) => (
               <li key={link.label}>
-                <Link to={link.href} className="text-gray-600 hover:text-[#8d33ff] transition-colors text-sm md:text-lg">
+                <Link to={link.href} className="text-gray-600 hover:text-black transition-colors text-sm md:text-lg">
                   {link.label}
                 </Link>
               </li>

@@ -56,7 +56,7 @@ export const CurriculumSection = (): JSX.Element => {
       </div>
 
       <div className="flex flex-col items-center gap-8 w-full">
-        <Button className="h-auto gap-[11.29px] px-[45.17px] py-[25.41px] rounded-[11.29px] bg-[#7317e6] hover:bg-[#5f12c4] text-[#f6f7f9] [font-family:'Avenir_Next_LT_Pro-Bold',Helvetica] font-bold text-[28.2px] leading-[33.9px] tracking-[0] shadow-xl shadow-purple-200">
+        <Button className="h-auto gap-[11.29px] px-[45.17px] py-[25.41px] rounded-[11.29px] bg-black hover:bg-zinc-800 text-[#f6f7f9] [font-family:'Avenir_Next_LT_Pro-Bold',Helvetica] font-bold text-[28.2px] leading-[33.9px] tracking-[0] shadow-xl shadow-zinc-300">
           Download App <Zap className="w-6 h-6 fill-current text-yellow-300" />
         </Button>
 
@@ -113,7 +113,7 @@ export const CurriculumSection = (): JSX.Element => {
                 document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
               }, 100);
             }}
-            className="h-[59px] min-w-[200px] bg-white text-[#8d33ff] hover:bg-purple-50 rounded-[10.37px] border-2 border-[#8d33ff] font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
+            className="h-[59px] min-w-[200px] bg-white text-black hover:bg-zinc-100 rounded-[10.37px] border-2 border-black font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
           >
             <Monitor className="w-5 h-5" /> Try Web Version
           </Button>

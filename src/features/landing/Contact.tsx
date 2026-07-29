@@ -32,7 +32,7 @@ export default function Contact() {
                 </div>
                 <div className="py-20 px-5 lg:px-20">
                     <div className="max-w-xl mx-auto">
-                        <h1 className="text-4xl lg:text-5xl font-extrabold mb-4 text-center text-gray-900 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                        <h1 className="text-4xl lg:text-5xl font-extrabold mb-4 text-center text-black">
                             Contact Cloop Support
                         </h1>
                         <p className="text-lg text-gray-500 text-center mb-10">
@@ -81,7 +81,7 @@ export default function Contact() {
 
                                 <Button
                                     type="submit"
-                                    className="w-full h-14 bg-gradient-to-r from-purple-600 to-violet-600 hover:from-purple-700 hover:to-violet-700 text-white rounded-xl text-lg font-bold shadow-lg shadow-purple-200"
+                                    className="w-full h-14 bg-black hover:bg-zinc-800 text-white rounded-xl text-lg font-bold shadow-lg shadow-zinc-300"
                                 >
                                     Send Message
                                 </Button>

@@ -19,8 +19,8 @@ interface Chapter {
 }
 
 const statusConfig = {
-  completed: { label: "Completed", icon: CheckCircle, color: "bg-blue-100 text-blue-700" },
-  "in-progress": { label: "In Progress", icon: Play, color: "bg-blue-50 text-blue-600" },
+  completed: { label: "Completed", icon: CheckCircle, color: "bg-zinc-200 text-black font-bold" },
+  "in-progress": { label: "In Progress", icon: Play, color: "bg-zinc-100 text-zinc-900 font-bold" },
 };
 
 const Chapters = () => {
@@ -103,7 +103,7 @@ const Chapters = () => {
           </Button>
           <div className="min-w-0">
             <h2 className="text-lg sm:text-xl lg:text-2xl font-bold flex items-center gap-2 truncate">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600 shrink-0" /> 
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-black shrink-0" /> 
               <span className="truncate">{subjectName}</span>
             </h2>
             <p className="text-xs sm:text-sm text-muted-foreground mt-0.5 sm:mt-1">
@@ -113,10 +113,10 @@ const Chapters = () => {
         </div>
 
         {/* Overall Progress */}
-        <div className="space-y-2 sm:space-y-3 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100">
+        <div className="space-y-2 sm:space-y-3 bg-white rounded-xl sm:rounded-2xl p-3 sm:p-4 border border-gray-100 shadow-sm">
           <div className="flex items-center justify-between">
             <span className="font-medium text-xs sm:text-sm">Progress</span>
-            <span className="text-xs sm:text-sm font-bold text-blue-600">{Math.round(overallProgress)}%</span>
+            <span className="text-xs sm:text-sm font-bold text-black">{Math.round(overallProgress)}%</span>
           </div>
           <Progress value={overallProgress} className="h-1.5 sm:h-2" />
           <p className="text-[11px] sm:text-xs text-muted-foreground">{completedTopics} of {totalTopics} topics completed</p>
@@ -140,12 +140,12 @@ const Chapters = () => {
               return (
                 <Card
                   key={ch.id}
-                  className="border-border transition-all hover:shadow-md cursor-pointer"
+                  className="border-border transition-all hover:shadow-md cursor-pointer hover:border-black"
                   onClick={() => handleChapterClick(ch)}
                 >
                   <CardContent className="p-3 sm:p-4 lg:p-5 flex items-center gap-3 sm:gap-4">
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "bg-blue-100" : status === "completed" ? "bg-blue-200" : "bg-gray-100"}`}>
-                      <span className={`text-xs sm:text-sm font-bold ${status === "in-progress" ? "text-blue-700" : status === "completed" ? "text-blue-800" : "text-gray-500"}`}>
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center shrink-0 ${status === "in-progress" ? "bg-zinc-100" : status === "completed" ? "bg-zinc-200" : "bg-gray-100"}`}>
+                      <span className={`text-xs sm:text-sm font-bold ${status === "in-progress" ? "text-black" : status === "completed" ? "text-black font-black" : "text-gray-500"}`}>
                         {i + 1}
                       </span>
                     </div>
@@ -165,10 +165,10 @@ const Chapters = () => {
                       </div>
                     </div>
                     {status === "in-progress" && (
-                      <Button size="sm" className="bg-blue-600 hover:bg-blue-700 text-white border-0 shrink-0 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Continue</Button>
+                      <Button size="sm" className="bg-black hover:bg-zinc-800 text-white border-0 shrink-0 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Continue</Button>
                     )}
                     {status === "completed" && (
-                      <Button size="sm" variant="outline" className="shrink-0 border-blue-300 text-blue-700 hover:bg-blue-50 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Review</Button>
+                      <Button size="sm" variant="outline" className="shrink-0 border-zinc-300 text-black hover:bg-zinc-100 text-[10px] sm:text-xs h-8 sm:h-9 px-2 sm:px-3">Review</Button>
                     )}
                   </CardContent>
                 </Card>

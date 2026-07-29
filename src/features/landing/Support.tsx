@@ -13,13 +13,13 @@ export default function Support() {
             </div>
             <div className="py-20 px-5 lg:px-20">
                 <div className="max-w-4xl mx-auto">
-                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-gray-900 bg-gradient-to-r from-purple-600 to-violet-600 bg-clip-text text-transparent">
+                    <h1 className="text-4xl lg:text-5xl font-extrabold mb-8 text-black">
                         Support Center
                     </h1>
 
                     <div className="mb-16 mt-12">
                         <h2 className="text-3xl font-bold text-gray-900 mb-8 flex items-center gap-3">
-                            <span className="w-2 h-8 bg-purple-600 rounded-full"></span>
+                            <span className="w-2 h-8 bg-black rounded-full"></span>
                             Web Version FAQ
                         </h2>
                         <Accordion type="single" collapsible className="w-full space-y-4">
@@ -44,7 +44,7 @@ export default function Support() {
                                     I forgot my User ID. How can I recover it?
                                 </AccordionTrigger>
                                 <AccordionContent className="text-lg text-gray-600 leading-relaxed pb-6">
-                                    Since Cloop Web uses a unique User ID system for privacy, we recommend saving your ID securely. If you lose it, please contact <a href="mailto:support@cloopapp.com" className="text-purple-600 font-bold">support@cloopapp.com</a> with your registration details.
+                                    Since Cloop Web uses a unique User ID system for privacy, we recommend saving your ID securely. If you lose it, please contact <a href="mailto:support@cloopapp.com" className="text-black font-bold underline">support@cloopapp.com</a> with your registration details.
                                 </AccordionContent>
                             </AccordionItem>
                             <AccordionItem value="item-4" className="border rounded-2xl px-6 bg-gray-50/50">
@@ -58,7 +58,7 @@ export default function Support() {
                         </Accordion>
                     </div>
 
-                    <div className="bg-gradient-to-br from-purple-600 to-violet-700 p-10 lg:p-14 rounded-[40px] text-white shadow-xl shadow-purple-200">
+                    <div className="bg-gradient-to-br from-black via-zinc-900 to-zinc-950 p-10 lg:p-14 rounded-[40px] text-white shadow-xl shadow-zinc-300">
                         <div className="max-w-2xl">
                             <h2 className="text-3xl lg:text-4xl font-bold mb-6">Still need help with Cloop Web?</h2>
                             <p className="text-xl opacity-90 mb-10 leading-relaxed font-medium">
@@ -67,7 +67,7 @@ export default function Support() {
                             <div className="flex flex-col sm:flex-row gap-4">
                                 <Button 
                                     onClick={() => navigate("/contact")}
-                                    className="h-14 px-10 bg-white text-purple-600 hover:bg-purple-50 rounded-xl text-lg font-bold"
+                                    className="h-14 px-10 bg-white text-black hover:bg-zinc-100 rounded-xl text-lg font-bold"
                                 >
                                     Contact Support
                                 </Button>

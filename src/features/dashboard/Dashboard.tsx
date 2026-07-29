@@ -2,169 +2,105 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { BookOpen, Play, Loader2, Target, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { BookOpen, Play, Loader2, RefreshCw } from "lucide-react";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import PracticeDashboard from "@/features/practice/PracticeDashboard";
 
-interface GenerationStatus {
-  status: "pending" | "in_progress" | "completed" | "failed";
-  chapters_generated?: boolean;
-  topics_generated?: boolean;
-  goals_generated?: boolean;
-  error_message?: string;
-}
-
 interface UserSubject {
-  id?: number;
+  id: number;
   subject_id: number;
-  subject?: {
-    name?: string;
-    category?: string;
+  subject: {
+    id: number;
+    name: string;
+    code: string;
   };
+  category?: string;
+  grade_level?: string;
   completion_percent?: number;
   total_chapters?: number;
   completed_chapters?: number;
-  generation_status?: GenerationStatus | null;
+  generation_status?: {
+    status: string;
+    chapters_generated?: boolean;
+  };
 }
 
 interface UserProfile {
-  name?: string;
-  grade_level?: string;
-  board?: string;
-  user_subjects?: UserSubject[];
-  num_lessons?: number;
+  id: number;
+  user_id: number;
+  name: string;
+  grade_level: string;
+  board: string;
+  user_subjects: UserSubject[];
 }
 
 const Dashboard = () => {
+  const navigate = useNavigate();
   const { mode } = usePracticeMode();
   const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
-  const navigate = useNavigate();
 
-  const fetchProfile = async (showLoading = true) => {
-    if (showLoading) setLoading(true);
+  const fetchProfile = async () => {
+    setLoading(true);
     setError("");
     const token = localStorage.getItem("cloop_token");
+
     if (!token) {
       navigate("/");
       return;
     }
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
     try {
+      const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
       const response = await fetch(`${API_BASE_URL}/api/profile`, {
         headers: {
-          "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
+          "Content-Type": "application/json",
         },
       });
 
+      if (response.status === 401) {
+        localStorage.removeItem("cloop_token");
+        localStorage.removeItem("cloop_user");
+        navigate("/");
+        return;
+      }
+
       if (!response.ok) {
-        const err = await response.json().catch(() => null);
-        throw new Error(err?.error || `Profile fetch failed (${response.status})`);
+        throw new Error("Failed to fetch user profile");
       }
 
       const data = await response.json();
       setProfile(data);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unable to fetch profile data.";
-      console.error("Profile fetch error", err);
+      const message = err instanceof Error ? err.message : "An error occurred";
       setError(message);
     } finally {
-      if (showLoading) setLoading(false);
+      setLoading(false);
     }
   };
 
   useEffect(() => {
     fetchProfile();
-  }, [navigate]);
+  }, []);
 
-  const handleRetryGeneration = async (subjectId: number, e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent card click navigation
-    const token = localStorage.getItem("cloop_token");
-    if (!token) return;
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
-    try {
-      // Optimistically update the UI to pending status so the user gets instant feedback
-      if (profile && profile.user_subjects) {
-        const updatedSubjects = profile.user_subjects.map(us => {
-          if (us.subject_id === subjectId) {
-            return {
-              ...us,
-              generation_status: {
-                status: "pending" as const,
-                chapters_generated: false,
-                topics_generated: false,
-                goals_generated: false
-              }
-            };
-          }
-          return us;
-        });
-        setProfile({ ...profile, user_subjects: updatedSubjects });
-      }
-
-      const response = await fetch(`${API_BASE_URL}/api/content-generation/retry/${subjectId}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to retry generation");
-      }
-
-      // Refresh state silently in the background
-      fetchProfile(false);
-    } catch (err) {
-      console.error("Retry generation failed:", err);
-      // Refresh to revert optimistic UI on failure
-      fetchProfile(false);
-    }
-  };
-
-  // Polling for live curriculum generation progress (self-terminating)
+  // Poll profile if any subject generation is pending or in_progress
   useEffect(() => {
-    if (!profile) return;
+    if (!profile?.user_subjects) return;
 
-    // Check if any subject is currently generating
-    const hasGeneratingSubjects = profile.user_subjects?.some((item) => {
-      const status = item.generation_status?.status;
+    const isAnyGenerating = profile.user_subjects.some((s) => {
+      const status = s.generation_status?.status;
       return status === "pending" || status === "in_progress";
     });
 
-    if (!hasGeneratingSubjects) return;
-
-    const token = localStorage.getItem("cloop_token");
-    if (!token) return;
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
-
-    const intervalId = setInterval(async () => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/api/profile`, {
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          setProfile(data);
-        }
-      } catch (err) {
-        console.error("Polling profile failed:", err);
-      }
-    }, 5000);
-
-    return () => clearInterval(intervalId);
+    if (isAnyGenerating) {
+      const interval = setInterval(() => {
+        fetchProfile();
+      }, 5000);
+      return () => clearInterval(interval);
+    }
   }, [profile]);
 
   // Handle Practice Mode Home
@@ -176,7 +112,7 @@ const Dashboard = () => {
     return (
       <DashboardLayout title="Dashboard">
         <div className="flex items-center justify-center min-h-[60vh]">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+          <Loader2 className="w-8 h-8 animate-spin text-black" />
         </div>
       </DashboardLayout>
     );
@@ -200,7 +136,7 @@ const Dashboard = () => {
           <h2 className="text-xl sm:text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
             Hi {profile?.name ? profile.name.split(" ")[0] : "Learner"},
           </h2>
-            <p className="text-sm sm:text-base lg:text-lg text-blue-600 font-bold mt-1">
+          <p className="text-sm sm:text-base lg:text-lg text-black font-semibold mt-1">
             <button 
               onClick={() => navigate("/dashboard/statistics")}
               className="hover:underline cursor-pointer"
@@ -215,14 +151,14 @@ const Dashboard = () => {
         {/* Enrolled Subjects */}
         <div className="space-y-4 sm:space-y-6">
           <div className="flex items-center gap-2 sm:gap-3">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-blue-100 flex items-center justify-center">
-              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-blue-600" />
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-zinc-100 flex items-center justify-center">
+              <BookOpen className="w-4 h-4 sm:w-5 sm:h-5 text-black" />
             </div>
             <h3 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-gray-900">Learning Progress Overview</h3>
           </div>
 
           {subjects.length === 0 ? (
-            <div className="text-center py-12 sm:py-20 bg-blue-50/50 rounded-2xl sm:rounded-3xl border border-blue-100">
+            <div className="text-center py-12 sm:py-20 bg-zinc-50 rounded-2xl sm:rounded-3xl border border-zinc-200">
               <p className="text-base sm:text-lg text-gray-500 font-medium">No subjects enrolled yet.</p>
             </div>
           ) : (
@@ -244,10 +180,10 @@ const Dashboard = () => {
                     key={item.subject_id}
                     className={`rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group ${
                       isChapterGenerationInProgress
-                        ? "opacity-80 border-blue-300 bg-gradient-to-br from-blue-50 to-blue-100 cursor-not-allowed animate-pulse"
+                        ? "opacity-80 border-zinc-300 bg-gradient-to-br from-zinc-800 to-zinc-900 cursor-not-allowed animate-pulse"
                         : isFailed
                         ? "border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30 cursor-not-allowed"
-                        : "border-blue-200 hover:shadow-xl hover:border-blue-300 cursor-pointer bg-gradient-to-br from-blue-100 to-blue-50"
+                        : "border-zinc-200 hover:shadow-xl hover:border-black cursor-pointer bg-gradient-to-br from-zinc-900 via-zinc-900 to-black text-white"
                     }`}
                     onClick={() => {
                       if (isCardDisabled) return;
@@ -256,61 +192,80 @@ const Dashboard = () => {
                       );
                     }}
                   >
-                    <CardContent className="p-4 sm:p-6 flex flex-col flex-1">
-                      <div className="mb-3 sm:mb-4 flex items-center gap-2">
-                        {isFailed ? (
-                          <span className="text-[9px] sm:text-[10px] font-black text-red-800 bg-red-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
-                            {item.subject?.category || "General"}
-                            {" (Generation Failed)"}
+                    <CardContent className="p-5 sm:p-7 flex flex-col justify-between flex-1 space-y-6">
+                      <div>
+                        {/* Subject Header Info */}
+                        <div className="flex items-center justify-between gap-2 mb-3">
+                          <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-zinc-400 bg-white/10 px-2.5 sm:px-3 py-1 rounded-full backdrop-blur-md">
+                            {item.category || "Academic"}
                           </span>
-                        ) : (
-                            <span className="text-[9px] sm:text-[10px] font-black text-blue-800 bg-blue-200 rounded-full px-2 sm:px-3 py-0.5 sm:py-1 uppercase tracking-widest inline-flex items-center gap-1.5">
-                              {isGenerating && <Loader2 className="w-2.5 h-2.5 animate-spin text-blue-800" />}
-                            {item.subject?.category || "General"}
-                            {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : " (Generating Chapters)")}
-                          </span>
-                        )}
-                      </div>
+                          {isGenerating && (
+                            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
+                              <RefreshCw className="w-3 h-3 animate-spin" /> Generating...
+                            </span>
+                          )}
+                        </div>
 
-                      <h4 className="text-lg sm:text-xl font-extrabold text-gray-900 mb-4 sm:mb-6 group-hover:text-blue-600 transition-colors leading-tight">{item.subject?.name || "Untitled"}</h4>
+                        {/* Subject Title */}
+                        <h4 className="text-xl sm:text-2xl font-black text-white group-hover:text-zinc-200 transition-colors leading-tight">
+                          {item.subject?.name || "Untitled Subject"}
+                        </h4>
 
-                      <div className="space-y-3 sm:space-y-4 mb-4 sm:mb-8 flex-1">
-                        <div>
-                          <div className="flex justify-between text-[10px] sm:text-xs mb-1.5 sm:mb-2">
-                            <span className="font-bold text-gray-500 uppercase tracking-tighter">Concept Mastery:</span>
-                            <span className={`font-extrabold ${isNotStarted ? "text-gray-400" : "text-blue-600"}`}>
+                        {/* Concept Mastery Metric */}
+                        <div className="mt-6 space-y-2">
+                          <div className="flex items-center justify-between text-xs sm:text-sm font-bold">
+                            <span className="text-zinc-400 uppercase tracking-wider text-[10px] sm:text-[11px]">Concept Mastery:</span>
+                            <span className={isNotStarted ? "text-zinc-400" : "text-white"}>
                               {isNotStarted ? "Not Started" : `${pct}%`}
                             </span>
                           </div>
-                          <Progress value={pct} className="h-1.5 sm:h-2 bg-white/50" />
+
+                          {/* Progress Bar */}
+                          <div className="h-2 w-full bg-white/10 rounded-full overflow-hidden">
+                            <div
+                              className="h-full bg-gradient-to-r from-white to-zinc-400 transition-all duration-700"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
                         </div>
-                        <div className="flex justify-between text-[10px] sm:text-xs pb-1.5 sm:pb-2 border-b border-blue-200/50">
-                          <span className="font-bold text-gray-500 uppercase tracking-tighter">Chapters:</span>
-                          <span className="font-bold text-gray-900">{item.completed_chapters || 0} / {item.total_chapters || 0}</span>
+
+                        {/* Chapters Completed */}
+                        <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
+                          <span className="font-bold text-zinc-400 uppercase tracking-tighter text-[11px]">Chapters:</span>
+                          <span className="font-bold text-white">{item.completed_chapters || 0} / {item.total_chapters || 0}</span>
                         </div>
                       </div>
 
-                      {isChapterGenerationInProgress ? (
-                        <Button
-                          disabled
-                           className="w-full h-10 sm:h-12 bg-blue-100 text-blue-400 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm cursor-not-allowed"
-                         >
-                           <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-blue-400" /> Generating Chapters...
-                        </Button>
-                      ) : isFailed ? (
-                        <Button
-                          onClick={(e) => handleRetryGeneration(item.subject_id, e)}
-                          className="w-full h-10 sm:h-12 bg-red-100 hover:bg-red-200 text-red-600 font-bold transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
-                        >
-                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current rotate-90" /> Retry Generation
-                        </Button>
-                      ) : (
-                        <Button
-                           className="w-full h-10 sm:h-12 bg-white text-blue-600 font-bold hover:bg-blue-600 hover:text-white transition-all rounded-lg sm:rounded-xl gap-2 mt-auto text-xs sm:text-sm shadow-sm"
-                        >
-                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
-                        </Button>
-                      )}
+                      {/* CTA Button */}
+                      <div className="pt-2">
+                        {isFailed ? (
+                          <Button
+                            className="w-full bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              fetchProfile();
+                            }}
+                          >
+                            Generation Failed. Tap to Retry
+                          </Button>
+                        ) : (
+                          <Button
+                            disabled={isCardDisabled}
+                            className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl gap-2 shadow-lg shadow-black/20 transition-all group-hover:scale-[1.02]"
+                          >
+                            {isChapterGenerationInProgress ? (
+                              <>
+                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-black" /> Generating Chapters...
+                              </>
+                            ) : (
+                              <>
+                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
+                                {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : "")}
+                              </>
+                            )}
+                          </Button>
+                        )}
+                      </div>
                     </CardContent>
                   </Card>
                 );

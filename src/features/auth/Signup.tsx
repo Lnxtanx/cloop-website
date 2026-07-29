@@ -268,7 +268,7 @@ const Signup = () => {
 
         <Link 
           to="/" 
-          className="text-sm font-medium text-purple-600 hover:text-purple-700 transition-colors"
+          className="text-sm font-medium text-black hover:text-zinc-700 transition-colors"
         >
           Log in
         </Link>
@@ -306,7 +306,7 @@ const Signup = () => {
                 className={`max-w-[90%] sm:max-w-[80%] md:max-w-[75%] ${
                   msg.sender === "bot"
                     ? "bg-gray-100 text-gray-900 rounded-2xl sm:rounded-3xl rounded-bl-md px-3.5 sm:px-4 py-2.5 sm:py-3"
-                    : "bg-purple-600 text-white rounded-2xl sm:rounded-3xl rounded-br-md px-3.5 sm:px-4 py-2.5 sm:py-3"
+                    : "bg-black text-white rounded-2xl sm:rounded-3xl rounded-br-md px-3.5 sm:px-4 py-2.5 sm:py-3"
                 }`}
               >
                 <p className="text-sm sm:text-base leading-relaxed whitespace-pre-wrap">
@@ -338,29 +338,29 @@ const Signup = () => {
           {/* Completion State - User ID Card */}
           {hasCompleted && (
             <div className="pt-4 animate-fade-in">
-              <div className="bg-gradient-to-br from-purple-50 to-purple-100 border-2 border-purple-200 rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-center">
-                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-purple-600 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+              <div className="bg-gradient-to-br from-zinc-50 to-zinc-100 border-2 border-zinc-300 rounded-2xl sm:rounded-3xl p-5 sm:p-6 text-center shadow-lg">
+                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-black rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
                   <Check className="w-6 h-6 sm:w-8 sm:h-8 text-white" />
                 </div>
-                <p className="text-xs sm:text-sm font-semibold text-purple-700 uppercase tracking-wider mb-1.5 sm:mb-2">
+                <p className="text-xs sm:text-sm font-semibold text-zinc-700 uppercase tracking-wider mb-1.5 sm:mb-2">
                   Your User ID
                 </p>
-                <p className="text-2xl sm:text-3xl font-black text-purple-900 mb-3 sm:mb-4 tracking-tight break-all">
+                <p className="text-2xl sm:text-3xl font-black text-zinc-900 mb-3 sm:mb-4 tracking-tight break-all">
                   {generatedGuestId}
                 </p>
                 <button
                   onClick={copyToClipboard}
-                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white border-2 border-purple-200 rounded-xl font-semibold text-purple-700 hover:bg-purple-50 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
+                  className="inline-flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 bg-white border-2 border-zinc-300 rounded-xl font-semibold text-zinc-900 hover:bg-zinc-100 transition-colors mb-3 sm:mb-4 text-sm sm:text-base"
                 >
-                  <Sparkles className="w-4 h-4" />
+                  <Sparkles className="w-4 h-4 text-black" />
                   Copy ID
                 </button>
-                <p className="text-[11px] sm:text-xs text-purple-600 mb-4 sm:mb-6">
+                <p className="text-[11px] sm:text-xs text-zinc-600 mb-4 sm:mb-6">
                   ⚠️ Save this ID to login next time
                 </p>
                 <Button
                   onClick={() => navigate("/")}
-                  className="w-full h-11 sm:h-12 bg-purple-600 hover:bg-purple-700 text-white rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base"
+                  className="w-full h-11 sm:h-12 bg-black hover:bg-zinc-800 text-white rounded-xl sm:rounded-2xl font-semibold text-sm sm:text-base"
                 >
                   Continue to Login
                   <ArrowRight className="ml-2 w-4 h-4" />
@@ -387,14 +387,14 @@ const Signup = () => {
                   value={inputValue}
                   onChange={(e) => setInputValue(e.target.value)}
                   placeholder="Type your answer..."
-                  className="flex-1 h-11 sm:h-12 rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-4 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent focus:bg-white transition-all text-sm sm:text-base"
+                  className="flex-1 h-11 sm:h-12 rounded-xl sm:rounded-2xl border border-gray-200 bg-gray-50 px-4 focus:outline-none focus:ring-2 focus:ring-black focus:border-transparent focus:bg-white transition-all text-sm sm:text-base"
                   disabled={isLoading || !isOptionsLoaded}
                   autoFocus
                 />
                 <Button
                   type="submit"
                   size="icon"
-                  className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-purple-600 hover:bg-purple-700 shrink-0"
+                  className="h-11 w-11 sm:h-12 sm:w-12 rounded-xl sm:rounded-2xl bg-black hover:bg-zinc-800 shrink-0"
                   disabled={isLoading || !inputValue.trim() || !isOptionsLoaded}
                   aria-label="Send"
                 >
@@ -413,8 +413,8 @@ const Signup = () => {
                       onClick={handleSelectAll}
                       className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all shrink-0 ${
                         currentQuestion.options.length > 0 && currentQuestion.options.every(opt => currentMultiSelection.includes(opt.value))
-                          ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
-                          : "bg-purple-50 text-purple-700 hover:bg-purple-100 border border-purple-100"
+                          ? "bg-black text-white shadow-lg shadow-zinc-300"
+                          : "bg-zinc-100 text-zinc-800 hover:bg-zinc-200 border border-zinc-200"
                       }`}
                       disabled={isLoading}
                     >
@@ -452,7 +452,7 @@ const Signup = () => {
                         onClick={() => handleOptionSelect(opt)}
                         className={`px-3 py-2 sm:px-4 sm:py-2.5 rounded-full text-xs sm:text-sm font-medium transition-all min-h-[38px] flex items-center justify-center ${
                           selected
-                            ? "bg-purple-600 text-white shadow-lg shadow-purple-200"
+                            ? "bg-black text-white shadow-lg shadow-zinc-300"
                             : "bg-gray-100 text-gray-700 hover:bg-gray-200 active:scale-95"
                         }`}
                         disabled={isLoading}
@@ -470,7 +470,7 @@ const Signup = () => {
                       type="button"
                       onClick={handleMultiChoiceContinue}
                       disabled={isLoading}
-                      className="w-full h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-purple-600 hover:bg-purple-700 font-semibold text-sm sm:text-base"
+                      className="w-full h-11 sm:h-12 rounded-xl sm:rounded-2xl bg-black hover:bg-zinc-800 font-semibold text-sm sm:text-base"
                     >
                       {currentMultiSelection.length > 0
                         ? `Continue with ${currentMultiSelection.length} selected`
@@ -488,9 +488,9 @@ const Signup = () => {
                   key={idx}
                   className={`h-1.5 rounded-full transition-all ${
                     idx === currentIndex 
-                      ? "w-6 bg-purple-600" 
+                      ? "w-6 bg-black" 
                       : idx < currentIndex 
-                        ? "w-1.5 bg-purple-300" 
+                        ? "w-1.5 bg-zinc-400" 
                         : "w-1.5 bg-gray-200"
                   }`}
                 />

@@ -59,7 +59,7 @@ export function PracticeSidebar() {
   return (
     <Sidebar collapsible="icon" className="border-r border-gray-200 bg-white sticky top-0 h-screen">
       {/* Header with logo and toggle */}
-      <div className="h-14 flex items-center gap-2 px-3 border-b border-blue-600 bg-gradient-to-r from-blue-600 to-blue-700 shrink-0">
+      <div className="h-14 flex items-center gap-2 px-3 border-b border-zinc-800 bg-gradient-to-r from-black via-zinc-900 to-zinc-950 shrink-0">
         <button
           onClick={() => handleNavClick("/dashboard")}
           className="flex items-center gap-2 cursor-pointer hover:opacity-90 transition-opacity"
@@ -70,7 +70,7 @@ export function PracticeSidebar() {
         </button>
         {/* Desktop toggle button - hidden on mobile */}
         {!isMobile && (
-          <SidebarTrigger className="text-blue-200 hover:text-white hover:bg-blue-500/30 rounded-lg shrink-0 w-8 h-8 ml-auto">
+          <SidebarTrigger className="text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg shrink-0 w-8 h-8 ml-auto">
             {collapsed
               ? <PanelLeftOpen className="w-5 h-5" />
               : <PanelLeftClose className="w-5 h-5" />
@@ -104,7 +104,7 @@ export function PracticeSidebar() {
                       <SidebarMenuButton asChild tooltip={collapsed && !isMobile ? item.title : undefined}>
                         <button
                           onClick={() => handleNavClick(item.url)}
-                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg transition-all w-full ${isActive ? "bg-blue-100 text-blue-800 font-bold" : "text-gray-800 hover:bg-blue-50 hover:text-blue-700"}`}
+                          className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg transition-all w-full ${isActive ? "bg-zinc-100 text-black font-bold border-l-4 border-black" : "text-gray-800 hover:bg-zinc-100 hover:text-black"}`}
                         >
                           <item.icon className="w-[22px] h-[22px] shrink-0" />
                           {(!collapsed || isMobile) && <span className="font-semibold">{item.title}</span>}
@@ -122,7 +122,7 @@ export function PracticeSidebar() {
       <SidebarFooter className="p-4 bg-white border-t border-gray-100 flex flex-col gap-2">
         <Button
           onClick={handleModeSwitch}
-          className={`w-full justify-center gap-3 h-10 px-3 bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 shadow-none transition-all ${collapsed && !isMobile ? 'p-0' : ''}`}
+          className={`w-full justify-center gap-3 h-10 px-3 bg-black hover:bg-zinc-800 text-white border border-zinc-800 shadow-md transition-all ${collapsed && !isMobile ? 'p-0' : ''}`}
           title={collapsed && !isMobile ? "Back to Normal Mode" : ""}
         >
           {(!collapsed || isMobile) && <span className="font-bold text-base tracking-tight">Back to Normal Mode</span>}

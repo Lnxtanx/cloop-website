@@ -79,7 +79,7 @@ function UserBubble({ msg }: { msg: TopicChatMessage }) {
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
       <div style={{
         maxWidth: "65%", padding: "10px 16px", borderRadius: "18px 18px 4px 18px",
-        background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+        background: "linear-gradient(135deg, #09090b, #27272a)",
         color: "#fff", fontSize: 14, lineHeight: 1.55,
       }}>
         {msg.message}
@@ -104,7 +104,7 @@ function AIBubble({
       {/* Avatar */}
       <div style={{
         width: 28, height: 28, borderRadius: "50%", flexShrink: 0,
-        background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+        background: "linear-gradient(135deg, #000000, #404040)",
         display: "flex", alignItems: "center", justifyContent: "center",
         color: "#fff", fontSize: 10, fontWeight: 700,
       }}>C.</div>
@@ -124,7 +124,7 @@ function AIBubble({
               style={{
                 background: "transparent",
                 border: "none",
-                color: isSpeaking ? "#7c3aed" : "#9ca3af",
+                color: isSpeaking ? "#000000" : "#9ca3af",
                 cursor: "pointer",
                 padding: "6px",
                 display: "flex",
@@ -133,14 +133,14 @@ function AIBubble({
                 borderRadius: "50%",
                 transition: "all 0.2s",
               }}
-              className="hover:bg-blue-100/50 hover:text-blue-600 focus:outline-none shrink-0"
+              className="hover:bg-zinc-100 hover:text-black focus:outline-none shrink-0"
               title={isSpeaking ? "Stop listening" : "Listen to response"}
             >
               {isSpeaking ? (
                 <span className="flex gap-0.5 items-center justify-center h-4 w-4">
-                  <span className="w-0.5 h-2 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '0ms' }} />
-                  <span className="w-0.5 h-3.5 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '150ms' }} />
-                  <span className="w-0.5 h-2.5 bg-blue-600 rounded animate-bounce" style={{ animationDelay: '300ms' }} />
+                  <span className="w-0.5 h-2 bg-black rounded animate-bounce" style={{ animationDelay: '0ms' }} />
+                  <span className="w-0.5 h-3.5 bg-black rounded animate-bounce" style={{ animationDelay: '150ms' }} />
+                  <span className="w-0.5 h-2.5 bg-black rounded animate-bounce" style={{ animationDelay: '300ms' }} />
                 </span>
               ) : (
                 <Volume2 className="w-4 h-4" />
@@ -264,7 +264,7 @@ function SummaryCard({ data }: { data: SessionSummaryData }) {
         </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
-            { label: "Total", val: data.total_questions ?? 0, bg: "bg-blue-100", c: "text-blue-700" },
+            { label: "Total", val: data.total_questions ?? 0, bg: "bg-zinc-100", c: "text-black" },
             { label: "Correct", val: data.correct_answers ?? 0, bg: "bg-green-100", c: "text-green-700" },
             { label: "Wrong", val: data.incorrect_answers ?? 0, bg: "bg-red-100", c: "text-red-600" },
           ].map(({ label, val, bg, c }) => (
@@ -312,8 +312,8 @@ function ScorePredictionCard({ data }: { data: ScorePrediction }) {
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[
-            { label: "Concept", val: concept, bg2: "bg-blue-50", c2: "text-blue-700" },
-            { label: "Exam", val: exam, bg2: "bg-blue-50", c2: "text-blue-700" },
+            { label: "Concept", val: concept, bg2: "bg-zinc-100", c2: "text-black" },
+            { label: "Exam", val: exam, bg2: "bg-zinc-100", c2: "text-black" },
           ].map(({ label, val, bg2, c2 }) => (
             <div key={label} className={`${bg2} rounded-xl py-2 text-center`}>
               <p className={`text-base font-extrabold ${c2}`}>{val}%</p>
@@ -329,67 +329,63 @@ function ScorePredictionCard({ data }: { data: ScorePrediction }) {
 // ─── Goals bar ────────────────────────────────────────────────────────────────
 
 function goalIsCompleted(g: TopicGoal): boolean {
-  // Backend returns goals with chat_goal_progress array (same as mobile)
-  // Fall back to top-level is_completed if present
   return g.chat_goal_progress?.[0]?.is_completed ?? g.is_completed ?? false;
 }
 
 function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean; onToggle: () => void }) {
   const doneCount = goals.filter(goalIsCompleted).length;
   return (
-      <div style={{ background: "#eff6ff", borderBottom: "1px solid #bfdbfe", flexShrink: 0 }}>
+    <div style={{ background: "#f4f4f5", borderBottom: "1px solid #e4e4e7", flexShrink: 0 }}>
       <button onClick={onToggle} style={{
         width: "100%", display: "flex", alignItems: "center", justifyContent: "space-between",
         padding: "0 16px", height: 40, border: "none", background: "transparent", cursor: "pointer",
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-             <Trophy style={{ width: 15, height: 15, color: "#3b82f6" }} />
+          <Trophy style={{ width: 15, height: 15, color: "#000000" }} />
           <span style={{ fontSize: 13, fontWeight: 600, color: "#111827" }}>Learning Goals</span>
           <span style={{ fontSize: 12, color: "#9ca3af" }}>{doneCount}/{goals.length}</span>
         </div>
         {open
-          ? <ChevronUp style={{ width: 15, height: 15, color: "#7c3aed" }} />
-           : <ChevronDown style={{ width: 15, height: 15, color: "#3b82f6" }} />}
+          ? <ChevronUp style={{ width: 15, height: 15, color: "#000000" }} />
+          : <ChevronDown style={{ width: 15, height: 15, color: "#000000" }} />}
       </button>
       {open && (
-      <div style={{ overflowX: "auto", paddingBottom: 12 }}>
-        <div style={{ display: "flex", gap: 10, padding: "0 16px", width: "max-content" }}>
-          {goals.map((g, i) => {
-            const completed = goalIsCompleted(g);
-            const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
-            const progress = g.chat_goal_progress?.[0];
-            const numQ: number = progress?.num_questions ?? 0;
-            const numC: number = progress?.num_correct ?? 0;
-            const score = progress?.score_percent
-              ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
-            // Phase heuristic: if goal has ≥2 questions and not yet complete, likely in exam phase
-            const phase: "concept" | "exam" | null = active
-              ? numQ >= 2 ? "exam" : "concept"
-              : null;
+        <div style={{ overflowX: "auto", paddingBottom: 12 }}>
+          <div style={{ display: "flex", gap: 10, padding: "0 16px", width: "max-content" }}>
+            {goals.map((g, i) => {
+              const completed = goalIsCompleted(g);
+              const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
+              const progress = g.chat_goal_progress?.[0];
+              const numQ: number = progress?.num_questions ?? 0;
+              const numC: number = progress?.num_correct ?? 0;
+              const score = progress?.score_percent
+                ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
+              const phase: "concept" | "exam" | null = active
+                ? numQ >= 2 ? "exam" : "concept"
+                : null;
 
-          return (
-            <div key={g.id} style={{
-              width: 116, borderRadius: 12, padding: 10,
-              border: `2px solid ${completed ? "#6366f1" : active ? "#3b82f6" : "#d1d5db"}`,
-              background: completed ? "#eff6ff" : active ? "#fafafa" : "#f9fafb",
-              boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
-            }}>
+              return (
+                <div key={g.id} style={{
+                  width: 116, borderRadius: 12, padding: 10,
+                  border: `2px solid ${completed ? "#000000" : active ? "#18181b" : "#d1d5db"}`,
+                  background: completed ? "#f4f4f5" : active ? "#ffffff" : "#f9fafb",
+                  boxShadow: active ? "0 2px 8px rgba(0,0,0,0.08)" : "none",
+                }}>
                   <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 5 }}>
                     <div style={{ display: "flex", alignItems: "center", gap: 4 }}>
                       {completed
-                        ?                    <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#6366f1", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
+                        ? <div style={{ width: 16, height: 16, borderRadius: "50%", background: "#000000", display: "flex", alignItems: "center", justifyContent: "center" }}><span style={{ color: "#fff", fontSize: 9 }}>✓</span></div>
                         : active
-                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "#3b82f6" }} /></div>
+                          ? <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #000000", display: "flex", alignItems: "center", justifyContent: "center" }}><div style={{ width: 7, height: 7, borderRadius: "50%", background: "#000000" }} /></div>
                           : <div style={{ width: 16, height: 16, borderRadius: "50%", border: "2px solid #d1d5db" }} />
                       }
-                        <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#3b82f6" : active ? "#3b82f6" : "#9ca3af" }}>{i + 1}</span>
+                      <span style={{ fontSize: 11, fontWeight: 700, color: completed ? "#000000" : active ? "#000000" : "#9ca3af" }}>{i + 1}</span>
                     </div>
-                    {/* Phase badge — only on active goal */}
                     {phase && (
                       <span style={{
                         fontSize: 9, fontWeight: 700, borderRadius: 6, padding: "2px 5px",
-                        background: phase === "exam" ? "#eff6ff" : "#f0fdf4",
-                        color: phase === "exam" ? "#2563eb" : "#16a34a",
+                        background: phase === "exam" ? "#f4f4f5" : "#f0fdf4",
+                        color: phase === "exam" ? "#000000" : "#16a34a",
                       }}>
                         {phase === "exam" ? "EXAM" : "CONCEPT"}
                       </span>
@@ -400,8 +396,8 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
                   </p>
                   {score > 0 && (
                     <div style={{ marginTop: 6 }}>
-                       <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                         <div style={{ height: "100%", width: `${score}%`, background: completed ? "#6366f1" : "#3b82f6", borderRadius: 2, transition: "width 0.4s ease" }} />
+                      <div style={{ height: 3, background: "#e5e7eb", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
+                        <div style={{ height: "100%", width: `${score}%`, background: completed ? "#000000" : "#18181b", borderRadius: 2, transition: "width 0.4s ease" }} />
                       </div>
                       <span style={{ fontSize: 10, color: "#6b7280" }}>{score}%</span>
                     </div>
@@ -421,11 +417,11 @@ function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: boolean
 function TypingDots() {
   return (
     <div className="flex items-end gap-2.5 mb-5">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-500 to-purple-700 flex items-center justify-center text-white text-xs font-bold flex-shrink-0">C</div>
+      <div className="w-7 h-7 rounded-full bg-black flex items-center justify-center text-white text-xs font-bold flex-shrink-0">C</div>
       <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm border border-gray-100">
         <div className="flex gap-1.5">
           {[0, 150, 300].map((d, i) => (
-            <div key={i} className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
+            <div key={i} className="w-2 h-2 rounded-full bg-zinc-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
           ))}
         </div>
       </div>

@@ -18,11 +18,11 @@ export default function About() {
                 <div className="py-16 px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto animate-fade-up">
                     {/* Hero Header */}
                     <div className="text-center max-w-3xl mx-auto mb-16">
-                        <div className="inline-flex items-center gap-2 bg-purple-100 text-purple-700 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-widest mb-4">
+                        <div className="inline-flex items-center gap-2 bg-zinc-100 text-zinc-900 rounded-full px-4 py-1.5 text-xs font-black uppercase tracking-widest mb-4 border border-zinc-200">
                             Our Mission & Philosophy
                         </div>
                         <h1 className="text-4xl sm:text-5xl font-extrabold text-[#1a0a3c] mb-6 leading-tight tracking-tight">
-                            Building India’s Concept Mastery <span className="text-[#6B4EFF]">Infrastructure</span>
+                            Building India’s Concept Mastery <span className="text-black underline underline-offset-4 decoration-zinc-400">Infrastructure</span>
                         </h1>
                         <p className="text-lg sm:text-xl text-gray-500 font-medium">
                             Predicting exam scores based on concept mastery, not memory. Making NCF’s vision for India’s education work on the ground.
@@ -36,17 +36,17 @@ export default function About() {
                         <div className="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 lg:p-12 transition-all hover:shadow-2xl">
                             <div className="grid lg:grid-cols-12 gap-8 items-center">
                                 <div className="lg:col-span-5 text-left">
-                                    <div className="w-12 h-12 bg-purple-100 rounded-2xl flex items-center justify-center mb-6">
-                                        <Brain className="w-6 h-6 text-[#6B4EFF]" />
+                                    <div className="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center mb-6">
+                                        <Brain className="w-6 h-6 text-black" />
                                     </div>
                                     <h2 className="text-3xl font-extrabold text-[#1a0a3c] mb-4">
                                         About Cloop
                                     </h2>
-                                    <p className="text-purple-600 font-bold text-lg leading-relaxed mb-4">
+                                    <p className="text-black font-bold text-lg leading-relaxed mb-4">
                                         Cloop is not another edtech startup. We are building what NCF envisioned but couldn’t implement; a system that measures understanding, not memory.
                                     </p>
                                 </div>
-                                <div className="lg:col-span-7 bg-[#F7F6FE] rounded-2xl p-6 lg:p-8 border border-purple-50 text-left">
+                                <div className="lg:col-span-7 bg-zinc-50 rounded-2xl p-6 lg:p-8 border border-zinc-200 text-left">
                                     <p className="text-gray-600 text-base sm:text-lg leading-relaxed mb-4">
                                         We started with a question: <strong>What if students could know their exam scores before exam day, based on how well they understand concepts?</strong>
                                     </p>
@@ -119,7 +119,7 @@ export default function About() {
                                 </div>
                             </div>
 
-                            <div className="bg-purple-50 rounded-2xl p-6 border border-purple-100 text-purple-950">
+                            <div className="bg-zinc-100 rounded-2xl p-6 border border-zinc-200 text-zinc-900">
                                 <p className="font-medium text-base sm:text-lg leading-relaxed">
                                     <strong>The result?</strong> A error dataset that can help NCERT/Publishers see where textbooks fail. Teachers know where methods need changing. Policymakers get evidence, not assumptions. This is NCF’s vision with tools that actually work.
                                 </p>
@@ -127,7 +127,7 @@ export default function About() {
                         </div>
 
                         {/* Section 3: The Cloop Vision for India */}
-                        <div className="bg-[linear-gradient(137deg,rgba(104,59,218,1)_0%,rgba(180,129,230,1)_100%)] rounded-3xl shadow-xl p-8 lg:p-12 text-white relative overflow-hidden text-left">
+                        <div className="bg-[linear-gradient(137deg,#09090b_0%,#18181b_60%,#000000_100%)] rounded-3xl shadow-xl p-8 lg:p-12 text-white relative overflow-hidden text-left">
                             <div className="absolute top-0 left-0 w-full h-full opacity-10">
                                 <div className="absolute top-10 left-10 w-64 h-64 bg-white rounded-full blur-3xl" />
                                 <div className="absolute bottom-10 right-10 w-80 h-80 bg-white rounded-full blur-3xl" />
@@ -167,7 +167,7 @@ export default function About() {
                                 <h2 className="text-3xl font-extrabold text-[#1a0a3c] mb-2">
                                     Team
                                 </h2>
-                                <div className="w-12 h-1 bg-[#6B4EFF] rounded-full mb-6" />
+                                <div className="w-12 h-1 bg-black rounded-full mb-6" />
                             </div>
 
                             <div className="grid sm:grid-cols-2 gap-6 max-w-4xl">
