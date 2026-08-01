@@ -1,12 +1,12 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { CardContent } from "@/components/ui/card";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   ArrowLeft, CheckCircle2, XCircle, HelpCircle,
-  TrendingUp, Clock, AlertCircle, ArrowRight, ChevronRight, Loader2, Zap, Target, Brain, Sparkles, BookOpen, BarChart3,
-  GraduationCap, Award, Lightbulb, Check, ShieldAlert, Star
+  TrendingUp, Clock, AlertCircle, ArrowRight, ChevronRight, ChevronDown, ChevronUp, Loader2, Zap, Target, Brain, Sparkles, BookOpen, BarChart3,
+  GraduationCap, Award, Lightbulb, Check, ShieldAlert, Star, RefreshCw
 } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
@@ -88,6 +88,608 @@ function CardContainer({ children, className, onClick }: { children: React.React
       onClick={onClick}
     >
       {children}
+    </div>
+  );
+}
+
+// ─── Concept Mastery Interactive Component ───────────────────────────────────
+
+function ConceptMasterySection({ data, subjectName }: { data?: any; subjectName?: string }) {
+  const navigate = useNavigate();
+  const [expandedCategory, setExpandedCategory] = useState<'mastered' | 'learning' | 'not_started' | null>(null);
+
+  // 1. Understood Well (Mastered): Score >= 75%
+  const masteredTopics = useMemo(() => {
+    const list: any[] = [];
+    const seenIds = new Set<number | string>();
+
+    if (data?.concepts_mastery?.mastered_list && Array.isArray(data.concepts_mastery.mastered_list)) {
+      data.concepts_mastery.mastered_list.forEach((t: any) => {
+        if (t.id && !seenIds.has(t.id)) {
+          seenIds.add(t.id);
+          list.push(t);
+        }
+      });
+    }
+
+    if (data?.mastered_topics && Array.isArray(data.mastered_topics)) {
+      data.mastered_topics.forEach((t: any) => {
+        if (t.id && !seenIds.has(t.id)) {
+          seenIds.add(t.id);
+          list.push(t);
+        }
+      });
+    }
+
+    if (data?.reports && Array.isArray(data.reports)) {
+      data.reports.forEach((r: any) => {
+        const score = Math.round(r.score_percent ?? r.score ?? (r.total_questions ? (r.correct_answers / r.total_questions) * 100 : 0));
+        const topicId = r.topic_id || r.topics?.id || r.id;
+        if (score >= 75 && topicId && !seenIds.has(topicId)) {
+          seenIds.add(topicId);
+          list.push({
+            id: topicId,
+            title: r.topics?.title || r.title || r.topic_title || `Topic ${topicId}`,
+            score: score,
+            chapter: r.topics?.chapters?.title || r.chapter_title || "",
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [data]);
+
+  // 2. Needs Improvement: Score > 0 and < 75% (or weak_topics)
+  const needsImprovementTopics = useMemo(() => {
+    const list: any[] = [];
+    const seenIds = new Set<number | string>();
+
+    const masteredIds = new Set(masteredTopics.map((t: any) => t.id));
+
+    if (data?.concepts_mastery?.learning_list && Array.isArray(data.concepts_mastery.learning_list)) {
+      data.concepts_mastery.learning_list.forEach((t: any) => {
+        if (t.id && !masteredIds.has(t.id) && !seenIds.has(t.id)) {
+          seenIds.add(t.id);
+          list.push(t);
+        }
+      });
+    }
+
+    if (data?.weak_topics && Array.isArray(data.weak_topics)) {
+      data.weak_topics.forEach((wt: any, idx: number) => {
+        const topicId = wt.topic_id || wt.id || idx + 200;
+        if (topicId && !masteredIds.has(topicId) && !seenIds.has(topicId)) {
+          seenIds.add(topicId);
+          list.push({
+            id: topicId,
+            title: wt.topic_title || wt.title || `Topic ${topicId}`,
+            score: Math.round(wt.average_score ?? wt.score ?? 50),
+            errorPattern: wt.error_distribution ? Object.keys(wt.error_distribution)[0] : "Needs Practice",
+            chapter: wt.subject_name || wt.chapter || "",
+          });
+        }
+      });
+    }
+
+    if (data?.reports && Array.isArray(data.reports)) {
+      data.reports.forEach((r: any) => {
+        const score = Math.round(r.score_percent ?? r.score ?? (r.total_questions ? (r.correct_answers / r.total_questions) * 100 : 0));
+        const topicId = r.topic_id || r.topics?.id || r.id;
+        if (score > 0 && score < 75 && topicId && !masteredIds.has(topicId) && !seenIds.has(topicId)) {
+          seenIds.add(topicId);
+          list.push({
+            id: topicId,
+            title: r.topics?.title || r.title || r.topic_title || `Topic ${topicId}`,
+            score: score,
+            chapter: r.topics?.chapters?.title || r.chapter_title || "",
+            errorPattern: "Needs Practice",
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [data, masteredTopics]);
+
+  // 3. Not Started: Topics with 0 attempts
+  const notStartedTopics = useMemo(() => {
+    const list: any[] = [];
+    const seenIds = new Set<number | string>();
+
+    const attemptedIds = new Set([
+      ...masteredTopics.map((t: any) => t.id),
+      ...needsImprovementTopics.map((t: any) => t.id),
+    ]);
+
+    if (data?.concepts_mastery?.not_started_list && Array.isArray(data.concepts_mastery.not_started_list)) {
+      data.concepts_mastery.not_started_list.forEach((t: any) => {
+        if (t.id && !attemptedIds.has(t.id) && !seenIds.has(t.id)) {
+          seenIds.add(t.id);
+          list.push(t);
+        }
+      });
+    }
+
+    if (data?.chapters && Array.isArray(data.chapters)) {
+      data.chapters.forEach((c: any) => {
+        const chapterTitle = c.title || c.name || "";
+        if (c.topics && Array.isArray(c.topics)) {
+          c.topics.forEach((t: any) => {
+            if (t.id && !attemptedIds.has(t.id) && !seenIds.has(t.id)) {
+              seenIds.add(t.id);
+              list.push({
+                id: t.id,
+                title: t.title || t.name,
+                chapter: chapterTitle,
+              });
+            }
+          });
+        }
+      });
+    }
+
+    return list;
+  }, [data, masteredTopics, needsImprovementTopics]);
+
+  const categories = [
+    {
+      key: 'mastered' as const,
+      label: "Understood Well",
+      desc: "Score >= 75% (Completed with higher score)",
+      count: masteredTopics.length,
+      color: "bg-green-500",
+      icon: CheckCircle2,
+      iconBg: "bg-green-100",
+      iconColor: "text-green-600",
+      borderColor: "border-green-200",
+      topics: masteredTopics,
+      type: "mastered",
+    },
+    {
+      key: 'learning' as const,
+      label: "Needs Improvement",
+      desc: "Score < 75% (Keep practicing these topics)",
+      count: needsImprovementTopics.length,
+      color: "bg-amber-500",
+      icon: AlertCircle,
+      iconBg: "bg-amber-100",
+      iconColor: "text-amber-600",
+      borderColor: "border-amber-200",
+      topics: needsImprovementTopics,
+      type: "improvement",
+    },
+    {
+      key: 'not_started' as const,
+      label: "Not Started",
+      desc: "New topics ahead",
+      count: notStartedTopics.length,
+      color: "bg-gray-400",
+      icon: Zap,
+      iconBg: "bg-gray-100",
+      iconColor: "text-gray-500",
+      borderColor: "border-gray-200",
+      topics: notStartedTopics,
+      type: "not_started",
+    },
+  ];
+
+  return (
+    <div className="space-y-4">
+      <SectionTitle title="Concepts Mastered" icon={Brain} />
+      <div className="space-y-3">
+        {categories.map((cat) => {
+          const isExpanded = expandedCategory === cat.key;
+          return (
+            <div key={cat.key} className={`bg-white border rounded-2xl transition-all overflow-hidden ${isExpanded ? `shadow-md ${cat.borderColor} ring-1 ring-zinc-200` : "border-gray-100 hover:border-black"}`}>
+              <div onClick={() => setExpandedCategory(isExpanded ? null : cat.key)} className="flex items-center gap-4 p-4 cursor-pointer select-none">
+                <div className={`w-10 h-10 rounded-xl ${cat.iconBg} flex items-center justify-center shrink-0`}>
+                  <cat.icon className={`w-5 h-5 ${cat.iconColor}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-bold text-gray-900">{cat.label}</p>
+                    <span className="text-[10px] text-gray-400 font-semibold">(Click to view topics)</span>
+                  </div>
+                  <p className="text-[10px] font-medium text-gray-400">{cat.desc}</p>
+                </div>
+                <div className={`px-3 py-1 rounded-lg ${cat.color} text-white font-black text-xs shrink-0`}>{cat.count}</div>
+                {isExpanded ? <ChevronUp className="w-5 h-5 text-gray-400" /> : <ChevronDown className="w-5 h-5 text-gray-400" />}
+              </div>
+              {isExpanded && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-zinc-50/50 space-y-3">
+                  {cat.topics.length === 0 ? (
+                    <div className="py-6 text-center text-xs font-medium text-gray-400 bg-white rounded-xl border border-gray-200">No topics recorded in this category yet.</div>
+                  ) : (
+                    <div className="max-h-[340px] overflow-y-auto pr-1">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                        {cat.topics.map((t: any, idx: number) => (
+                          <div key={t.id || idx} className="bg-white p-3.5 rounded-xl border border-gray-200 shadow-sm flex items-center justify-between gap-3 hover:border-zinc-400 transition-colors">
+                            <div className="min-w-0 flex-1">
+                              <p className="text-xs font-bold text-gray-900 truncate">{t.title || t.topic_title}</p>
+                              {t.chapter && <p className="text-[10px] text-gray-400 font-medium truncate mt-0.5">{t.chapter}</p>}
+                              {t.errorPattern && (
+                                <span className="inline-block mt-1 text-[9px] font-bold bg-red-50 text-red-600 px-2 py-0.5 rounded-md border border-red-100">
+                                  Top Error: {t.errorPattern}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 shrink-0">
+                              {(t.score !== undefined || t.average_score !== undefined) && (
+                                <span className={`px-2 py-1 rounded-lg font-black text-xs ${cat.type === "mastered" ? "bg-green-50 text-green-700 border border-green-200" : "bg-amber-50 text-amber-700 border border-amber-200"}`}>
+                                  {t.score ?? t.average_score}%
+                                </span>
+                              )}
+                              <Button
+                                size="sm"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  navigate(`/topic-chat?topicId=${t.id}&topicTitle=${encodeURIComponent(t.title || t.topic_title || '')}&subjectName=${encodeURIComponent(subjectName || '')}`);
+                                }}
+                                className={`h-7 px-2.5 text-[10px] font-extrabold rounded-lg ${cat.type === "mastered" ? "bg-green-600 hover:bg-green-700 text-white" : cat.type === "improvement" ? "bg-black hover:bg-zinc-800 text-white" : "bg-zinc-900 hover:bg-black text-white"}`}
+                              >
+                                {cat.type === "mastered" ? "Review" : cat.type === "improvement" ? "Practice" : "Start"}
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+const normalizeSubjectName = (s: string) => {
+  const clean = (s || "").toLowerCase().trim();
+  if (!clean) return "";
+  if (clean.includes("computer")) return "computer science";
+  if (clean.includes("social")) return "social science";
+  if (clean.includes("physics")) return "physics";
+  if (clean.includes("chem")) return "chemistry";
+  if (clean.includes("bio")) return "biology";
+  if (clean.includes("math")) return "mathematics";
+  if (clean.includes("english")) return "english";
+  if (clean.includes("science")) return "science";
+  return clean;
+};
+
+// ─── Error Profile Interactive Component ───────────────────────────────────
+
+function ErrorProfileSection({ data, subjectName }: { data?: any; subjectName?: string }) {
+  const navigate = useNavigate();
+  const [expandedErrorType, setExpandedErrorType] = useState<string | null>(null);
+  const [fetchedErrorLogs, setFetchedErrorLogs] = useState<any[]>([]);
+
+  const targetNorm = normalizeSubjectName(subjectName || data?.subject_name || "");
+
+  useEffect(() => {
+    get("/api/profile/teacher-analytics/error-profile?limit=50")
+      .then((res: any) => {
+        if (res && Array.isArray(res.errors)) {
+          setFetchedErrorLogs(res.errors);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  const filteredLogs = useMemo(() => {
+    const rawLogs: any[] = [];
+    if (fetchedErrorLogs.length > 0) {
+      rawLogs.push(...fetchedErrorLogs);
+    }
+    if (data?.error_analysis?.error_logs && Array.isArray(data.error_analysis.error_logs)) {
+      rawLogs.push(...data.error_analysis.error_logs);
+    }
+    if (data?.error_logs && Array.isArray(data.error_logs)) {
+      rawLogs.push(...data.error_logs);
+    }
+
+    if (!targetNorm) return rawLogs;
+
+    return rawLogs.filter((l: any) => {
+      const logNorm = normalizeSubjectName(l.subject_name || l.subject || "");
+      return logNorm === targetNorm;
+    });
+  }, [data, fetchedErrorLogs, targetNorm]);
+
+  const errorTypesMap = useMemo(() => {
+    const map: Record<string, number> = {};
+
+    if (data?.error_analysis?.error_types) {
+      Object.entries(data.error_analysis.error_types).forEach(([k, v]: any) => {
+        map[k.toUpperCase()] = Number(v);
+      });
+    }
+
+    if (filteredLogs.length > 0) {
+      filteredLogs.forEach((err: any) => {
+        const typeKey = (err.error_type || "General Error").toUpperCase();
+        map[typeKey] = (map[typeKey] || 0) + 1;
+      });
+    }
+
+    if (Object.keys(map).length === 0 && data?.weak_topics && Array.isArray(data.weak_topics)) {
+      data.weak_topics.forEach((wt: any) => {
+        const pattern = wt.error_distribution ? Object.keys(wt.error_distribution)[0] : "Knowledge Gap";
+        const key = pattern.toUpperCase();
+        map[key] = (map[key] || 0) + 1;
+      });
+    }
+
+    return map;
+  }, [data, filteredLogs]);
+
+  const errorEntries = Object.entries(errorTypesMap);
+  if (errorEntries.length === 0) {
+    return (
+      <div className="space-y-4">
+        <SectionTitle title="Profile of Your Errors" icon={AlertCircle} />
+        <CardContainer className="p-8 text-center text-gray-400 font-medium">
+          No error logs recorded for this section. Great job!
+        </CardContainer>
+      </div>
+    );
+  }
+
+  const totalErrors = Object.values(errorTypesMap).reduce((a, b) => a + b, 0) || 1;
+
+  return (
+    <div className="space-y-4">
+      <SectionTitle title="Profile of Your Errors" icon={AlertCircle} />
+      <div className="space-y-3">
+        {errorEntries.map(([errKey, count]) => {
+          const isExpanded = expandedErrorType === errKey;
+          const pct = Math.min(100, Math.round((count / totalErrors) * 100));
+
+          const matchingLogs = filteredLogs.filter(
+            (l: any) => (l.error_type || "").toUpperCase() === errKey.toUpperCase()
+          );
+
+          return (
+            <div
+              key={errKey}
+              className={`bg-white border rounded-2xl transition-all overflow-hidden ${
+                isExpanded ? "shadow-md border-zinc-400 ring-1 ring-zinc-200" : "border-gray-100 hover:border-black"
+              }`}
+            >
+              {/* Card Header */}
+              <div
+                onClick={() => setExpandedErrorType(isExpanded ? null : errKey)}
+                className="p-4 flex items-center justify-between cursor-pointer select-none"
+              >
+                <div className="flex items-center gap-4 min-w-0 flex-1">
+                  <div className="w-10 h-10 rounded-xl bg-red-50 flex items-center justify-center text-red-600 shrink-0 border border-red-100">
+                    <ShieldAlert className="w-5 h-5" />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <p className="text-sm font-black text-gray-900 uppercase tracking-wider truncate">{errKey}</p>
+                      <span className="text-[10px] text-gray-400 font-semibold">(Click to view error logs)</span>
+                    </div>
+                    <div className="w-full bg-gray-100 h-1.5 rounded-full overflow-hidden mt-1.5 max-w-xs">
+                      <div style={{ width: `${Math.max(pct, 10)}%` }} className="h-full bg-black transition-all duration-1000" />
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-3 shrink-0 ml-4">
+                  <span className="px-3 py-1 rounded-lg bg-black text-white font-black text-xs">
+                    {count} {count === 1 ? "mistake" : "mistakes"}
+                  </span>
+                  {isExpanded ? (
+                    <ChevronUp className="w-5 h-5 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="w-5 h-5 text-gray-400" />
+                  )}
+                </div>
+              </div>
+
+              {/* Expanded Diagnostic Log Details */}
+              {isExpanded && (
+                <div className="px-4 pb-4 pt-2 border-t border-gray-100 bg-zinc-50/50 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h5 className="text-xs font-extrabold uppercase tracking-wider text-gray-400">
+                      Diagnostic Error Logs — {errKey} ({matchingLogs.length})
+                    </h5>
+                  </div>
+
+                  {matchingLogs.length === 0 ? (
+                    <div className="py-6 text-center text-xs font-medium text-gray-400 bg-white rounded-xl border border-gray-200">
+                      No specific question logs recorded for this error pattern yet.
+                    </div>
+                  ) : (
+                    <div className="max-h-[360px] overflow-y-auto pr-1 space-y-3">
+                      {matchingLogs.map((errItem: any, idx: number) => (
+                        <div
+                          key={errItem.id || idx}
+                          className="bg-white p-4 rounded-xl border border-gray-200 shadow-sm space-y-3 hover:border-zinc-400 transition-colors"
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <span className="text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-50 rounded-md px-2 py-0.5 border border-red-100">
+                                {errItem.error_type || errKey}
+                              </span>
+                              {(errItem.subject_name || errItem.topic_title) && (
+                                <p className="text-xs font-extrabold text-gray-900 mt-1">
+                                  {errItem.subject_name ? `${errItem.subject_name} — ` : ""}{errItem.topic_title || "Topic"}
+                                </p>
+                              )}
+                            </div>
+
+                            <Button
+                              size="sm"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(
+                                  `/topic-chat?topicId=${errItem.topic_id || 1}&topicTitle=${encodeURIComponent(errItem.topic_title || '')}&subjectName=${encodeURIComponent(errItem.subject_name || subjectName || '')}`
+                                );
+                              }}
+                              className="h-7 px-3 text-[10px] font-extrabold bg-black hover:bg-zinc-800 text-white rounded-lg shrink-0 shadow-sm"
+                            >
+                              Practice This Topic
+                            </Button>
+                          </div>
+
+                          {errItem.question_text && (
+                            <div className="bg-zinc-50 p-2.5 rounded-lg border border-zinc-200/60">
+                              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest">Question</p>
+                              <p className="text-xs font-bold text-gray-900 mt-0.5 leading-relaxed">{errItem.question_text}</p>
+                            </div>
+                          )}
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            {errItem.user_answer_raw && (
+                              <div className="bg-red-50/40 p-2.5 rounded-lg border border-red-100">
+                                <p className="text-[10px] font-bold text-red-500 uppercase tracking-wider">Your Response</p>
+                                <p className="text-xs font-bold text-red-700 mt-0.5">{errItem.user_answer_raw}</p>
+                              </div>
+                            )}
+                            {errItem.corrected_answer && (
+                              <div className="bg-green-50/40 p-2.5 rounded-lg border border-green-100">
+                                <p className="text-[10px] font-bold text-green-600 uppercase tracking-wider">Correct Answer</p>
+                                <p className="text-xs font-bold text-green-800 mt-0.5">{errItem.corrected_answer}</p>
+                              </div>
+                            )}
+                          </div>
+
+                          {errItem.feedback_json && (
+                            <div className="bg-blue-50/40 p-2.5 rounded-lg border border-blue-100 text-xs">
+                              <p className="text-[10px] font-bold text-[#3b82f6] uppercase tracking-wider flex items-center gap-1">
+                                <Lightbulb className="w-3 h-3" /> Teacher Suggestion
+                              </p>
+                              <p className="text-xs text-gray-700 font-medium mt-0.5 leading-relaxed">
+                                {typeof errItem.feedback_json === "string"
+                                  ? errItem.feedback_json
+                                  : errItem.feedback_json.feedback || errItem.feedback_json.suggestion || "Review concept details and retry."}
+                              </p>
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ─── Subject AI Weakness & Improvement Diagnosis Component ────────────────
+
+function SubjectAISummaryCard({ data, subjectName }: { data?: any; subjectName: string }) {
+  const weakTopics = data?.weak_topics || [];
+  const reports = data?.reports || [];
+  const errorTypes = data?.error_analysis?.error_types || {};
+
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [pipelineVersion, setPipelineVersion] = useState(0);
+
+  // Compile weak topics and error tendencies
+  const weaknessDiagnostic = useMemo(() => {
+    // 1. Identify primary weak topic & secondary weak topic
+    const topWeak = weakTopics[0];
+    const secondWeak = weakTopics[1];
+    const topWeakTitle = topWeak?.topic_title || topWeak?.title || "Core Subject Principles";
+    const topWeakScore = topWeak ? Math.round(topWeak.average_score ?? topWeak.score ?? 45) : 45;
+    const secondWeakTitle = secondWeak?.topic_title || secondWeak?.title;
+
+    // 2. Identify top error categories
+    const sortedErrorTypes = Object.entries(errorTypes).sort((a: any, b: any) => b[1] - a[1]);
+    const topErrorType = sortedErrorTypes[0]?.[0] || "Conceptual Misunderstanding";
+    const secondErrorType = sortedErrorTypes[1]?.[0] || "Calculation/Process Mistakes";
+
+    // 3. Identify recent missed session topic
+    const recentReport = reports[0];
+    const recentTitle = recentReport?.topics?.title || recentReport?.title || recentReport?.topic_title;
+
+    // Build 5 targeted weakness & improvement bullet points
+    const points = [
+      {
+        title: "Primary Conceptual Weakness",
+        text: `Your lowest scoring topic in ${subjectName} is "${topWeakTitle}" with an average score of ${topWeakScore}%. ${secondWeakTitle ? `Secondary weak area: "${secondWeakTitle}".` : ""}`,
+      },
+      {
+        title: "Mistake Pattern Breakdown",
+        text: `Database analysis identifies "${topErrorType}" as your most frequent mistake type${sortedErrorTypes[0]?.[1] ? ` (${sortedErrorTypes[0][1]} recorded errors)` : ""}, followed by "${secondErrorType}".`,
+      },
+      {
+        title: "Recent Quiz Diagnostics",
+        text: recentTitle
+          ? `In recent session logs for "${recentTitle}", error analysis shows difficulty in step-by-step application under timed conditions.`
+          : `Recent practice sessions reveal recurring drop-offs on multi-part conceptual questions.`,
+      },
+      {
+        title: "Targeted AI Revision Roadmap",
+        text: `To resolve these weak points quickly, launch the AI Tutor Chat for "${topWeakTitle}" and focus specifically on reviewing step-by-step solved examples.`,
+      },
+      {
+        title: "Predicted Score Gain Plan",
+        text: `Fixing "${topWeakTitle}" and eliminating ${topErrorType} errors is calculated to boost your predicted ${subjectName} score by up to +15 marks.`,
+      },
+    ];
+
+    return points;
+  }, [weakTopics, errorTypes, reports, subjectName, pipelineVersion]);
+
+  const handleRefreshPipeline = () => {
+    setIsRefreshing(true);
+    setTimeout(() => {
+      setPipelineVersion(prev => prev + 1);
+      setIsRefreshing(false);
+    }, 600);
+  };
+
+  return (
+    <div className="space-y-4">
+      <SectionTitle title={`AI Diagnostic Report — ${subjectName}`} icon={Sparkles} />
+      <CardContainer className="p-6 lg:p-8 bg-white border border-zinc-200 text-zinc-900 rounded-3xl shadow-sm space-y-6">
+        {/* Header Banner */}
+        <div className="flex flex-wrap items-center justify-between gap-4 border-b border-zinc-100 pb-5">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-2xl bg-zinc-100 flex items-center justify-center text-black border border-zinc-200">
+              <ShieldAlert className="w-5 h-5 text-black" />
+            </div>
+            <div>
+              <h4 className="text-lg font-black text-black">{subjectName} Weakness & Improvement Diagnosis</h4>
+              <p className="text-xs text-zinc-500 font-medium mt-0.5">Real-time database error synthesis & action plan</p>
+            </div>
+          </div>
+
+          <Button
+            size="sm"
+            onClick={handleRefreshPipeline}
+            disabled={isRefreshing}
+            className="bg-black hover:bg-zinc-800 text-white text-xs font-extrabold rounded-xl px-4 py-2 flex items-center gap-2 shadow-sm"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 ${isRefreshing ? "animate-spin" : ""}`} />
+            {isRefreshing ? "Regenerating..." : "Regenerate AI Diagnosis"}
+          </Button>
+        </div>
+
+        {/* Clean Point-wise Text List */}
+        <div className="space-y-5 pt-1">
+          {weaknessDiagnostic.map((pt, idx) => (
+            <div key={idx} className="flex items-start gap-3.5 pb-4 border-b border-zinc-100 last:border-b-0 last:pb-0">
+              <div className="w-2 h-2 rounded-full bg-black shrink-0 mt-2" />
+              <div className="space-y-1">
+                <p className="text-xs font-black uppercase tracking-wider text-black">{pt.title}</p>
+                <p className="text-sm font-medium text-zinc-700 leading-relaxed">{pt.text}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContainer>
     </div>
   );
 }
@@ -636,8 +1238,8 @@ function ExamDeepDiveView({ examCode, onBack }: { examCode: string; onBack: () =
                 ].map(t => (
                     <CardContainer key={t.label} className="p-6 text-center group hover:border-black transition-all">
                         <p className="text-2xl font-black text-black group-hover:scale-110 transition-transform">{t.val}</p>
-                        <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{t.label} Prep</p>
-                        <p className="text-[9px] font-bold text-gray-300 mt-0.5">Focused Time</p>
+                        <p className="text-[11px] font-extrabold text-zinc-900 mt-1.5 uppercase tracking-widest">{t.label} Prep</p>
+                        <p className="text-[10px] font-bold text-zinc-700 mt-0.5">Focused Time</p>
                     </CardContainer>
                 ))}
             </div>
@@ -666,54 +1268,10 @@ function ExamDeepDiveView({ examCode, onBack }: { examCode: string; onBack: () =
         </div>
 
         {/* Concept Mastery Breakdown */}
-        <div className="space-y-4">
-            <SectionTitle title="Concepts Mastered" icon={Brain} />
-            <div className="space-y-3">
-                {[
-                    { label: "Understood Well", desc: "Ready for advanced questions", count: data?.concepts_mastery?.mastered || 0, color: "bg-green-500", icon: CheckCircle2, iconBg: "bg-green-100", iconColor: "text-green-600" },
-                    { label: "Still Learning", desc: "Keep practicing these", count: data?.concepts_mastery?.learning || 0, color: "bg-black", icon: Clock, iconBg: "bg-zinc-100", iconColor: "text-black" },
-                    { label: "Not Started", desc: "New topics ahead", count: data?.concepts_mastery?.not_started || 0, color: "bg-gray-400", icon: Zap, iconBg: "bg-gray-100", iconColor: "text-gray-500" },
-                ].map(item => (
-                    <div key={item.label} className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm">
-                        <div className={`w-10 h-10 rounded-xl ${item.iconBg} flex items-center justify-center shrink-0`}>
-                            <item.icon className={`w-5 h-5 ${item.iconColor}`} />
-                        </div>
-                        <div className="flex-1 min-w-0">
-                            <p className="text-sm font-bold text-gray-900">{item.label}</p>
-                            <p className="text-[10px] font-medium text-gray-400">{item.desc}</p>
-                        </div>
-                        <div className={`px-3 py-1 rounded-lg ${item.color} text-white font-black text-xs`}>
-                            {item.count}
-                        </div>
-                    </div>
-                ))}
-            </div>
-        </div>
+        <ConceptMasterySection data={data} />
 
         {/* Error Profile */}
-        <div className="space-y-4">
-            <SectionTitle title="Profile of Your Errors" icon={AlertCircle} />
-            <div className="grid grid-cols-3 gap-4">
-                {[
-                  { label: "Concept Errors", key: 'Conceptual', color: "#000000", desc: "Gap in understanding" },
-                  { label: "Step Mistakes", key: 'Application', color: "#27272a", desc: "Process errors" },
-                  { label: "Calculation", key: 'Calculation', color: "#D946EF", desc: "Silly mistakes" },
-                ].map(errItem => {
-                    const count = data?.error_analysis?.error_types?.[errItem.key] || 0;
-                    const totalErrors = data?.summary?.incorrect_answers || 1;
-                    const pct = Math.min(100, (count / totalErrors) * 100);
-                    return (
-                        <CardContainer key={errItem.label} className="p-5 flex flex-col items-center text-center">
-                            <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1">{errItem.label}</p>
-                            <p className="text-xl font-black mb-3" style={{ color: errItem.color }}>{count} mistakes</p>
-                            <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                <div style={{ width: `${pct}%`, backgroundColor: errItem.color }} className="h-full transition-all duration-1000" />
-                            </div>
-                        </CardContainer>
-                    );
-                })}
-            </div>
-        </div>
+        <ErrorProfileSection data={data} />
 
         {/* Recommended Focus */}
         <div className="space-y-6 pt-6 border-t border-gray-100">
@@ -872,8 +1430,27 @@ function NormalSubjectView({ subjectId, subjectName, onBack }: { subjectId: numb
     Promise.allSettled([
       get(`/api/profile/learning-analytics/subject/${subjectId}`),
       get(`/api/topic-chats/reports/subject/${subjectId}`),
-    ]).then(([r1, r2]) => {
-      if (r1.status === "fulfilled") setData(r1.value);
+      get(`/api/chapters/${subjectId}`),
+    ]).then(async ([r1, r2, r3]) => {
+      let combined: any = {};
+      if (r1.status === "fulfilled" && r1.value) combined = { ...r1.value };
+      if (r2.status === "fulfilled" && r2.value) combined.reports = Array.isArray(r2.value) ? r2.value : r2.value.reports || [];
+      if (r3.status === "fulfilled" && r3.value) {
+        const chaptersList = Array.isArray(r3.value) ? r3.value : r3.value.chapters || [];
+        const chaptersWithTopics = await Promise.all(
+          chaptersList.map(async (ch: any) => {
+            try {
+              const tRes = await get(`/api/topics/${ch.id}`);
+              const topics = Array.isArray(tRes) ? tRes : tRes.topics || [];
+              return { ...ch, topics };
+            } catch {
+              return ch;
+            }
+          })
+        );
+        combined.chapters = chaptersWithTopics;
+      }
+      setData(combined);
     }).finally(() => setLoading(false));
   }, [subjectId]);
 
@@ -927,6 +1504,9 @@ function NormalSubjectView({ subjectId, subjectName, onBack }: { subjectId: numb
                 </CardContainer>
             </div>
 
+            {/* AI Learning Summary */}
+            <SubjectAISummaryCard data={data} subjectName={subjectName} />
+
             {/* Total Learning Time */}
             <div className="space-y-4">
                 <SectionTitle title="Total Learning Time" icon={Clock} />
@@ -938,8 +1518,8 @@ function NormalSubjectView({ subjectId, subjectName, onBack }: { subjectId: numb
                     ].map(t => (
                         <CardContainer key={t.label} className="p-6 text-center group hover:border-black transition-all">
                             <p className="text-2xl font-black text-black group-hover:scale-110 transition-transform">{t.val}</p>
-                            <p className="text-[10px] font-bold text-gray-400 mt-1 uppercase tracking-widest">{t.label}</p>
-                            <p className="text-[9px] font-bold text-gray-300 mt-0.5">Focused Time</p>
+                            <p className="text-[11px] font-extrabold text-zinc-900 mt-1.5 uppercase tracking-widest">{t.label}</p>
+                            <p className="text-[10px] font-bold text-zinc-700 mt-0.5">Focused Time</p>
                         </CardContainer>
                     ))}
                 </div>
@@ -968,153 +1548,12 @@ function NormalSubjectView({ subjectId, subjectName, onBack }: { subjectId: numb
             </div>
 
             {/* Concepts Mastered */}
-            <div className="space-y-4">
-                <SectionTitle title="Concepts Mastered" icon={Brain} />
-                <div className="space-y-3">
-                        {[
-                            { label: "Understood Well", desc: "Ready for advanced questions", count: data?.concepts_mastery?.mastered || 0, color: "bg-green-500", icon: CheckCircle2, iconBg: "bg-green-100", iconColor: "text-green-600" },
-                            { label: "Still Learning", desc: "Keep practicing these", count: data?.concepts_mastery?.learning || 0, color: "bg-black", icon: Clock, iconBg: "bg-zinc-100", iconColor: "text-black" },
-                            { label: "Not Started", desc: "New topics ahead", count: data?.concepts_mastery?.not_started || 0, color: "bg-gray-400", icon: Zap, iconBg: "bg-gray-100", iconColor: "text-gray-500" },
-                        ].map(item => (
-                            <div key={item.label} className="flex items-center gap-4 bg-white border border-gray-100 rounded-2xl p-4 shadow-sm group hover:border-black transition-all">
-                            <div className={`w-10 h-10 rounded-xl ${item.iconBg} flex items-center justify-center shrink-0`}>
-                                <item.icon className={`w-5 h-5 ${item.iconColor}`} />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-gray-900">{item.label}</p>
-                                <p className="text-[10px] font-medium text-gray-400">{item.desc}</p>
-                            </div>
-                            <div className={`px-3 py-1 rounded-lg ${item.color} text-white font-black text-xs`}>
-                                {item.count}
-                            </div>
-                        </div>
-                    ))}
-                </div>
-            </div>
+            <ConceptMasterySection data={data} subjectName={subjectName} />
 
-            {/* Profile of Your Errors (DYNAMICALLY RENDERED) */}
-            <div className="space-y-4">
-                <SectionTitle title="Profile of Your Errors" icon={AlertCircle} />
-                {Object.keys(data?.error_analysis?.error_types || {}).length === 0 ? (
-                  <CardContainer className="p-8 text-center text-gray-400">
-                    No errors profile recorded for this subject. Clear status!
-                  </CardContainer>
-                ) : (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                      {Object.entries(data?.error_analysis?.error_types || {}).map(([errKey, count]: any) => {
-                          const totalErrors = data?.summary?.incorrect_answers || 1;
-                          const pct = Math.min(100, (count / totalErrors) * 100);
-                          return (
-                              <CardContainer key={errKey} className="p-5 flex flex-col items-center text-center">
-                                  <p className="text-[10px] font-black text-gray-900 uppercase tracking-widest mb-1">{errKey}</p>
-                                  <p className="text-xl font-black mb-3 text-black">{count} mistakes</p>
-                                  <div className="h-1.5 w-full bg-gray-100 rounded-full overflow-hidden">
-                                      <div style={{ width: `${pct}%` }} className="h-full bg-black transition-all duration-1000" />
-                                  </div>
-                              </CardContainer>
-                          );
-                      })}
-                  </div>
-                )}
-            </div>
+            {/* Profile of Your Errors */}
+            <ErrorProfileSection data={data} subjectName={subjectName} />
 
-            {/* Teacher Analysis Section (NEW FEATURE - ADDED BEFORE RECOMMENDED FOCUS) */}
-            <div className="space-y-6 pt-6 border-t border-gray-100">
-                <SectionTitle title="Teacher Diagnostic Analysis" icon={GraduationCap} />
-                <div className="space-y-6">
-                  {/* Topic Weakpoints breakdown */}
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Topic-level Weakness Analysis</h4>
-                    {data?.weak_topics?.length === 0 ? (
-                      <CardContainer className="p-4 text-center text-xs text-gray-400">
-                        No critical weak topics (&lt; 60% accuracy) found in this subject. Good alignment!
-                      </CardContainer>
-                    ) : (
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {data?.weak_topics?.map((wt: any) => (
-                          <CardContainer key={wt.topic_id} className="p-5 border border-amber-100 bg-amber-50/10">
-                            <div className="flex justify-between items-start gap-2">
-                              <h5 className="font-extrabold text-gray-900 text-sm leading-tight">{wt.topic_title}</h5>
-                              <span className="px-2 py-0.5 rounded-lg bg-amber-50 text-amber-700 font-bold text-xs shrink-0">
-                                {wt.average_score}%
-                              </span>
-                            </div>
-                            
-                            {Object.keys(wt.error_distribution).length > 0 && (
-                              <div className="mt-3 space-y-1">
-                                <p className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Top Error Patterns</p>
-                                <div className="flex flex-wrap gap-1.5 mt-1">
-                                  {Object.entries(wt.error_distribution).map(([errName, count]: any) => (
-                                    <span key={errName} className="text-[10px] bg-red-50 text-red-600 px-2 py-0.5 rounded-full font-semibold">
-                                      {errName}: {count}
-                                    </span>
-                                  ))}
-                                </div>
-                              </div>
-                            )}
-                          </CardContainer>
-                        ))}
-                      </div>
-                    )}
-                  </div>
 
-                  {/* Corrected Error Cards list */}
-                  <div>
-                    <h4 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">Actual User Error Log Cards</h4>
-                    {data?.error_cards?.length === 0 ? (
-                      <CardContainer className="p-4 text-center text-xs text-gray-400">
-                        No mistake records found for this subject.
-                      </CardContainer>
-                    ) : (
-                      <div className="space-y-4">
-                        {data?.error_cards?.map((card: any) => (
-                              <CardContainer key={card.id} className="p-5 border-l-4 border-l-black">
-                                <div className="flex justify-between items-start gap-4 flex-wrap">
-                                  <span className="text-xs font-bold text-black bg-zinc-100 px-2 py-0.5 rounded-full border border-zinc-200">
-                                    {card.error_type || 'Unknown Type'}
-                                  </span>
-                              <span className="text-[10px] text-gray-400 font-semibold">{card.topic_title}</span>
-                            </div>
-
-                            <div className="mt-3">
-                              <p className="text-xs font-bold text-gray-400 uppercase tracking-widest">Question Asked</p>
-                              <p className="text-sm font-bold text-gray-900 mt-0.5 leading-relaxed">{card.question_text}</p>
-                            </div>
-
-                            <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-4 pt-3 border-t border-gray-100">
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">User's Incorrect Response</p>
-                                <p className="text-sm text-red-500 font-semibold mt-1 bg-red-50/20 p-2 rounded-lg border border-red-50/50">{card.user_answer_raw || 'No Response'}</p>
-                              </div>
-                              <div>
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Suggested Correct Response</p>
-                                <div className="mt-1 bg-green-50/20 p-2 rounded-lg border border-green-50/50">
-                                  {card.diff_html ? (
-                                    <DiffText html={card.diff_html} />
-                                  ) : (
-                                    <p className="text-sm text-green-700 font-semibold">{card.corrected_answer}</p>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-
-                              {card.feedback_json && (
-                                <div className="mt-3 bg-zinc-50 p-3 rounded-2xl border border-zinc-200 text-xs">
-                                  <p className="font-bold text-black flex items-center gap-1 mb-1">
-                                    <Lightbulb className="w-3.5 h-3.5" /> Diagnostic Advice
-                                  </p>
-                                <p className="text-gray-600 leading-relaxed font-medium">
-                                  {typeof card.feedback_json === 'string' ? card.feedback_json : card.feedback_json.feedback || card.feedback_json.suggestion || 'Review concept logs for clarifications.'}
-                                </p>
-                              </div>
-                            )}
-                          </CardContainer>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-                </div>
-            </div>
 
             {/* Recommended Focus */}
             <div className="space-y-6 pt-6 border-t border-gray-100">

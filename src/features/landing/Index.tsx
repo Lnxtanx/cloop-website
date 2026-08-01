@@ -115,13 +115,11 @@ const Index = () => {
           className="flex items-center gap-2 cursor-pointer"
           onClick={() => navigate("/")}
         >
-          <div className="w-10 h-10 bg-black rounded-xl flex items-center justify-center">
-            <img
-              src="/figmaAssets/logo.png"
-              alt="Cloop Logo"
-              className="w-7 h-auto"
-            />
-          </div>
+          <img
+            src="/favicon.ico"
+            alt="Cloop Logo"
+            className="w-10 h-10 rounded-xl shadow-sm object-cover shrink-0"
+          />
           <span className="text-[#1a0a3c] font-bold text-xl md:text-2xl tracking-tight">Cloop</span>
         </div>
 

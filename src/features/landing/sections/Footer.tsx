@@ -15,7 +15,7 @@ export const Footer = (): JSX.Element => {
         <div className="flex flex-col gap-4 md:gap-6">
           <div className="flex flex-col gap-2">
             <div className="w-[140px] md:w-[180px] h-[48px] md:h-[60px] bg-black rounded-xl md:rounded-2xl flex items-center justify-center p-2 shadow-md">
-              <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full" />
+              <img src="/figmaAssets/logo-1.png" alt="Logo" className="max-h-full brightness-0 invert" />
             </div>
             <p className="text-black text-xs md:text-sm font-bold tracking-wide text-left">
               Building India’s Concept Mastery Infrastructure
