@@ -253,3 +253,16 @@
     animation: voice-pulse-ring 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
   }
 }
+
+/* Corrections Strikethrough & Insertions */
+.correction del {
+  text-decoration: line-through;
+  color: #d1344b;
+  margin-right: 0.15em;
+}
+.correction ins {
+  text-decoration: none;
+  color: #1f9d6b;
+  font-weight: 600;
+}
+

@@ -5,13 +5,14 @@
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
 
 export interface TopicChatMessage {
-  id: number;
+  id: number | string;
   message: string;
   sender: "user" | "ai";
   message_type?: string;
   options?: Array<{ text: string; value: string }>;
   diff_html?: string | null;
   emoji?: string | null;
+  metadata?: any;
   is_correct?: boolean;
   feedback?: {
     type?: string;
