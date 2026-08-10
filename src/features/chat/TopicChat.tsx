@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots } from "./components/ChatBubbles";
-import { SummaryCard, ScorePredictionCard } from "./components/ChatCards";
+import { SummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -357,6 +357,21 @@ export default function TopicChat() {
                 // Score Prediction Card
                 if (msg.message_type === "score_prediction" && msg.metadata?.score_prediction) {
                   return <ScorePredictionCard key={msg.id ?? idx} data={msg.metadata.score_prediction} />;
+                }
+
+                // Internet Link Card
+                if (msg.message_type === "internet_link") {
+                  return <InternetLinkCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
+                }
+
+                // Goal Revision Card
+                if (msg.message_type === "goal_revision") {
+                  return <GoalRevisionCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
+                }
+
+                // Session Learning Report Card
+                if (msg.message_type === "learning_report") {
+                  return <LearningReportCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
                 }
 
                 // Mermaid Diagram

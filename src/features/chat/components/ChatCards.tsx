@@ -77,3 +77,141 @@ export function ScorePredictionCard({ data }: { data: ScorePrediction }) {
     </div>
   );
 }
+
+export function InternetLinkCard({ diffHtml }: { diffHtml?: string | null }) {
+  let d: { title?: string; url?: string } = {};
+  try {
+    d = JSON.parse(diffHtml ?? "{}");
+  } catch { /* ignore */ }
+  if (!d.url) return null;
+  return (
+    <div style={{ margin: "8px 0" }}>
+      <a
+        href={d.url}
+        target="_blank"
+        rel="noreferrer"
+        style={{
+          display: "inline-block",
+          padding: "10px 14px",
+          borderRadius: 12,
+          border: "1px solid #e6e1f5",
+          background: "#faf9ff",
+          color: "#6b40d8",
+          fontSize: 14,
+          fontWeight: 600,
+          textDecoration: "none",
+        }}
+      >
+        🔗 {d.title || "Further reading"}
+      </a>
+    </div>
+  );
+}
+
+export function GoalRevisionCard({ diffHtml }: { diffHtml?: string | null }) {
+  let d: { title?: string; definitions?: { term: string; definition: string }[] } = {};
+  try {
+    d = JSON.parse(diffHtml ?? "{}");
+  } catch { /* ignore */ }
+  if (!d.definitions?.length) return null;
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e6e1f5",
+        borderRadius: 14,
+        padding: 16,
+        background: "#faf9ff",
+        margin: "8px 0",
+        maxWidth: 560,
+        color: "#1f2430",
+      }}
+    >
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#6b40d8", marginBottom: 10 }}>
+        📌 {d.title || "Remember for your test"}
+      </div>
+      <div style={{ display: "grid", gap: 8 }}>
+        {d.definitions.map((x, i) => (
+          <div key={i} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 8, padding: "8px 10px" }}>
+            <div style={{ fontWeight: 700 }}>{x.term}</div>
+            <div style={{ color: "#444" }}>{x.definition}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+export function LearningReportCard({ diffHtml }: { diffHtml?: string | null }) {
+  let d: {
+    title?: string;
+    focus_areas?: string[];
+    strong_areas?: string[];
+    key_definitions?: { term: string; definition: string }[];
+    recommendation?: string;
+  } = {};
+  try {
+    d = JSON.parse(diffHtml ?? "{}");
+  } catch { /* ignore */ }
+
+  if (!d.focus_areas && !d.strong_areas && !d.key_definitions) return null;
+  const label = { fontWeight: 600, fontSize: 13, marginBottom: 4 } as const;
+
+  return (
+    <div
+      style={{
+        border: "1px solid #e6e1f5",
+        borderRadius: 14,
+        padding: 16,
+        background: "#faf9ff",
+        margin: "8px 0",
+        maxWidth: 560,
+        color: "#1f2430",
+        fontSize: 14,
+        lineHeight: 1.5,
+      }}
+    >
+      <div style={{ fontSize: 15, fontWeight: 700, color: "#6b40d8", marginBottom: 10 }}>
+        🧾 {d.title || "Your learning report"}
+      </div>
+      {!!d.focus_areas?.length && (
+        <div style={{ marginTop: 10 }}>
+          <div style={label}>🔴 Focus on this</div>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {d.focus_areas.map((t, i) => (
+              <li key={i} style={{ margin: "4px 0" }}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!!d.strong_areas?.length && (
+        <div style={{ marginTop: 10 }}>
+          <div style={label}>🟢 Great job on</div>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            {d.strong_areas.map((t, i) => (
+              <li key={i} style={{ margin: "4px 0" }}>{t}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+      {!!d.key_definitions?.length && (
+        <div style={{ marginTop: 10 }}>
+          <div style={label}>📌 Key definitions</div>
+          <div style={{ display: "grid", gap: 6, marginTop: 4 }}>
+            {d.key_definitions.map((x, i) => (
+              <div key={i} style={{ background: "#fff", border: "1px solid #eee", borderRadius: 8, padding: "6px 10px" }}>
+                <strong style={{ color: "#6b40d8" }}>{x.term}:</strong> {x.definition}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+      {d.recommendation && (
+        <div style={{ marginTop: 12, paddingTop: 10, borderTop: "1px solid #eee", fontSize: 13, color: "#555" }}>
+          💡 {d.recommendation}
+        </div>
+      )}
+    </div>
+  );
+}
+

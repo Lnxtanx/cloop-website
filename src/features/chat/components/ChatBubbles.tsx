@@ -135,6 +135,8 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
   const feedback = msg.feedback;
   const isCorrect = msg.is_correct ?? feedback?.is_correct;
+  const scorePct = feedback?.score_percent ?? msg.score_percent;
+  const feedbackNote = feedback?.content ?? null;
 
   let bubbleBackground = "#fff";
   let bubbleBorder = "#e5e7eb";
