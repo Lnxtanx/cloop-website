@@ -175,21 +175,26 @@ export function SessionSummaryCard({ data, message }: { data: SessionSummaryData
           </div>
         )}
 
-        {/* AI Summary Text (merged from performance analysis) */}
-        {message && message !== "session_complete" && message !== "Session Summary" && (
-          <div
-            style={{
-              marginTop: 12,
-              paddingTop: 12,
-              borderTop: "1px solid #f1f5f9",
-              fontSize: 13,
-              color: "#475569",
-              lineHeight: 1.6,
-            }}
-          >
-            {message}
-          </div>
-        )}
+        {/* AI Summary Text (merged from performance analysis, excluding raw dash walls) */}
+        {message &&
+          message !== "session_complete" &&
+          message !== "Session Summary" &&
+          !message.includes("1. Your Performance") &&
+          !message.startsWith("—") &&
+          !message.startsWith("⸻") && (
+            <div
+              style={{
+                marginTop: 12,
+                paddingTop: 12,
+                borderTop: "1px solid #f1f5f9",
+                fontSize: 13,
+                color: "#475569",
+                lineHeight: 1.6,
+              }}
+            >
+              {message}
+            </div>
+          )}
       </div>
     </div>
   );
@@ -394,3 +399,44 @@ export function LearningReportCard({ diffHtml }: { diffHtml?: string | null }) {
     </div>
   );
 }
+
+/* ─── AI Performance Summary Card ─── */
+export function AISummaryCard({ text }: { text: string }) {
+  let summaryText = text;
+  let title = "Performance Summary";
+
+  try {
+    if (text.trim().startsWith("{")) {
+      const parsed = JSON.parse(text);
+      if (parsed.summary) summaryText = parsed.summary;
+      if (parsed.title) title = parsed.title;
+    }
+  } catch {
+    /* ignore */
+  }
+
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+      <div
+        style={{
+          border: "1.5px solid #e9d5ff",
+          borderRadius: 16,
+          padding: 16,
+          background: "#faf5ff",
+          maxWidth: 480,
+          color: "#1e1b4b",
+          boxShadow: "0 2px 8px rgba(126, 34, 206, 0.05)",
+        }}
+      >
+        <div style={{ fontSize: 14, fontWeight: 700, color: "#7e22ce", marginBottom: 8, display: "flex", alignItems: "center", gap: 6 }}>
+          <span>📝</span>
+          <span>{title}</span>
+        </div>
+        <div style={{ color: "#334155", fontSize: 13.5, lineHeight: 1.6 }}>
+          {summaryText}
+        </div>
+      </div>
+    </div>
+  );
+}
+

@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots } from "./components/ChatBubbles";
-import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard } from "./components/ChatCards";
+import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -231,8 +231,8 @@ export default function TopicChat() {
   };
 
   return (
-    <DashboardLayout title={topicTitle}>
-      <div style={{ display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", background: "#f8fafc" }}>
+    <DashboardLayout title={topicTitle} mainClassName="flex-1 flex flex-col min-h-0 relative p-0 overflow-hidden bg-slate-50">
+      <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f8fafc" }}>
         {/* Sub-header Bar with Voice Toggle & Timer */}
         <div
           style={{
@@ -375,7 +375,14 @@ export default function TopicChat() {
                   return <GoalRevisionCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
                 }
 
-                // Session Learning Report Card
+                // Session Learning Report Card / AI Summary
+                if (
+                  msg.message_type === "learning_report" ||
+                  (msg.sender === "ai" && (msg.message?.trim().startsWith('{"summary"') || msg.message?.trim().startsWith('{"title"')))
+                ) {
+                  return <AISummaryCard key={msg.id ?? idx} text={msg.diff_html || msg.message} />;
+                }
+
                 if (msg.message_type === "learning_report") {
                   return <LearningReportCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
                 }
@@ -469,10 +476,25 @@ export default function TopicChat() {
         </div>
 
         {/* Input Bar */}
-        <div style={{ padding: "16px 24px", background: "#ffffff", borderTop: "1px solid #e2e8f0" }}>
+        <div style={{ padding: done ? "8px 16px" : "16px 24px", background: "#ffffff", borderTop: "1px solid #e2e8f0" }}>
           {done ? (
-            <div style={{ textAlign: "center", padding: "12px", background: "#f0fdf4", border: "1px solid #bbf7d0", borderRadius: 12 }}>
-              <p style={{ color: "#166534", fontWeight: 700, margin: 0, fontSize: 14 }}>🎉 Session Complete! All learning goals achieved.</p>
+            <div style={{ textAlign: "center", padding: "4px 0" }}>
+              <div
+                style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: 6,
+                  padding: "6px 16px",
+                  background: "#f0fdf4",
+                  border: "1.5px solid #bbf7d0",
+                  borderRadius: 20,
+                  boxShadow: "0 1px 4px rgba(22, 101, 52, 0.06)",
+                }}
+              >
+                <span style={{ color: "#166534", fontWeight: 700, margin: 0, fontSize: 13 }}>
+                  🎉 Session Complete! All learning goals achieved.
+                </span>
+              </div>
             </div>
           ) : (
             <form
