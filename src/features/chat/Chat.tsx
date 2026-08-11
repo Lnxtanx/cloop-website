@@ -203,6 +203,9 @@ const Chat = () => {
       setMessages((prev) => [...prev, errorMessage]);
     } finally {
       setIsLoading(false);
+      setTimeout(() => {
+        textareaRef.current?.focus();
+      }, 50);
     }
   };
 

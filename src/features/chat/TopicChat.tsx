@@ -140,6 +140,9 @@ export default function TopicChat() {
       setError(e.message || "Failed to load chat.");
     } finally {
       setLoading(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 100);
     }
   }, [topicId]);
 
@@ -227,6 +230,9 @@ export default function TopicChat() {
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
     } finally {
       setSending(false);
+      setTimeout(() => {
+        inputRef.current?.focus();
+      }, 50);
     }
   };
 
