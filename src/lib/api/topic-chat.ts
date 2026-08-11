@@ -78,8 +78,19 @@ export interface SessionSummaryData {
   overall_score_percent?: number;
   performance_percent?: number;
   predicted_score?: number;
-  top_error_types?: Array<{ type: string }>;
-  weak_goals?: Array<{ goal_title: string }>;
+  star_rating?: number;
+  performance_level?: string;
+  performance_color?: string;
+  goal_performance?: Array<{
+    goal_title: string;
+    questions_asked: number;
+    correct_answers: number;
+    incorrect_answers: number;
+    score_percent: number;
+    is_weak: boolean;
+  }>;
+  top_error_types?: Array<{ type: string; count?: number; percent?: number }>;
+  weak_goals?: Array<{ goal_title: string; score_percent?: number }>;
   has_weak_areas?: boolean;
 }
 

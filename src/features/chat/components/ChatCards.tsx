@@ -1,7 +1,8 @@
 import React from "react";
-import { Trophy } from "lucide-react";
+import { Trophy, Star } from "lucide-react";
 import { SessionSummaryData, ScorePrediction } from "@/lib/api/topic-chat";
 
+/* ─── Legacy SummaryCard (kept for backward compat) ─── */
 export function SummaryCard({ data }: { data: SessionSummaryData }) {
   const score = Number(data.score_percent ?? data.overall_score_percent ?? data.performance_percent ?? 0);
   const predicted = data.predicted_score != null ? Math.round(Number(data.predicted_score)) : Math.min(100, Math.round(score + 15));
@@ -44,6 +45,157 @@ export function SummaryCard({ data }: { data: SessionSummaryData }) {
   );
 }
 
+/* ─── NEW: Session Summary Card (rich metrics card for end-of-session) ─── */
+export function SessionSummaryCard({ data, message }: { data: SessionSummaryData; message?: string }) {
+  const score = Number(data.overall_score_percent ?? data.score_percent ?? data.performance_percent ?? 0);
+  const stars = data.star_rating ?? (score >= 90 ? 5 : score >= 75 ? 4 : score >= 60 ? 3 : score >= 40 ? 2 : 1);
+  const level = data.performance_level ?? (score >= 80 ? "Excellent" : score >= 60 ? "Good" : "Needs Improvement");
+
+  const scoreBg = score >= 80 ? "#dcfce7" : score >= 60 ? "#fef9c3" : "#fee2e2";
+  const scoreBorder = score >= 80 ? "#86efac" : score >= 60 ? "#fde047" : "#fca5a5";
+  const scoreColor = score >= 80 ? "#166534" : score >= 60 ? "#854d0e" : "#991b1b";
+  const levelBg = score >= 80 ? "#bbf7d0" : score >= 60 ? "#fef08a" : "#fecaca";
+
+  const goalPerf = data.goal_performance ?? [];
+
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start", marginBottom: 16 }}>
+      <div
+        style={{
+          background: "#ffffff",
+          border: `1.5px solid ${scoreBorder}`,
+          borderRadius: 18,
+          padding: 20,
+          minWidth: 280,
+          maxWidth: 380,
+          boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
+        }}
+      >
+        {/* Header: Trophy + Score */}
+        <div style={{ textAlign: "center", marginBottom: 16 }}>
+          <div style={{ display: "flex", justifyContent: "center", gap: 2, marginBottom: 6 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                style={{
+                  width: 18,
+                  height: 18,
+                  fill: i < stars ? "#f59e0b" : "none",
+                  color: i < stars ? "#f59e0b" : "#d1d5db",
+                }}
+              />
+            ))}
+          </div>
+          <div
+            style={{
+              display: "inline-block",
+              background: scoreBg,
+              borderRadius: 12,
+              padding: "8px 20px",
+              marginBottom: 6,
+            }}
+          >
+            <span style={{ fontSize: 32, fontWeight: 800, color: scoreColor }}>{score}%</span>
+          </div>
+          <div
+            style={{
+              display: "inline-block",
+              background: levelBg,
+              borderRadius: 20,
+              padding: "3px 14px",
+              fontSize: 12,
+              fontWeight: 700,
+              color: scoreColor,
+              marginLeft: 8,
+            }}
+          >
+            {level}
+          </div>
+        </div>
+
+        {/* Stats Grid */}
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 8, marginBottom: 14 }}>
+          {[
+            { label: "Total", val: data.total_questions ?? 0, bg: "#f8fafc", color: "#1e293b" },
+            { label: "Correct", val: data.correct_answers ?? 0, bg: "#f0fdf4", color: "#166534" },
+            { label: "Wrong", val: data.incorrect_answers ?? 0, bg: "#fef2f2", color: "#991b1b" },
+          ].map(({ label, val, bg, color }) => (
+            <div key={label} style={{ background: bg, borderRadius: 12, padding: "10px 0", textAlign: "center" }}>
+              <div style={{ fontSize: 20, fontWeight: 800, color }}>{val}</div>
+              <div style={{ fontSize: 11, color: "#94a3b8", fontWeight: 600 }}>{label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Per-Goal Breakdown */}
+        {goalPerf.length > 0 && (
+          <div style={{ marginBottom: 14 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 8 }}>📊 Goal Breakdown</div>
+            {goalPerf.map((g, i) => {
+              const pct = g.score_percent ?? 0;
+              const barColor = pct >= 80 ? "#22c55e" : pct >= 60 ? "#eab308" : "#ef4444";
+              return (
+                <div key={i} style={{ marginBottom: 8 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginBottom: 3 }}>
+                    <span style={{ color: "#334155", fontWeight: 600, maxWidth: "70%", overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                      {g.goal_title}
+                    </span>
+                    <span style={{ color: barColor, fontWeight: 700 }}>
+                      {pct}% ({g.correct_answers}/{g.questions_asked})
+                    </span>
+                  </div>
+                  <div style={{ height: 6, background: "#f1f5f9", borderRadius: 3, overflow: "hidden" }}>
+                    <div style={{ height: "100%", width: `${Math.max(pct, 3)}%`, background: barColor, borderRadius: 3, transition: "width 0.5s ease" }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+
+        {/* Common Mistakes */}
+        {(data.top_error_types?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 4 }}>⚠️ Common Mistakes</div>
+            {data.top_error_types!.slice(0, 3).map((e, i) => (
+              <div key={i} style={{ fontSize: 12, color: "#64748b", paddingLeft: 8 }}>• {e.type}{e.count ? ` (${e.count}×)` : ""}</div>
+            ))}
+          </div>
+        )}
+
+        {/* Weak Areas */}
+        {data.has_weak_areas && (data.weak_goals?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 12, fontWeight: 700, color: "#475569", marginBottom: 4 }}>💡 Areas to Improve</div>
+            {data.weak_goals!.map((g, i) => (
+              <div key={i} style={{ fontSize: 12, color: "#64748b", paddingLeft: 8 }}>
+                • {g.goal_title}{g.score_percent != null ? ` (${g.score_percent}%)` : ""}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* AI Summary Text (merged from performance analysis) */}
+        {message && message !== "session_complete" && message !== "Session Summary" && (
+          <div
+            style={{
+              marginTop: 12,
+              paddingTop: 12,
+              borderTop: "1px solid #f1f5f9",
+              fontSize: 13,
+              color: "#475569",
+              lineHeight: 1.6,
+            }}
+          >
+            {message}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── Score Prediction Card ─── */
 export function ScorePredictionCard({ data }: { data: ScorePrediction }) {
   const pred = Math.round(data.predicted_score);
   const concept = Math.round((data.concept_score ?? 0) * 100);
@@ -78,6 +230,7 @@ export function ScorePredictionCard({ data }: { data: ScorePrediction }) {
   );
 }
 
+/* ─── Internet Link Card ─── */
 export function InternetLinkCard({ diffHtml }: { diffHtml?: string | null }) {
   let d: { title?: string; url?: string } = {};
   try {
@@ -108,6 +261,7 @@ export function InternetLinkCard({ diffHtml }: { diffHtml?: string | null }) {
   );
 }
 
+/* ─── Goal Revision Card ─── */
 export function GoalRevisionCard({ diffHtml }: { diffHtml?: string | null }) {
   let d: { title?: string; definitions?: { term: string; definition: string }[] } = {};
   try {
@@ -142,9 +296,11 @@ export function GoalRevisionCard({ diffHtml }: { diffHtml?: string | null }) {
   );
 }
 
+/* ─── Learning Report Card (updated: also accepts summary field) ─── */
 export function LearningReportCard({ diffHtml }: { diffHtml?: string | null }) {
   let d: {
     title?: string;
+    summary?: string;
     focus_areas?: string[];
     strong_areas?: string[];
     key_definitions?: { term: string; definition: string }[];
@@ -153,6 +309,30 @@ export function LearningReportCard({ diffHtml }: { diffHtml?: string | null }) {
   try {
     d = JSON.parse(diffHtml ?? "{}");
   } catch { /* ignore */ }
+
+  // If only summary text, render as a simple styled card
+  if (!d.focus_areas && !d.strong_areas && !d.key_definitions && d.summary) {
+    return (
+      <div
+        style={{
+          border: "1px solid #e6e1f5",
+          borderRadius: 14,
+          padding: 16,
+          background: "#faf9ff",
+          margin: "8px 0",
+          maxWidth: 560,
+          color: "#1f2430",
+          fontSize: 14,
+          lineHeight: 1.6,
+        }}
+      >
+        <div style={{ fontSize: 15, fontWeight: 700, color: "#6b40d8", marginBottom: 10 }}>
+          📝 {d.title || "Performance Summary"}
+        </div>
+        <div style={{ color: "#475569" }}>{d.summary}</div>
+      </div>
+    );
+  }
 
   if (!d.focus_areas && !d.strong_areas && !d.key_definitions) return null;
   const label = { fontWeight: 600, fontSize: 13, marginBottom: 4 } as const;
@@ -214,4 +394,3 @@ export function LearningReportCard({ diffHtml }: { diffHtml?: string | null }) {
     </div>
   );
 }
-

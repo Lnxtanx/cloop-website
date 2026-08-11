@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots } from "./components/ChatBubbles";
-import { SummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard } from "./components/ChatCards";
+import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -349,9 +349,15 @@ export default function TopicChat() {
                   return <UserBubble key={msg.id ?? idx} msg={msg} />;
                 }
 
-                // Summary Card
-                if (msg.message_type === "summary_card" && msg.metadata?.session_summary) {
-                  return <SummaryCard key={msg.id ?? idx} data={msg.metadata.session_summary} />;
+                // Session Summary Card (end-of-session metrics)
+                if (msg.message_type === "session_summary") {
+                  let summaryData = (msg as any).session_summary;
+                  if (!summaryData && msg.diff_html) {
+                    try { summaryData = JSON.parse(msg.diff_html); } catch {}
+                  }
+                  if (summaryData) {
+                    return <SessionSummaryCard key={msg.id ?? idx} data={summaryData} message={msg.message} />;
+                  }
                 }
 
                 // Score Prediction Card
