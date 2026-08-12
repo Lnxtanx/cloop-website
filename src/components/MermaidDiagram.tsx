@@ -40,7 +40,7 @@ mermaid.initialize({
     padding: 15,
     htmlLabels: true,
     useMaxWidth: true,
-    defaultRenderer: "dagre",
+    defaultRenderer: "elk",
   },
   sequence: {
     diagramMarginX: 10,
@@ -103,7 +103,7 @@ mermaid.initialize({
   quadrantChart: {
     chartWidth: 500,
     chartHeight: 500,
-    titleTopMargin: 25,
+
     titleFontSize: 20,
     quadrantLabelFontSize: 16,
     quadrantTextTopPadding: 5,
@@ -141,6 +141,42 @@ interface MermaidDiagramProps {
 
 let diagramCounter = 0;
 
+/**
+ * Sanitize mermaid diagram code to prevent common parse errors.
+ * - Wraps node labels containing parentheses () in quotes: A[Fast: O(1)] → A["Fast: O(1)"]
+ * - Handles labels with special chars that break Mermaid's parser
+ * - Preserves already-quoted labels and arrow syntax
+ */
+function sanitizeMermaidCode(code: string): string {
+  return code.split('\n').map(line => {
+    // Skip lines that are diagram type declarations, comments, or subgraph lines
+    if (/^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|pie|gantt|journey|mindmap|gitGraph|subgraph|end|%%|style|class |click )/i.test(line)) {
+      return line;
+    }
+
+    // Fix node labels in square brackets: A[label with (parens)] → A["label with (parens)"]
+    // Match: NodeId[label] but NOT NodeId["already quoted"]
+    line = line.replace(/(\w+)\[([^\]"]+)\]/g, (_match, nodeId, label) => {
+      // Only quote if the label contains problematic characters
+      if (/[(){}|<>]/.test(label)) {
+        // Escape any existing double quotes inside the label
+        const escaped = label.replace(/"/g, '#quot;');
+        return `${nodeId}["${escaped}"]`;
+      }
+      return _match;
+    });
+
+    // Fix node labels in round brackets (parens shape): A(label with special)
+    // These are less common but can also break with nested parens
+    line = line.replace(/(\w+)\(([^)"]+(?:\([^)]*\))[^)"]*)\)/g, (_match, nodeId, label) => {
+      const escaped = label.replace(/"/g, '#quot;');
+      return `${nodeId}("${escaped}")`;
+    });
+
+    return line;
+  }).join('\n');
+}
+
 export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>("");
@@ -161,6 +197,10 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
         
         // Remove any existing ```mermaid fences if present
         cleanCode = cleanCode.replace(/^```mermaid\s*\n?/i, "").replace(/\n?```$/i, "");
+        
+        // ── Sanitize mermaid code to prevent parse errors ──
+        // Fix node labels containing special chars like parentheses: F[Fast: O(1)] → F["Fast: O(1)"]
+        cleanCode = sanitizeMermaidCode(cleanCode);
         
         const uniqueId = `mermaid-${Date.now()}-${++diagramCounter}`;
         const { svg } = await mermaid.render(uniqueId, cleanCode);
