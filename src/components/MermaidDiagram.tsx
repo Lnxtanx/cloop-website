@@ -107,7 +107,7 @@ mermaid.initialize({
     titleFontSize: 20,
     quadrantLabelFontSize: 16,
     quadrantTextTopPadding: 5,
-    quadrantLabelPadding: 10,
+    quadrantPadding: 10,
     labelFontSize: 14,
     quadrant1Fill: "#ede9fe",
     quadrant2Fill: "#f5f3ff",
