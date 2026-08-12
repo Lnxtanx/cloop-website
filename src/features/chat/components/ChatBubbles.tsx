@@ -3,6 +3,64 @@ import { Volume2 } from "lucide-react";
 import { TopicChatMessage } from "@/lib/api/topic-chat";
 import { DiffText, stripTags } from "./DiffText";
 
+/**
+ * Lightweight inline markdown renderer for chat messages.
+ * Handles: **bold**, *italic*, `code`, and \n line breaks.
+ */
+function renderInlineMarkdown(text: string): React.ReactNode[] {
+  if (!text) return [];
+
+  const nodes: React.ReactNode[] = [];
+  // Split on markdown tokens: **bold**, *italic*, `code`
+  const regex = /(\*\*(.+?)\*\*|\*(.+?)\*|`(.+?)`)/g;
+  let lastIndex = 0;
+  let match;
+  let key = 0;
+
+  while ((match = regex.exec(text)) !== null) {
+    // Push text before this match
+    if (match.index > lastIndex) {
+      const before = text.slice(lastIndex, match.index);
+      nodes.push(...splitNewlines(before, key));
+      key += before.split('\n').length;
+    }
+
+    if (match[2]) {
+      // **bold**
+      nodes.push(<strong key={`b${key++}`} style={{ fontWeight: 700 }}>{match[2]}</strong>);
+    } else if (match[3]) {
+      // *italic*
+      nodes.push(<em key={`i${key++}`}>{match[3]}</em>);
+    } else if (match[4]) {
+      // `code`
+      nodes.push(
+        <code key={`c${key++}`} style={{
+          background: '#e5e7eb', padding: '1px 5px', borderRadius: 4,
+          fontSize: '0.9em', fontFamily: 'monospace',
+        }}>{match[4]}</code>
+      );
+    }
+    lastIndex = regex.lastIndex;
+  }
+
+  // Push remaining text
+  if (lastIndex < text.length) {
+    nodes.push(...splitNewlines(text.slice(lastIndex), key));
+  }
+
+  return nodes;
+}
+
+function splitNewlines(text: string, startKey: number): React.ReactNode[] {
+  const parts = text.split('\n');
+  const result: React.ReactNode[] = [];
+  parts.forEach((part, i) => {
+    if (i > 0) result.push(<br key={`br${startKey + i}`} />);
+    if (part) result.push(part);
+  });
+  return result;
+}
+
 export function UserBubble({ msg }: { msg: TopicChatMessage }) {
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
@@ -17,7 +75,7 @@ export function UserBubble({ msg }: { msg: TopicChatMessage }) {
           lineHeight: 1.55,
         }}
       >
-        {msg.message}
+        {renderInlineMarkdown(msg.message || "")}
       </div>
     </div>
   );
@@ -65,7 +123,7 @@ export function AIBubble({
               lineHeight: 1.55,
             }}
           >
-            {msg.message}
+            {renderInlineMarkdown(msg.message || "")}
           </div>
           {onSpeak && msg.message && msg.message.trim() && (
             <button
@@ -166,7 +224,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
               <DiffText html={msg.diff_html!} />
             ) : (
               <>
-                <span style={{ fontSize: 14 }}>{originalText}</span>
+                <span style={{ fontSize: 14 }}>{renderInlineMarkdown(originalText)}</span>
                 <div
                   style={{
                     marginTop: 8,
@@ -184,7 +242,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
               </>
             )
           ) : (
-            <span style={{ fontSize: 14 }}>{originalText}</span>
+            <span style={{ fontSize: 14 }}>{renderInlineMarkdown(originalText)}</span>
           )}
         </div>
 
