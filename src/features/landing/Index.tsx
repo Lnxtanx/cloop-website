@@ -17,13 +17,37 @@ const Index = () => {
     }
   }, [navigate]);
 
+  const [spaceNotice, setSpaceNotice] = useState("");
+
+  const cleanLoginInput = (raw: string) => {
+    // Strip zero-width spaces (\u200B-\u200D, \uFEFF), non-breaking spaces (\u00A0), and trim outer spaces
+    return raw
+      .trim()
+      .replace(/[\u200B-\u200D\uFEFF\u00A0]/g, "")
+      .replace(/\s+/g, " ");
+  };
+
+  const handleInputChange = (val: string) => {
+    // Detect if input has leading/trailing spaces or invisible copy-paste characters
+    const hasInvisibleOrExtraSpaces = /^\s|\s$|[\u200B-\u200D\uFEFF\u00A0]|\s{2,}/.test(val);
+    const cleaned = cleanLoginInput(val);
+
+    if (hasInvisibleOrExtraSpaces && val.length > 0) {
+      setSpaceNotice("Spaces & hidden characters auto-cleaned");
+    } else {
+      setSpaceNotice("");
+    }
+
+    setGuestId(cleaned);
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    const value = guestId.trim();
+    const value = cleanLoginInput(guestId);
     if (!value) {
-      setError("Please enter your Guest ID or Registered Email.");
+      setError("Please enter your Guest ID, registered email, or phone number.");
       return;
     }
 
@@ -232,11 +256,20 @@ const Index = () => {
                   id="guest-id"
                   type="text"
                   value={guestId}
-                  onChange={(e) => setGuestId(e.target.value)}
-                  placeholder="Enter email or phone number"
+                  onChange={(e) => handleInputChange(e.target.value)}
+                  onPaste={(e) => {
+                    const pasted = e.clipboardData.getData("text");
+                    handleInputChange(pasted);
+                  }}
+                  placeholder="Enter Guest ID, email, or phone number"
                   className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition"
                 />
               </div>
+              {spaceNotice && (
+                <p className="text-[11px] text-amber-600 font-medium mt-0.5 flex items-center gap-1 animate-pulse">
+                  <span>✨</span> {spaceNotice}
+                </p>
+              )}
             </div>
 
             {error && (
