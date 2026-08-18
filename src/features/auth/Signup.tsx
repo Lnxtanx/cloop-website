@@ -176,6 +176,24 @@ const Signup = () => {
 
     addMessage({ id: Date.now() + 1, sender: "user", text: option.label });
     setFormData((f) => ({ ...f, [currentQuestion.key]: option.value }));
+
+    // If user selected board, dynamically refresh the subject options for Question 4
+    if (currentQuestion.key === "board") {
+      getSignupOptions(option.value).then((newData) => {
+        setQuestions((prevQuestions) =>
+          prevQuestions.map((q) => {
+            if (q.key === "subjects") {
+              return {
+                ...q,
+                options: newData.subjects.map((s) => ({ label: s.name, value: String(s.id) }))
+              };
+            }
+            return q;
+          })
+        );
+      }).catch((err) => console.error("Error loading board subjects:", err));
+    }
+
     showNextQuestion(currentIndex + 1);
   };
 

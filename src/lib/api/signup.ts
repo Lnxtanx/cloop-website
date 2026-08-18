@@ -29,8 +29,11 @@ export interface SignupOptions {
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || "https://api.cloopapp.com";
 
-export const getSignupOptions = async (): Promise<SignupOptions> => {
-  const response = await fetch(`${API_BASE_URL}/api/signup/options`, { method: "GET", headers: { "Content-Type": "application/json" } });
+export const getSignupOptions = async (boardId?: string | number): Promise<SignupOptions> => {
+  const url = boardId 
+    ? `${API_BASE_URL}/api/signup/options?board_id=${boardId}`
+    : `${API_BASE_URL}/api/signup/options`;
+  const response = await fetch(url, { method: "GET", headers: { "Content-Type": "application/json" } });
   if (!response.ok) {
     const error = await response.json().catch(() => ({}));
     throw new Error(error.error || "Failed to fetch signup options");
