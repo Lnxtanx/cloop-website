@@ -143,7 +143,9 @@ const Dashboard = () => {
             >
               Your Learning Dashboard
             </button>
-            {profile?.grade_level && <span> | Class {profile.grade_level}</span>}
+            {profile?.grade_level && (
+              <span> | {profile.grade_level.toLowerCase().startsWith('class') || profile.grade_level.toLowerCase().startsWith('grade') ? profile.grade_level : `Class ${profile.grade_level}`}</span>
+            )}
             {profile?.board && <span> {profile.board}</span>}
           </p>
         </div>
