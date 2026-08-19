@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Play, Loader2, RefreshCw } from "lucide-react";
+import { BookOpen, Play, Loader2 } from "lucide-react";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import PracticeDashboard from "@/features/practice/PracticeDashboard";
 
@@ -20,10 +20,6 @@ interface UserSubject {
   completion_percent?: number;
   total_chapters?: number;
   completed_chapters?: number;
-  generation_status?: {
-    status: string;
-    chapters_generated?: boolean;
-  };
 }
 
 interface UserProfile {
@@ -85,23 +81,6 @@ const Dashboard = () => {
   useEffect(() => {
     fetchProfile();
   }, []);
-
-  // Poll profile if any subject generation is pending or in_progress
-  useEffect(() => {
-    if (!profile?.user_subjects) return;
-
-    const isAnyGenerating = profile.user_subjects.some((s) => {
-      const status = s.generation_status?.status;
-      return status === "pending" || status === "in_progress";
-    });
-
-    if (isAnyGenerating) {
-      const interval = setInterval(() => {
-        fetchProfile();
-      }, 5000);
-      return () => clearInterval(interval);
-    }
-  }, [profile]);
 
   // Handle Practice Mode Home
   if (mode === "PRACTICE") {
@@ -170,25 +149,11 @@ const Dashboard = () => {
                 const pct = Math.round(item.completion_percent || 0);
                 const isNotStarted = pct === 0;
 
-                const genStatus = item.generation_status?.status;
-                const isGenerating = genStatus === "pending" || genStatus === "in_progress";
-                const isFailed = genStatus === "failed";
-                const isChaptersGenerated = item.generation_status?.chapters_generated || (item.total_chapters !== undefined && item.total_chapters > 0);
-                const isChapterGenerationInProgress = isGenerating && !isChaptersGenerated;
-                const isCardDisabled = isChapterGenerationInProgress || isFailed;
-
                 return (
                   <Card
                     key={item.subject_id}
-                    className={`rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group ${
-                      isChapterGenerationInProgress
-                        ? "opacity-80 border-zinc-300 bg-gradient-to-br from-zinc-800 to-zinc-900 cursor-not-allowed animate-pulse"
-                        : isFailed
-                        ? "border-red-200 bg-gradient-to-br from-red-50/50 to-red-100/30 cursor-not-allowed"
-                        : "border-zinc-200 hover:shadow-xl hover:border-black cursor-pointer bg-gradient-to-br from-zinc-900 via-zinc-900 to-black text-white"
-                    }`}
+                    className="rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group border-zinc-200 hover:shadow-xl hover:border-black cursor-pointer bg-gradient-to-br from-zinc-900 via-zinc-900 to-black text-white"
                     onClick={() => {
-                      if (isCardDisabled) return;
                       navigate(
                         `/chapters?subjectId=${encodeURIComponent(safeSubjectId)}&subjectName=${encodeURIComponent(item.subject?.name || "Untitled")}`
                       );
@@ -201,11 +166,6 @@ const Dashboard = () => {
                           <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-zinc-400 bg-white/10 px-2.5 sm:px-3 py-1 rounded-full backdrop-blur-md">
                             {item.category || "Academic"}
                           </span>
-                          {isGenerating && (
-                            <span className="text-[10px] font-bold text-amber-300 bg-amber-500/20 px-2 py-0.5 rounded-full flex items-center gap-1">
-                              <RefreshCw className="w-3 h-3 animate-spin" /> Generating...
-                            </span>
-                          )}
                         </div>
 
                         {/* Subject Title */}
@@ -240,33 +200,11 @@ const Dashboard = () => {
 
                       {/* CTA Button */}
                       <div className="pt-2">
-                        {isFailed ? (
-                          <Button
-                            className="w-full bg-red-600 hover:bg-red-700 text-white font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              fetchProfile();
-                            }}
-                          >
-                            Generation Failed. Tap to Retry
-                          </Button>
-                        ) : (
-                          <Button
-                            disabled={isCardDisabled}
-                            className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl gap-2 shadow-lg shadow-black/20 transition-all group-hover:scale-[1.02]"
-                          >
-                            {isChapterGenerationInProgress ? (
-                              <>
-                                <Loader2 className="w-3.5 h-3.5 sm:w-4 sm:h-4 animate-spin text-black" /> Generating Chapters...
-                              </>
-                            ) : (
-                              <>
-                                <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
-                                {isGenerating && (isChaptersGenerated ? " (Generating Topics)" : "")}
-                              </>
-                            )}
-                          </Button>
-                        )}
+                        <Button
+                          className="w-full bg-white hover:bg-zinc-200 text-black font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl gap-2 shadow-lg shadow-black/20 transition-all group-hover:scale-[1.02]"
+                        >
+                          <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Learning Session
+                        </Button>
                       </div>
                     </CardContent>
                   </Card>
