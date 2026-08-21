@@ -257,10 +257,6 @@ const Index = () => {
                   type="text"
                   value={guestId}
                   onChange={(e) => handleInputChange(e.target.value)}
-                  onPaste={(e) => {
-                    const pasted = e.clipboardData.getData("text");
-                    handleInputChange(pasted);
-                  }}
                   placeholder="Enter Guest ID, email, or phone number"
                   className="w-full pl-9 md:pl-10 pr-4 py-2.5 md:py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 focus:border-black transition"
                 />
