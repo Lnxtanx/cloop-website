@@ -17,7 +17,7 @@ import MediaCard from "@/components/MediaCard";
 import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
-import { UserBubble, AIBubble, CorrectionBubble, TypingDots } from "./components/ChatBubbles";
+import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments } from "./components/ChatBubbles";
 import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
@@ -50,6 +50,95 @@ function mergeMessages(userMsgs: TopicChatMessage[], aiMsgs: TopicChatMessage[])
   return [...m.values()].sort(
     (x, y) => new Date(x.created_at || 0).getTime() - new Date(y.created_at || 0).getTime()
   );
+}
+
+function extractAIAttachments(items: TopicChatMessage[]): AIAttachments {
+  const attachments: AIAttachments = {};
+
+  items.forEach((m) => {
+    // 1. Mermaid Diagram
+    if (m.message_type === "mermaid_diagram" || m.metadata?.mermaid_diagram?.code || m.mermaid_diagram?.code) {
+      let code = m.metadata?.mermaid_diagram?.code || m.mermaid_diagram?.code || "";
+      let title = m.metadata?.mermaid_diagram?.title || m.mermaid_diagram?.title || "Concept Diagram";
+      let trigger = m.metadata?.mermaid_diagram?.trigger || m.mermaid_diagram?.trigger || "teaching";
+      if (!code && m.diff_html) {
+        try {
+          const parsed = JSON.parse(m.diff_html);
+          code = parsed.code || m.diff_html;
+          if (parsed.title) title = parsed.title;
+          if (parsed.trigger) trigger = parsed.trigger;
+        } catch {
+          code = m.diff_html;
+        }
+      }
+      if (code) {
+        attachments.mermaidDiagram = { code, title, trigger };
+      }
+    }
+
+    // 2. Text Diagram
+    if (m.message_type === "text_diagram" || m.metadata?.text_diagram?.code || m.text_diagram?.code) {
+      let code = m.metadata?.text_diagram?.code || m.text_diagram?.code || "";
+      let title = m.metadata?.text_diagram?.title || m.text_diagram?.title || "Quick Reference";
+      let diagramType = m.metadata?.text_diagram?.diagram_type || m.text_diagram?.diagram_type || "ascii";
+      let trigger = m.metadata?.text_diagram?.trigger || m.text_diagram?.trigger || "teaching";
+      if (!code && m.diff_html) {
+        try {
+          const parsed = JSON.parse(m.diff_html);
+          code = parsed.code || m.diff_html;
+          if (parsed.diagram_type) diagramType = parsed.diagram_type;
+          if (parsed.title) title = parsed.title;
+          if (parsed.trigger) trigger = parsed.trigger;
+        } catch {
+          code = m.diff_html;
+        }
+      }
+      if (code) {
+        attachments.textDiagram = { code, title, diagramType, trigger };
+      }
+    }
+
+    // 3. YouTube Video
+    if (m.message_type === "youtube_video" || m.youtube_video || (m as any).videos?.[0]) {
+      let mediaData: any = null;
+      if (m.diff_html) {
+        try {
+          mediaData = JSON.parse(m.diff_html);
+        } catch {}
+      }
+      const videoObj = (m as any).videos?.[0];
+      const title = mediaData?.title || videoObj?.title || m.youtube_video?.title || m.message || "Educational Video";
+      const url = mediaData?.url || videoObj?.url;
+      const embedUrl = mediaData?.embedUrl || videoObj?.embedUrl;
+      const thumbnail = mediaData?.thumbnail || videoObj?.thumbnail;
+      const channel = mediaData?.channel || videoObj?.channel;
+      const duration = mediaData?.duration || videoObj?.duration;
+      const viewCount = mediaData?.viewCount || videoObj?.viewCount;
+      const searchQuery = mediaData?.search_query || m.youtube_video?.search_query || m.message;
+      const trigger = m.youtube_video?.trigger;
+      attachments.youtubeVideo = { title, url, embedUrl, thumbnail, channel, duration, viewCount, searchQuery, trigger };
+    }
+
+    // 4. Google Image
+    if (m.message_type === "google_image" || m.google_image || (m as any).images?.[0]) {
+      let mediaData: any = null;
+      if (m.diff_html) {
+        try {
+          mediaData = JSON.parse(m.diff_html);
+        } catch {}
+      }
+      const imageObj = (m as any).images?.[0];
+      const title = mediaData?.title || imageObj?.title || m.google_image?.title || m.message || "Visual Reference";
+      const url = mediaData?.url || imageObj?.url || mediaData?.thumbnail || imageObj?.thumbnail;
+      const thumbnail = mediaData?.thumbnail || imageObj?.thumbnail || url;
+      const source = mediaData?.source || imageObj?.source;
+      const searchQuery = mediaData?.search_query || m.google_image?.search_query || m.message;
+      const trigger = m.google_image?.trigger;
+      attachments.googleImage = { title, url, thumbnail, source, searchQuery, trigger };
+    }
+  });
+
+  return attachments;
 }
 
 export default function TopicChat() {
@@ -107,6 +196,7 @@ export default function TopicChat() {
     inputRef,
     onAutoSend: handleAutoSend,
     autoListenAfterSpeak: false,
+    defaultVoiceEnabled: false,
   });
 
   // Timer
@@ -186,6 +276,7 @@ export default function TopicChat() {
       const res: SendMessageResponse = await sendTopicChatMessage(topicId, {
         message: text,
         session_time_seconds: elapsed,
+        voice_enabled: isVoiceEnabled,
       });
 
       if (res.goals) setGoals(res.goals);
@@ -213,11 +304,12 @@ export default function TopicChat() {
         setMessages((prev) => [...prev, ...newAiMsgs]);
 
         // Speak aloud if Voice is enabled
-        if (isVoiceEnabled && newAiMsgs[0]?.message) {
+        const firstTextMsg = newAiMsgs.find((m) => m.message && m.message_type !== "mermaid_diagram" && m.message_type !== "youtube_video" && m.message_type !== "google_image");
+        if (isVoiceEnabled && firstTextMsg?.message) {
           speak({
-            id: newAiMsgs[0].id,
-            message: newAiMsgs[0].message,
-            message_type: newAiMsgs[0].message_type,
+            id: firstTextMsg.id,
+            message: firstTextMsg.message,
+            message_type: firstTextMsg.message_type,
           });
         }
       }
@@ -242,19 +334,20 @@ export default function TopicChat() {
         {/* Sub-header Bar with Voice Toggle & Timer */}
         <div
           style={{
-            padding: "10px 20px",
-            background: "#faf5ff",
+            padding: "12px 24px",
+            background: "#ffffff",
             borderBottom: "1px solid #e9d5ff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
           <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.05em" }}>
+            <div style={{ fontSize: 12, fontWeight: 800, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.06em" }}>
               {subjectName} {chapterTitle ? `• ${chapterTitle}` : ""}
             </div>
-            <h1 style={{ fontSize: 16, fontWeight: 800, color: "#581c87", margin: 0 }} className="truncate">
+            <h1 style={{ fontSize: 18.5, fontWeight: 800, color: "#1e1b4b", margin: 0 }} className="truncate">
               {topicTitle}
             </h1>
           </div>
@@ -268,14 +361,16 @@ export default function TopicChat() {
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "4px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
                 border: "none",
                 cursor: "pointer",
-                background: isVoiceEnabled ? "#7e22ce" : "#f3e8ff",
+                background: isVoiceEnabled ? "linear-gradient(135deg, #7c3aed, #9333ea)" : "#f3e8ff",
                 color: isVoiceEnabled ? "#ffffff" : "#6b21a8",
+                boxShadow: isVoiceEnabled ? "0 2px 8px rgba(124, 58, 237, 0.25)" : "none",
+                transition: "all 0.2s ease",
               }}
             >
               {isVoiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
@@ -288,12 +383,13 @@ export default function TopicChat() {
                 display: "flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "4px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
                 background: "#f3e8ff",
                 color: "#6b21a8",
-                fontSize: 12,
+                fontSize: 13,
                 fontWeight: 700,
+                border: "1px solid #e9d5ff",
               }}
             >
               <Clock style={{ width: 14, height: 14, color: "#7e22ce" }} />
@@ -306,8 +402,8 @@ export default function TopicChat() {
                 navigate(-1);
               }}
               style={{
-                width: 32,
-                height: 32,
+                width: 34,
+                height: 34,
                 borderRadius: "50%",
                 border: "1px solid #e9d5ff",
                 background: "#ffffff",
@@ -315,7 +411,11 @@ export default function TopicChat() {
                 alignItems: "center",
                 justifyContent: "center",
                 cursor: "pointer",
+                transition: "all 0.15s ease",
               }}
+              onMouseEnter={(e) => (e.currentTarget.style.background = "#f3e8ff")}
+              onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
+              title="Exit Chat"
             >
               <X style={{ width: 16, height: 16, color: "#6b21a8" }} />
             </button>
@@ -326,7 +426,7 @@ export default function TopicChat() {
         {!loading && goals.length > 0 && <GoalsBar goals={goals} open={goalsOpen} onToggle={() => setGoalsOpen((p) => !p)} />}
 
         {/* Chat Feed */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "20px 24px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12 }}>
               <Loader2 className="w-8 h-8 animate-spin text-purple-700" />
@@ -337,143 +437,186 @@ export default function TopicChat() {
               <p style={{ color: "#ef4444", fontWeight: 700, marginBottom: 12 }}>{error}</p>
               <button
                 onClick={loadChat}
-                style={{ padding: "8px 16px", borderRadius: 8, background: "#000", color: "#fff", border: "none", cursor: "pointer" }}
+                style={{ padding: "8px 18px", borderRadius: 8, background: "#7e22ce", color: "#fff", border: "none", cursor: "pointer", fontWeight: 700 }}
               >
                 Retry
               </button>
             </div>
           ) : (
             <div>
-              {messages.map((msg, idx) => {
-                // User Correction / Diff
-                if (msg.message_type === "user_correction" || (msg.sender === "user" && msg.diff_html)) {
-                  return <CorrectionBubble key={msg.id ?? idx} msg={msg} />;
-                }
+              {(() => {
+                // Group consecutive AI messages into a single AI response turn
+                type ChatGroup =
+                  | { type: "user_correction"; msg: TopicChatMessage; id: string | number }
+                  | { type: "user"; msg: TopicChatMessage; id: string | number }
+                  | { type: "session_summary"; msg: TopicChatMessage; id: string | number }
+                  | { type: "standalone"; msg: TopicChatMessage; id: string | number }
+                  | { type: "ai_group"; items: TopicChatMessage[]; id: string | number };
 
-                // Pure User Message
-                if (msg.sender === "user") {
-                  return <UserBubble key={msg.id ?? idx} msg={msg} />;
-                }
+                const groups: ChatGroup[] = [];
+                let currentAiGroup: TopicChatMessage[] = [];
 
-                // Session Summary Card (end-of-session metrics)
-                if (msg.message_type === "session_summary") {
-                  let summaryData = (msg as any).session_summary;
-                  if (!summaryData && msg.diff_html) {
-                    try { summaryData = JSON.parse(msg.diff_html); } catch {}
+                const flushAiGroup = () => {
+                  if (currentAiGroup.length > 0) {
+                    groups.push({
+                      type: "ai_group",
+                      items: [...currentAiGroup],
+                      id: currentAiGroup[0].id || `ai-group-${groups.length}`,
+                    });
+                    currentAiGroup = [];
                   }
-                  if (summaryData) {
-                    return <SessionSummaryCard key={msg.id ?? idx} data={summaryData} message={msg.message} />;
+                };
+
+                messages.forEach((msg, idx) => {
+                  const id = msg.id ?? idx;
+                  if (msg.message_type === "user_correction" || (msg.sender === "user" && msg.diff_html)) {
+                    flushAiGroup();
+                    groups.push({ type: "user_correction", msg, id });
+                    return;
                   }
-                }
+                  if (msg.sender === "user") {
+                    flushAiGroup();
+                    groups.push({ type: "user", msg, id });
+                    return;
+                  }
+                  if (msg.message_type === "session_summary") {
+                    flushAiGroup();
+                    groups.push({ type: "session_summary", msg, id });
+                    return;
+                  }
+                  if (
+                    msg.message_type === "learning_report" ||
+                    (msg.sender === "ai" && (msg.message?.trim().startsWith('{"summary"') || msg.message?.trim().startsWith('{"title"')))
+                  ) {
+                    flushAiGroup();
+                    groups.push({ type: "standalone", msg, id });
+                    return;
+                  }
+                  currentAiGroup.push(msg);
+                });
 
-                // Score Prediction Card
-                if (msg.message_type === "score_prediction" && msg.metadata?.score_prediction) {
-                  return <ScorePredictionCard key={msg.id ?? idx} data={msg.metadata.score_prediction} />;
-                }
+                flushAiGroup();
 
-                // Internet Link Card
-                if (msg.message_type === "internet_link") {
-                  return <InternetLinkCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
-                }
-
-                // Goal Revision Card
-                if (msg.message_type === "goal_revision") {
-                  return <GoalRevisionCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
-                }
-
-                // Session Learning Report Card / AI Summary
-                if (
-                  msg.message_type === "learning_report" ||
-                  (msg.sender === "ai" && (msg.message?.trim().startsWith('{"summary"') || msg.message?.trim().startsWith('{"title"')))
-                ) {
-                  return <AISummaryCard key={msg.id ?? idx} text={msg.diff_html || msg.message} />;
-                }
-
-                if (msg.message_type === "learning_report") {
-                  return <LearningReportCard key={msg.id ?? idx} diffHtml={msg.diff_html} />;
-                }
-
-                // Mermaid Diagram
-                if (msg.message_type === "mermaid_diagram") {
-                  let code = msg.metadata?.mermaid_diagram?.code || "";
-                  let title = msg.metadata?.mermaid_diagram?.title || "Diagram";
-                  if (!code && msg.diff_html) {
-                    try {
-                      const parsed = JSON.parse(msg.diff_html);
-                      code = parsed.code || msg.diff_html;
-                      if (parsed.title) title = parsed.title;
-                    } catch {
-                      code = msg.diff_html;
+                return groups.map((group) => {
+                  if (group.type === "user_correction") {
+                    return <CorrectionBubble key={group.id} msg={group.msg} />;
+                  }
+                  if (group.type === "user") {
+                    return <UserBubble key={group.id} msg={group.msg} />;
+                  }
+                  if (group.type === "session_summary") {
+                    let summaryData = (group.msg as any).session_summary;
+                    if (!summaryData && group.msg.diff_html) {
+                      try { summaryData = JSON.parse(group.msg.diff_html); } catch {}
                     }
-                  }
-                  return <MermaidDiagram key={msg.id ?? idx} code={code} title={title} />;
-                }
-
-                // Text Diagram
-                if (msg.message_type === "text_diagram") {
-                  let code = msg.metadata?.text_diagram?.code || "";
-                  let title = msg.metadata?.text_diagram?.title || "Quick Reference";
-                  let diagramType: "ascii" | "tree" | "arrow" | "table" = msg.metadata?.text_diagram?.diagram_type || "ascii";
-                  if (!code && msg.diff_html) {
-                    try {
-                      const parsed = JSON.parse(msg.diff_html);
-                      code = parsed.code || msg.diff_html;
-                      if (parsed.diagram_type) diagramType = parsed.diagram_type;
-                      if (parsed.title) title = parsed.title;
-                    } catch {
-                      code = msg.diff_html;
+                    if (summaryData) {
+                      return <SessionSummaryCard key={group.id} data={summaryData} message={group.msg.message} />;
                     }
+                    return null;
                   }
-                  return <TextDiagram key={msg.id ?? idx} code={code} title={title} diagramType={diagramType} />;
-                }
+                  if (group.type === "standalone") {
+                    return <AISummaryCard key={group.id} text={group.msg.diff_html || group.msg.message} />;
+                  }
 
-                // Media Card (YouTube / Google Image)
-                if (msg.message_type === "youtube_video" || msg.message_type === "google_image") {
-                  const isVideo = msg.message_type === "youtube_video";
-                  return (
-                    <MediaCard
-                      key={msg.id ?? idx}
-                      type={isVideo ? "youtube" : "image"}
-                      title={msg.message || (isVideo ? "Educational Video" : "Diagram")}
-                      searchQuery={msg.message}
-                    />
+                  // AI Group: Unified Turn with in-bubble visual options & media drawer
+                  const turnAttachments = extractAIAttachments(group.items);
+
+                  // Find all text / conversation messages in this AI group
+                  const textMessages = group.items.filter(
+                    (m) =>
+                      m.message_type !== "mermaid_diagram" &&
+                      m.message_type !== "text_diagram" &&
+                      m.message_type !== "youtube_video" &&
+                      m.message_type !== "google_image" &&
+                      m.message_type !== "score_prediction" &&
+                      m.message_type !== "internet_link" &&
+                      m.message_type !== "goal_revision"
                   );
-                }
 
-                // Standard AI Bubble with optional inline diagram attachment
-                const hasMermaidInMeta = msg.metadata?.mermaid_diagram?.code;
-                const hasTextInMeta = msg.metadata?.text_diagram?.code;
+                  // Fallback if all items in this group were media/cards only
+                  const messagesToRender = textMessages.length > 0 ? textMessages : [group.items[0]];
 
-                return (
-                  <div key={msg.id ?? idx} className="space-y-3 mb-4">
-                    <AIBubble
-                      msg={msg}
-                      onOption={(optVal) => handleSend(optVal)}
-                      onSpeak={() =>
-                        speak({
-                          id: msg.id,
-                          message: msg.message,
-                          message_type: msg.message_type,
-                        })
-                      }
-                      isSpeaking={speakingMessageId === msg.id}
-                    />
-                    {hasMermaidInMeta && (
-                      <MermaidDiagram
-                        code={msg.metadata.mermaid_diagram.code}
-                        title={msg.metadata.mermaid_diagram.title || "Diagram"}
-                      />
-                    )}
-                    {hasTextInMeta && (
-                      <TextDiagram
-                        code={msg.metadata.text_diagram.code}
-                        title={msg.metadata.text_diagram.title || "Diagram"}
-                        diagramType={msg.metadata.text_diagram.diagram_type || "ascii"}
-                      />
-                    )}
-                  </div>
-                );
-              })}
+                  // Special standalone cards (score prediction, goal revision, internet link)
+                  const specialCards = group.items.filter(
+                    (m) =>
+                      m.message_type === "score_prediction" ||
+                      m.message_type === "internet_link" ||
+                      m.message_type === "goal_revision"
+                  );
+
+                  return (
+                    <div
+                      key={group.id}
+                      style={{
+                        display: "flex",
+                        alignItems: "flex-start",
+                        gap: 10,
+                        marginBottom: 20,
+                      }}
+                    >
+                      {/* AI Tutor Avatar */}
+                      <div
+                        style={{
+                          width: 30,
+                          height: 30,
+                          borderRadius: "50%",
+                          flexShrink: 0,
+                          background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: "#fff",
+                          fontSize: 11,
+                          fontWeight: 800,
+                          marginTop: 2,
+                          boxShadow: "0 2px 6px rgba(124, 58, 237, 0.2)",
+                        }}
+                      >
+                        C.
+                      </div>
+
+                      {/* Unified Content Column */}
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: "82%", minWidth: 280, flex: 1 }}>
+                        {messagesToRender.map((msg, idx) => {
+                          // Attach turn visual aids to the first message (or if msg has its own attachments)
+                          const msgAttachments = idx === 0 ? turnAttachments : extractAIAttachments([msg]);
+
+                          return (
+                            <AIBubble
+                              key={msg.id ?? `ai-msg-${idx}`}
+                              msg={msg}
+                              attachments={msgAttachments}
+                              onOption={(optVal) => handleSend(optVal)}
+                              onSpeak={() =>
+                                speak({
+                                  id: msg.id,
+                                  message: msg.message,
+                                  message_type: msg.message_type,
+                                })
+                              }
+                              isSpeaking={speakingMessageId === msg.id}
+                              hideAvatar={true}
+                            />
+                          );
+                        })}
+
+                        {specialCards.map((m, idx) => {
+                          if (m.message_type === "score_prediction" && m.metadata?.score_prediction) {
+                            return <ScorePredictionCard key={m.id ?? idx} data={m.metadata.score_prediction} />;
+                          }
+                          if (m.message_type === "internet_link") {
+                            return <InternetLinkCard key={m.id ?? idx} diffHtml={m.diff_html} />;
+                          }
+                          if (m.message_type === "goal_revision") {
+                            return <GoalRevisionCard key={m.id ?? idx} diffHtml={m.diff_html} />;
+                          }
+                          return null;
+                        })}
+                      </div>
+                    </div>
+                  );
+                });
+              })()}
 
               {sending && <TypingDots />}
               <div ref={bottomRef} />
@@ -482,15 +625,15 @@ export default function TopicChat() {
         </div>
 
         {/* Input Bar */}
-        <div style={{ padding: done ? "8px 16px" : "16px 24px", background: "#ffffff", borderTop: "1px solid #e2e8f0" }}>
+        <div style={{ padding: done ? "10px 20px" : "16px 24px", background: "#ffffff", borderTop: "1px solid #e9d5ff", boxShadow: "0 -1px 4px rgba(0,0,0,0.02)" }}>
           {done ? (
-            <div style={{ textAlign: "center", padding: "4px 0" }}>
+            <div style={{ textAlign: "center", padding: "6px 0" }}>
               <div
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
                   gap: 6,
-                  padding: "6px 16px",
+                  padding: "8px 20px",
                   background: "#f0fdf4",
                   border: "1.5px solid #bbf7d0",
                   borderRadius: 20,
@@ -529,13 +672,18 @@ export default function TopicChat() {
                 disabled={sending || loading}
                 style={{
                   flex: 1,
-                  height: 44,
-                  padding: "0 16px",
-                  borderRadius: 22,
-                  border: "1.5px solid #cbd5e1",
+                  height: 48,
+                  padding: "0 20px",
+                  borderRadius: 24,
+                  border: "1.5px solid #d8b4fe",
                   outline: "none",
-                  fontSize: 14,
+                  fontSize: 15.5,
+                  background: "#faf5ff",
+                  color: "#1e1b4b",
+                  transition: "border-color 0.2s ease",
                 }}
+                onFocus={(e) => (e.currentTarget.style.borderColor = "#7e22ce")}
+                onBlur={(e) => (e.currentTarget.style.borderColor = "#d8b4fe")}
               />
 
               {/* Mic / Talk to AI button */}
@@ -553,12 +701,14 @@ export default function TopicChat() {
                       ? "#f59e0b"
                       : isListening
                         ? "#ef4444"
-                        : "#f1f5f9",
-                    color: isWaitingToSend || isListening ? "#ffffff" : "#475569",
+                        : "#f3e8ff",
+                    color: isWaitingToSend || isListening ? "#ffffff" : "#7e22ce",
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
                     cursor: "pointer",
+                    boxShadow: isListening ? "0 0 12px rgba(239, 68, 68, 0.4)" : "none",
+                    transition: "all 0.2s ease",
                   }}
                   className={isListening || isWaitingToSend ? "animate-pulse" : ""}
                   title={
@@ -581,13 +731,15 @@ export default function TopicChat() {
                   height: 44,
                   borderRadius: "50%",
                   border: "none",
-                  background: "#000000",
+                  background: "linear-gradient(135deg, #7c3aed, #9333ea)",
                   color: "#ffffff",
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
                   cursor: "pointer",
-                  opacity: sending || !input.trim() ? 0.5 : 1,
+                  opacity: sending || !input.trim() ? 0.45 : 1,
+                  boxShadow: sending || !input.trim() ? "none" : "0 2px 8px rgba(124, 58, 237, 0.3)",
+                  transition: "all 0.2s ease",
                 }}
               >
                 {sending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}

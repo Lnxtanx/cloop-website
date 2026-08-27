@@ -14,6 +14,8 @@ interface UseVoiceAssistantProps {
   inputRef: React.RefObject<HTMLInputElement | HTMLTextAreaElement>;
   onAutoSend: (text: string) => void | Promise<void>;
   autoListenAfterSpeak?: boolean;
+  defaultVoiceEnabled?: boolean;
+  storageKey?: string | null;
 }
 
 export function useVoiceAssistant({
@@ -21,6 +23,8 @@ export function useVoiceAssistant({
   inputRef,
   onAutoSend,
   autoListenAfterSpeak = false,
+  defaultVoiceEnabled = false,
+  storageKey = null,
 }: UseVoiceAssistantProps) {
   const { toast } = useToast();
   const autoListenAfterSpeakRef = useRef(autoListenAfterSpeak);
@@ -29,8 +33,11 @@ export function useVoiceAssistant({
   }, [autoListenAfterSpeak]);
   
   const [isVoiceEnabled, setIsVoiceEnabled] = useState<boolean>(() => {
-    const saved = localStorage.getItem("cloop_voice_enabled");
-    return saved !== null ? saved === "true" : true; // Default to true if not set
+    if (storageKey) {
+      const saved = localStorage.getItem(storageKey);
+      return saved !== null ? saved === "true" : defaultVoiceEnabled;
+    }
+    return defaultVoiceEnabled;
   });
 
   const [speakingMessageId, setSpeakingMessageId] = useState<number | string | null>(null);
@@ -56,11 +63,13 @@ export function useVoiceAssistant({
     isWaitingToSendRef.current = isWaitingToSend;
   }, [isWaitingToSend]);
 
-  // Sync voice enabled to localStorage
+  // Sync voice enabled to storage if storageKey provided
   const isVoiceEnabledRef = useRef(isVoiceEnabled);
   useEffect(() => {
     isVoiceEnabledRef.current = isVoiceEnabled;
-    localStorage.setItem("cloop_voice_enabled", String(isVoiceEnabled));
+    if (storageKey) {
+      localStorage.setItem(storageKey, String(isVoiceEnabled));
+    }
     if (!isVoiceEnabled) {
       if (audioRef.current) {
         audioRef.current.pause();
@@ -74,7 +83,7 @@ export function useVoiceAssistant({
         setIsWaitingToSend(false);
       }
     }
-  }, [isVoiceEnabled]);
+  }, [isVoiceEnabled, storageKey]);
 
   // Clean-up voice synthesis on unmount
   useEffect(() => {

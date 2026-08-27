@@ -145,7 +145,7 @@ export default function Notifications() {
                     <div style={{
                       width: 44, height: 44, borderRadius: "50%", flexShrink: 0,
                       background: isWelcome ? "#FEF3C7" : "#f4f4f5",
-                      display: "flex", alignItems: "center", justifyCenter: "center",
+                      display: "flex", alignItems: "center", justifyContent: "center",
                     }}>
                       {isWelcome
                         ? <Star style={{ width: 20, height: 20, color: "#F59E0B" }} />

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import mermaid from "mermaid";
+import { Maximize2, ZoomIn, ZoomOut, X, Loader2 } from "lucide-react";
 
 // Initialize mermaid with full feature support
 mermaid.initialize({
@@ -18,7 +19,6 @@ mermaid.initialize({
     clusterBkg: "#f5f3ff",
     clusterBorder: "#c4b5fd",
     edgeLabelBackground: "#ffffff",
-    // Additional theme variables for better visuals
     mainBkg: "#ede9fe",
     nodeTextColor: "#4c1d95",
     branchLabelColor: "#5b21b6",
@@ -66,68 +66,93 @@ mermaid.initialize({
     leftPadding: 75,
     gridLineStartPadding: 35,
     fontSize: 11,
-    sectionFontSize: 11,
     numberSectionStyles: 4,
     axisFormat: "%Y-%m-%d",
-    topAxis: false,
+    useMaxWidth: true,
+  },
+  journey: {
+    diagramMarginX: 20,
+    diagramMarginY: 20,
+    leftMargin: 150,
+    width: 150,
+    height: 50,
+    boxMargin: 10,
+    boxTextMargin: 5,
+    noteMargin: 10,
+    messageMargin: 35,
   },
   class: {
     useMaxWidth: true,
-    hideEmptyMembersBox: true,
   },
   state: {
     useMaxWidth: true,
-    labelHeight: 30,
   },
   er: {
     useMaxWidth: true,
-    titleTopMargin: 25,
-    diagramPadding: 20,
-    layoutDirection: "TB",
-    minEntityWidth: 100,
-    minEntityHeight: 75,
-    entityPadding: 15,
-    stroke: "#a78bfa",
-    fill: "#ede9fe",
-    fontSize: 12,
   },
   pie: {
     useMaxWidth: true,
-    textPosition: 0.75,
-  },
-  mindmap: {
-    useMaxWidth: true,
-    padding: 10,
-    maxNodeWidth: 200,
   },
   quadrantChart: {
     chartWidth: 500,
     chartHeight: 500,
-
-    titleFontSize: 20,
-    quadrantLabelFontSize: 16,
-    quadrantTextTopPadding: 5,
+    titleFontSize: 16,
+    titlePadding: 10,
     quadrantPadding: 10,
-    labelFontSize: 14,
-    quadrant1Fill: "#ede9fe",
-    quadrant2Fill: "#f5f3ff",
-    quadrant3Fill: "#faf5ff",
-    quadrant4Fill: "#e9d5ff",
-    quadrant1TextFill: "#4c1d95",
-    quadrant2TextFill: "#5b21b6",
-    quadrant3TextFill: "#6b21a8",
-    quadrant4TextFill: "#7c3aed",
-    quadrantPointFill: "#4c1d95",
-    quadrantPointTextFill: "#4c1d95",
+    xAxisLabelPadding: 5,
+    yAxisLabelPadding: 5,
+    quadrantLabelFontSize: 14,
+    quadrantTextTopPadding: 5,
+    pointTextPadding: 5,
+    pointLabelFontSize: 12,
+    pointRadius: 5,
+    xAxisPosition: "bottom",
+    yAxisPosition: "left",
+  },
+  xyChart: {
+    width: 700,
+    height: 500,
+    titleFontSize: 16,
+    titlePadding: 10,
+    showDataLabel: false,
   },
   requirement: {
-    useMaxWidth: true,
     rect_fill: "#f5f3ff",
     text_color: "#4c1d95",
-    rect_border_size: "1",
+    rect_border_size: "1px",
     rect_border_color: "#a78bfa",
     rect_min_width: 200,
     rect_min_height: 10,
+  },
+  architecture: {
+    useMaxWidth: true,
+  },
+  block: {
+    useMaxWidth: true,
+  },
+  c4: {
+    useMaxWidth: true,
+  },
+  mindmap: {
+    useMaxWidth: true,
+  },
+  sankey: {
+    useMaxWidth: true,
+  },
+  timeline: {
+    useMaxWidth: true,
+  },
+  gitGraph: {
+    useMaxWidth: true,
+  },
+  packet: {
+    useMaxWidth: true,
+  },
+  kanban: {
+    useMaxWidth: true,
+  },
+  radar: {
+    useMaxWidth: true,
   },
   securityLevel: "loose",
   logLevel: "error",
@@ -137,76 +162,82 @@ interface MermaidDiagramProps {
   code: string;
   title?: string;
   trigger?: "correction" | "teaching" | "user_request";
+  hideAvatar?: boolean;
 }
 
 let diagramCounter = 0;
 
-/**
- * Sanitize mermaid diagram code to prevent common parse errors.
- * - Wraps node labels containing parentheses () in quotes: A[Fast: O(1)] → A["Fast: O(1)"]
- * - Handles labels with special chars that break Mermaid's parser
- * - Preserves already-quoted labels and arrow syntax
- */
 function sanitizeMermaidCode(code: string): string {
-  return code.split('\n').map(line => {
-    // Skip lines that are diagram type declarations, comments, or subgraph lines
-    if (/^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|pie|gantt|journey|mindmap|gitGraph|subgraph|end|%%|style|class |click )/i.test(line)) {
-      return line;
-    }
-
-    // Fix node labels in square brackets: A[label with (parens)] → A["label with (parens)"]
-    // Match: NodeId[label] but NOT NodeId["already quoted"]
-    line = line.replace(/(\w+)\[([^\]"]+)\]/g, (_match, nodeId, label) => {
-      // Only quote if the label contains problematic characters
-      if (/[(){}|<>]/.test(label)) {
-        // Escape any existing double quotes inside the label
-        const escaped = label.replace(/"/g, '#quot;');
-        return `${nodeId}["${escaped}"]`;
+  return code
+    .split("\n")
+    .map((line) => {
+      if (
+        /^\s*(graph|flowchart|sequenceDiagram|classDiagram|stateDiagram|erDiagram|pie|gantt|journey|mindmap|gitGraph|subgraph|end|%%|style|class |click )/i.test(
+          line
+        )
+      ) {
+        return line;
       }
-      return _match;
-    });
 
-    // Fix node labels in round brackets (parens shape): A(label with special)
-    // These are less common but can also break with nested parens
-    line = line.replace(/(\w+)\(([^)"]+(?:\([^)]*\))[^)"]*)\)/g, (_match, nodeId, label) => {
-      const escaped = label.replace(/"/g, '#quot;');
-      return `${nodeId}("${escaped}")`;
-    });
+      line = line.replace(/(\w+)\[([^\]"]+)\]/g, (_match, nodeId, label) => {
+        if (/[(){}|<>]/.test(label)) {
+          const escaped = label.replace(/"/g, "#quot;");
+          return `${nodeId}["${escaped}"]`;
+        }
+        return _match;
+      });
 
-    return line;
-  }).join('\n');
+      line = line.replace(/(\w+)\(([^)"]+(?:\([^)]*\))[^)"]*)\)/g, (_match, nodeId, label) => {
+        const escaped = label.replace(/"/g, "#quot;");
+        return `${nodeId}("${escaped}")`;
+      });
+
+      return line;
+    })
+    .join("\n");
 }
 
-export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramProps) {
+export default function MermaidDiagram({
+  code,
+  title = "Concept Visual",
+  trigger,
+  hideAvatar = false,
+}: MermaidDiagramProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [svgContent, setSvgContent] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [isRendering, setIsRendering] = useState(true);
+  const [isRendering, setIsRendering] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState(1);
+
+  // Close modal on Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setIsModalOpen(false);
+    };
+    if (isModalOpen) {
+      window.addEventListener("keydown", handleKeyDown);
+    }
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isModalOpen]);
 
   useEffect(() => {
-    if (!code || !containerRef.current) return;
-
     const renderDiagram = async () => {
+      if (!code.trim()) {
+        setError("Empty diagram code");
+        return;
+      }
+
       setIsRendering(true);
-      setError("");
+      setError(null);
 
       try {
-        // Clean and validate the code
-        let cleanCode = code.trim();
-        
-        // Remove any existing ```mermaid fences if present
-        cleanCode = cleanCode.replace(/^```mermaid\s*\n?/i, "").replace(/\n?```$/i, "");
-        
-        // ── Sanitize mermaid code to prevent parse errors ──
-        // Fix node labels containing special chars like parentheses: F[Fast: O(1)] → F["Fast: O(1)"]
-        cleanCode = sanitizeMermaidCode(cleanCode);
-        
-        const uniqueId = `mermaid-${Date.now()}-${++diagramCounter}`;
-        const { svg } = await mermaid.render(uniqueId, cleanCode);
+        const id = `mermaid-diagram-${++diagramCounter}`;
+        const sanitizedCode = sanitizeMermaidCode(code);
+        const { svg } = await mermaid.render(id, sanitizedCode);
         setSvgContent(svg);
-      } catch (err: unknown) {
-        console.error("Mermaid render error:", err);
+      } catch (err) {
+        console.error("Failed to render Mermaid diagram:", err);
         const errorMessage = err instanceof Error ? err.message : "Could not render diagram";
         setError(errorMessage);
       } finally {
@@ -217,7 +248,6 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
     void renderDiagram();
   }, [code]);
 
-  // Trigger label for the badge without icons/emojis
   const triggerLabel =
     trigger === "correction"
       ? "Correction Aid"
@@ -232,300 +262,291 @@ export default function MermaidDiagram({ code, title, trigger }: MermaidDiagramP
         ? { bg: "#eff6ff", text: "#2563eb", border: "#bfdbfe" }
         : { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" };
 
-  return (
+  const cardContent = (
     <div
       style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 8,
-        marginBottom: 16,
+        maxWidth: hideAvatar ? "100%" : "85%",
+        minWidth: 280,
+        borderRadius: 16,
+        overflow: "hidden",
+        border: "1.5px solid #e9d5ff",
+        background: "#ffffff",
+        boxShadow: "0 2px 12px rgba(124, 58, 237, 0.08)",
       }}
     >
-      {/* AI Avatar */}
+      {/* Header */}
       <div
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          flexShrink: 0,
-          background: "linear-gradient(135deg, #7c3aed, #a855f7)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: 10,
-          fontWeight: 700,
+          justifyContent: "space-between",
+          padding: "10px 14px",
+          background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+          borderBottom: "1px solid #e9d5ff",
         }}
       >
-        C.
-      </div>
-
-      {/* Diagram Card */}
-      <div
-        style={{
-          maxWidth: "85%",
-          minWidth: 280,
-          borderRadius: 16,
-          overflow: "hidden",
-          border: "1.5px solid #e9d5ff",
-          background: "#fff",
-          boxShadow: "0 2px 12px rgba(124, 58, 237, 0.08)",
-        }}
-      >
-        {/* Header */}
-        <div
-          style={{
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "10px 14px",
-            background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-            borderBottom: "1px solid #e9d5ff",
-          }}
-        >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 700,
-                color: "#5b21b6",
-                letterSpacing: "0.01em",
-              }}
-            >
-              {title || "Visual Diagram"}
-            </span>
-          </div>
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
           <span
             style={{
-              fontSize: 9,
+              fontSize: 12,
               fontWeight: 700,
-              padding: "3px 8px",
-              borderRadius: 8,
+              color: "#581c87",
+              whiteSpace: "nowrap",
+            }}
+          >
+            {title}
+          </span>
+          <span
+            style={{
+              fontSize: 10,
+              fontWeight: 600,
+              padding: "2px 8px",
+              borderRadius: 12,
               background: triggerColor.bg,
               color: triggerColor.text,
               border: `1px solid ${triggerColor.border}`,
-              textTransform: "uppercase",
-              letterSpacing: "0.04em",
             }}
           >
             {triggerLabel}
           </span>
         </div>
 
-        {/* Diagram Body */}
-        <div
-          ref={containerRef}
-          className="mermaid-container"
-          onClick={() => {
-            if (!isRendering && !error && svgContent) {
-              setIsModalOpen(true);
-            }
-          }}
-          title={!isRendering && !error && svgContent ? "Click to zoom in" : undefined}
-          style={{
-            padding: "16px 12px",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            minHeight: 120,
-            background: "#fefefe",
-            overflow: "auto",
-            cursor: !isRendering && !error && svgContent ? "zoom-in" : "default",
-          }}
-        >
-          {isRendering ? (
-            <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-              <div
-                style={{
-                  width: 16,
-                  height: 16,
-                  border: "2px solid #e9d5ff",
-                  borderTopColor: "#7c3aed",
-                  borderRadius: "50%",
-                  animation: "spin 0.8s linear infinite",
-                }}
-              />
-              <span style={{ fontSize: 12, color: "#9ca3af" }}>
-                Rendering diagram…
-              </span>
-              <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-            </div>
-          ) : error ? (
-            <div
-              style={{
-                padding: "16px",
-                background: "#fef2f2",
-                borderRadius: 10,
-                fontSize: 12,
-                color: "#dc2626",
-                textAlign: "center",
-              }}
-            >
-              <div style={{ marginBottom: 8 }}>⚠️ {error}</div>
-              <div
-                style={{
-                  fontSize: 10,
-                  color: "#9ca3af",
-                  fontFamily: "monospace",
-                  background: "#f5f5f5",
-                  padding: 8,
-                  borderRadius: 6,
-                  maxWidth: 400,
-                  overflow: "auto",
-                }}
-              >
-                <pre style={{ margin: 0, whiteSpace: "pre-wrap" }}>{code}</pre>
-              </div>
-            </div>
-          ) : (
-            <div
-              dangerouslySetInnerHTML={{ __html: svgContent }}
-              style={{
-                width: "100%",
-                overflow: "auto",
-              }}
-            />
-          )}
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <button
+            type="button"
+            onClick={() => setIsModalOpen(true)}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 28,
+              height: 28,
+              borderRadius: 8,
+              border: "1px solid #d8b4fe",
+              background: "#fff",
+              color: "#6b21a8",
+              cursor: "pointer",
+            }}
+            title="Expand diagram"
+          >
+            <Maximize2 style={{ width: 14, height: 14 }} />
+          </button>
         </div>
       </div>
 
-      {/* Zoom Dialog Modal Overlay */}
+      {/* Diagram Body */}
+      <div
+        style={{
+          padding: 16,
+          background: "#faf5ff",
+          overflowX: "auto",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          minHeight: 120,
+        }}
+      >
+        {isRendering && (
+          <div style={{ display: "flex", alignItems: "center", gap: 8, color: "#8b5cf6", fontSize: 12 }}>
+            <Loader2 style={{ width: 16, height: 16, animation: "spin 1s linear infinite" }} />
+            <span>Rendering diagram...</span>
+          </div>
+        )}
+
+        {error && (
+          <div style={{ color: "#ef4444", fontSize: 12, textAlign: "center", padding: 12 }}>
+            <p style={{ fontWeight: 600, marginBottom: 4 }}>Diagram preview unavailable</p>
+            <pre
+              style={{
+                fontSize: 11,
+                background: "#fee2e2",
+                padding: 8,
+                borderRadius: 6,
+                textAlign: "left",
+                overflowX: "auto",
+                maxWidth: 400,
+              }}
+            >
+              {code}
+            </pre>
+          </div>
+        )}
+
+        {!isRendering && !error && svgContent && (
+          <div
+            ref={containerRef}
+            style={{ width: "100%", display: "flex", justifyContent: "center" }}
+            dangerouslySetInnerHTML={{ __html: svgContent }}
+          />
+        )}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {hideAvatar ? (
+        <div style={{ marginBottom: 4, width: "100%" }}>{cardContent}</div>
+      ) : (
+        <div
+          style={{
+            display: "flex",
+            alignItems: "flex-start",
+            gap: 8,
+            marginBottom: 16,
+          }}
+        >
+          {/* AI Avatar */}
+          <div
+            style={{
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 10,
+              fontWeight: 700,
+            }}
+          >
+            C.
+          </div>
+          {cardContent}
+        </div>
+      )}
+
+      {/* Modal Viewer */}
       {isModalOpen && (
         <div
-          onClick={() => setIsModalOpen(false)}
           style={{
             position: "fixed",
             inset: 0,
             zIndex: 9999,
-            backgroundColor: "rgba(15, 23, 42, 0.75)",
-            backdropFilter: "blur(8px)",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            backgroundColor: "rgba(0, 0, 0, 0.7)",
+            backdropFilter: "blur(4px)",
             padding: 24,
-            cursor: "zoom-out",
           }}
+          onClick={() => setIsModalOpen(false)}
         >
           <div
-            onClick={(e) => e.stopPropagation()}
             style={{
               position: "relative",
               width: "100%",
-              maxWidth: "90vw",
+              maxWidth: 900,
               maxHeight: "90vh",
               background: "#fff",
               borderRadius: 20,
+              overflow: "hidden",
               boxShadow: "0 25px 50px -12px rgba(0, 0, 0, 0.25)",
               display: "flex",
               flexDirection: "column",
-              overflow: "hidden",
-              border: "1px solid #e9d5ff",
-              cursor: "default",
             }}
+            onClick={(e) => e.stopPropagation()}
           >
-            {/* Modal Header */}
             <div
               style={{
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "space-between",
-                padding: "16px 24px",
-                background: "#f9fafb",
-                borderBottom: "1px solid #e5e7eb",
+                padding: "16px 20px",
+                borderBottom: "1px solid #e9d5ff",
+                background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
               }}
             >
-              <span
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color: "#1e1b4b",
-                }}
-              >
-                {title || "Visual Diagram"}
-              </span>
-              <button
-                onClick={() => setIsModalOpen(false)}
-                style={{
-                  background: "transparent",
-                  border: "none",
-                  fontSize: 20,
-                  color: "#6b7280",
-                  cursor: "pointer",
-                  padding: 4,
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  lineHeight: 1,
-                }}
-              >
-                ✕
-              </button>
+              <span style={{ fontSize: 15, fontWeight: 700, color: "#581c87" }}>{title}</span>
+              <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.max(0.5, z - 0.2))}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: "1px solid #d8b4fe",
+                    background: "#fff",
+                    color: "#6b21a8",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Zoom Out"
+                >
+                  <ZoomOut style={{ width: 14, height: 14 }} />
+                </button>
+                <span style={{ fontSize: 12, fontWeight: 600, color: "#6b21a8", minWidth: 40, textAlign: "center" }}>
+                  {Math.round(zoomLevel * 100)}%
+                </span>
+                <button
+                  type="button"
+                  onClick={() => setZoomLevel((z) => Math.min(2.5, z + 0.2))}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: "1px solid #d8b4fe",
+                    background: "#fff",
+                    color: "#6b21a8",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                  title="Zoom In"
+                >
+                  <ZoomIn style={{ width: 14, height: 14 }} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 8,
+                    border: "none",
+                    background: "#6b21a8",
+                    color: "#fff",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    marginLeft: 8,
+                  }}
+                  title="Close (Esc)"
+                >
+                  <X style={{ width: 16, height: 16 }} />
+                </button>
+              </div>
             </div>
-
-            {/* Modal Body */}
             <div
-              className="mermaid-modal-container"
               style={{
-                padding: 32,
+                padding: 24,
                 overflow: "auto",
                 display: "flex",
                 justifyContent: "center",
                 alignItems: "center",
-                background: "#ffffff",
+                background: "#faf5ff",
                 flex: 1,
               }}
             >
               <div
-                dangerouslySetInnerHTML={{ __html: svgContent }}
                 style={{
-                  width: "100%",
-                  maxHeight: "70vh",
-                  display: "flex",
-                  justifyContent: "center",
+                  transform: `scale(${zoomLevel})`,
+                  transformOrigin: "center center",
+                  transition: "transform 0.2s ease",
                 }}
+                dangerouslySetInnerHTML={{ __html: svgContent }}
               />
             </div>
           </div>
-          <style>{`
-            .mermaid-modal-container svg {
-              width: auto !important;
-              height: auto !important;
-              max-width: 100% !important;
-              max-height: 70vh !important;
-            }
-          `}</style>
         </div>
       )}
-
-      {/* Global styles for mermaid diagrams */}
-      <style>{`
-        .mermaid-container svg {
-          max-width: 100%;
-          height: auto;
-        }
-        .mermaid-container .node rect,
-        .mermaid-container .node circle,
-        .mermaid-container .node ellipse,
-        .mermaid-container .node polygon,
-        .mermaid-container .node path {
-          stroke: #a78bfa !important;
-          stroke-width: 1.5px !important;
-        }
-        .mermaid-container .nodeLabel {
-          color: #4c1d95 !important;
-        }
-        .mermaid-container .edgePath .path {
-          stroke: #8b5cf6 !important;
-          stroke-width: 1.5px !important;
-        }
-        .mermaid-container .edgeLabel {
-          background-color: #f5f3ff !important;
-          color: #5b21b6 !important;
-        }
-        .mermaid-container .arrowheadPath {
-          fill: #8b5cf6 !important;
-        }
-      `}</style>
-    </div>
+    </>
   );
 }

@@ -5,6 +5,7 @@ interface TextDiagramProps {
   title?: string;
   trigger?: "correction" | "teaching" | "user_request";
   diagramType?: "ascii" | "tree" | "table" | "arrow" | "auto";
+  hideAvatar?: boolean;
 }
 
 /**
@@ -12,7 +13,7 @@ interface TextDiagramProps {
  * Renders text-based diagrams (ASCII art, tree diagrams, tables, flow diagrams)
  * as an alternative to Mermaid when graphical rendering isn't needed or desired.
  */
-export default function TextDiagram({ code, title, trigger, diagramType = "auto" }: TextDiagramProps) {
+export default function TextDiagram({ code, title, trigger, diagramType = "auto", hideAvatar = false }: TextDiagramProps) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   
   // Detect diagram type if auto
@@ -72,98 +73,106 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
         ? { bg: "#eff6ff", text: "#2563eb", border: "#bfdbfe" }
         : { bg: "#f0fdf4", text: "#16a34a", border: "#bbf7d0" };
 
-  return (
+  const cardContent = (
     <div
       style={{
-        display: "flex",
-        alignItems: "flex-start",
-        gap: 8,
-        marginBottom: 16,
+        maxWidth: hideAvatar ? "100%" : "75%",
+        minWidth: 220,
+        borderRadius: 14,
+        overflow: "hidden",
+        border: "1.5px solid #e9d5ff",
+        background: "#fafafa",
+        boxShadow: "0 2px 8px rgba(124, 58, 237, 0.06)",
       }}
     >
-      {/* AI Avatar */}
+      {/* Header */}
       <div
         style={{
-          width: 28,
-          height: 28,
-          borderRadius: "50%",
-          flexShrink: 0,
-          background: "linear-gradient(135deg, #7c3aed, #a855f7)",
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          color: "#fff",
-          fontSize: 10,
-          fontWeight: 700,
+          justifyContent: "space-between",
+          padding: "8px 12px",
+          background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
+          borderBottom: "1px solid #e9d5ff",
         }}
       >
-        C.
+        <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+          <span
+            style={{
+              fontSize: 11,
+              fontWeight: 700,
+              color: "#5b21b6",
+            }}
+          >
+            {title || "Text Diagram"}
+          </span>
+        </div>
+        <span
+          style={{
+            fontSize: 8,
+            fontWeight: 700,
+            padding: "2px 6px",
+            borderRadius: 6,
+            background: triggerColor.bg,
+            color: triggerColor.text,
+            border: `1px solid ${triggerColor.border}`,
+            textTransform: "uppercase",
+            letterSpacing: "0.03em",
+          }}
+        >
+          {triggerLabel}
+        </span>
       </div>
 
-      {/* Diagram Card */}
+      {/* Diagram Body */}
       <div
+        onClick={() => setIsModalOpen(true)}
+        title="Click to zoom in"
         style={{
-          maxWidth: "75%",
-          minWidth: 220,
-          borderRadius: 14,
-          overflow: "hidden",
-          border: "1.5px solid #e9d5ff",
-          background: "#fafafa",
-          boxShadow: "0 2px 8px rgba(124, 58, 237, 0.06)",
+          padding: "12px 14px",
+          background: "#fefefe",
+          cursor: "zoom-in",
         }}
       >
-        {/* Header */}
+        {renderedContent}
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      {hideAvatar ? (
+        <div style={{ marginBottom: 4 }}>{cardContent}</div>
+      ) : (
         <div
           style={{
             display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            padding: "8px 12px",
-            background: "linear-gradient(135deg, #f5f3ff, #ede9fe)",
-            borderBottom: "1px solid #e9d5ff",
+            alignItems: "flex-start",
+            gap: 8,
+            marginBottom: 16,
           }}
         >
-          <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-            <span
-              style={{
-                fontSize: 11,
-                fontWeight: 700,
-                color: "#5b21b6",
-              }}
-            >
-              {title || "Text Diagram"}
-            </span>
-          </div>
-          <span
+          {/* AI Avatar */}
+          <div
             style={{
-              fontSize: 8,
+              width: 28,
+              height: 28,
+              borderRadius: "50%",
+              flexShrink: 0,
+              background: "linear-gradient(135deg, #7c3aed, #a855f7)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "#fff",
+              fontSize: 10,
               fontWeight: 700,
-              padding: "2px 6px",
-              borderRadius: 6,
-              background: triggerColor.bg,
-              color: triggerColor.text,
-              border: `1px solid ${triggerColor.border}`,
-              textTransform: "uppercase",
-              letterSpacing: "0.03em",
             }}
           >
-            {triggerLabel}
-          </span>
+            C.
+          </div>
+          {cardContent}
         </div>
-
-        {/* Diagram Body */}
-        <div
-          onClick={() => setIsModalOpen(true)}
-          title="Click to zoom in"
-          style={{
-            padding: "12px 14px",
-            background: "#fefefe",
-            cursor: "zoom-in",
-          }}
-        >
-          {renderedContent}
-        </div>
-      </div>
+      )}
 
       {/* Zoom Dialog Modal Overlay */}
       {isModalOpen && (
@@ -225,7 +234,7 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
                   background: "transparent",
                   border: "none",
                   fontSize: 20,
-                  color: "#6b7280",
+                  color: "#6b21a8",
                   cursor: "pointer",
                   padding: 4,
                   display: "flex",
@@ -252,7 +261,7 @@ export default function TextDiagram({ code, title, trigger, diagramType = "auto"
           </div>
         </div>
       )}
-    </div>
+    </>
   );
 }
 
