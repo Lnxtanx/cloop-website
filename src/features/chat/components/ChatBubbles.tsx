@@ -73,12 +73,12 @@ export function UserBubble({ msg }: { msg: TopicChatMessage }) {
       <div
         style={{
           maxWidth: "70%",
-          padding: "12px 18px",
+          padding: "13px 20px",
           borderRadius: "18px 18px 4px 18px",
           background: "linear-gradient(135deg, #18181b, #27272a)",
           color: "#ffffff",
-          fontSize: 15.5,
-          lineHeight: 1.6,
+          fontSize: 16.5,
+          lineHeight: 1.62,
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
         }}
       >
@@ -195,18 +195,8 @@ export function AIBubble({
 
   const hasAnyMedia = hasDiagram || hasVideo || hasImage || hasTextDiagram;
 
-  // Active media tab state: default to diagram if present, otherwise video, then image, then text diagram
-  const defaultTab = hasDiagram
-    ? "diagram"
-    : hasVideo
-      ? "video"
-      : hasImage
-        ? "image"
-        : hasTextDiagram
-          ? "text_diagram"
-          : null;
-
-  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | null>(defaultTab);
+  // Active media tab state: default to null (hidden by default, expands on user click)
+  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | null>(null);
 
   const toggleMedia = (tab: "diagram" | "video" | "image" | "text_diagram") => {
     setActiveMedia((prev) => (prev === tab ? null : tab));
@@ -231,7 +221,7 @@ export function AIBubble({
       {/* 1. Main Text & TTS Audio Row */}
       <div
         style={{
-          padding: "13px 18px",
+          padding: "14px 20px",
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
@@ -239,7 +229,7 @@ export function AIBubble({
           background: "#ffffff",
         }}
       >
-        <div style={{ flex: 1, color: "#1e1b4b", fontSize: 15.5, lineHeight: 1.62 }}>
+        <div style={{ flex: 1, color: "#1e1b4b", fontSize: 16.5, lineHeight: 1.65 }}>
           {renderInlineMarkdown(msg.message || "")}
         </div>
 
@@ -297,9 +287,9 @@ export function AIBubble({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "5px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: activeMedia === "diagram" ? 700 : 600,
                 cursor: "pointer",
                 border: activeMedia === "diagram" ? "1.5px solid #a855f7" : "1px solid #e9d5ff",
@@ -327,9 +317,9 @@ export function AIBubble({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "5px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: activeMedia === "video" ? 700 : 600,
                 cursor: "pointer",
                 border: activeMedia === "video" ? "1.5px solid #ef4444" : "1px solid #fecaca",
@@ -360,9 +350,9 @@ export function AIBubble({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "5px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: activeMedia === "image" ? 700 : 600,
                 cursor: "pointer",
                 border: activeMedia === "image" ? "1.5px solid #3b82f6" : "1px solid #bfdbfe",
@@ -390,9 +380,9 @@ export function AIBubble({
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 6,
-                padding: "5px 12px",
+                padding: "6px 14px",
                 borderRadius: 20,
-                fontSize: 12.5,
+                fontSize: 13,
                 fontWeight: activeMedia === "text_diagram" ? 700 : 600,
                 cursor: "pointer",
                 border: activeMedia === "text_diagram" ? "1.5px solid #a21caf" : "1px solid #f5d0fe",

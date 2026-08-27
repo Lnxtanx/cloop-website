@@ -672,12 +672,12 @@ export default function TopicChat() {
                 disabled={sending || loading}
                 style={{
                   flex: 1,
-                  height: 48,
-                  padding: "0 20px",
-                  borderRadius: 24,
+                  height: 50,
+                  padding: "0 22px",
+                  borderRadius: 25,
                   border: "1.5px solid #d8b4fe",
                   outline: "none",
-                  fontSize: 15.5,
+                  fontSize: 16.5,
                   background: "#faf5ff",
                   color: "#1e1b4b",
                   transition: "border-color 0.2s ease",
