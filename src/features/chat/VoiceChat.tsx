@@ -1,292 +1,233 @@
-import { useEffect, useRef, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Mic, MicOff, PhoneOff, Volume2, Headphones, Loader2, ArrowLeft } from "lucide-react";
 import DashboardLayout from "@/layouts/DashboardLayout";
-import { Button } from "@/components/ui/button";
-import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
-import { sendVoiceChatMessage, fetchVoiceChatMessages } from "@/lib/api/normal-chat";
-
-type ConnectionStatus = "disconnected" | "connecting" | "idle" | "listening" | "speaking" | "thinking";
+import {
+  Mic,
+  MicOff,
+  PhoneOff,
+  Volume2,
+  Loader2,
+  ArrowLeft,
+  MessageSquare,
+  Sparkles,
+  Headphones,
+} from "lucide-react";
+import { createLiveVoiceSession } from "@/lib/api/voice-chat";
+import { useLiveVoiceTutor } from "@/hooks/useLiveVoiceTutor";
 
 export default function VoiceChat() {
   const navigate = useNavigate();
-  const [messages, setMessages] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [inputValue, setInputValue] = useState("");
-  const [isCallActive, setIsCallActive] = useState(false);
+  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [isInitializing, setIsInitializing] = useState(true);
+  const [showSubtitles, setShowSubtitles] = useState(true);
+  const [isMuted, setIsMuted] = useState(false);
 
-  // Hidden textarea ref for voice assistant compatibility
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const voice = useLiveVoiceTutor(sessionId);
 
-  const handleSendMessage = async (text: string) => {
-    if (!text.trim()) return;
+  // 1. Initialise session on mount
+  useEffect(() => {
+    let isMounted = true;
 
-    // Add user message
-    const userMsg = { role: "user", content: text };
-    setMessages((p) => [...p, userMsg]);
-    setInputValue("");
-    setIsLoading(true);
+    async function init() {
+      try {
+        // Request microphone permission first
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((t) => t.stop());
 
-    try {
-      const res = await sendVoiceChatMessage({
-        message: text,
-      });
-
-      const aiMsg = {
-        role: "assistant",
-        content: res.aiMessage?.message || "",
-        audio: res.aiMessage?.audio,
-        id: res.aiMessage?.id || Date.now().toString(),
-      };
-
-      setMessages((p) => [...p, aiMsg]);
-
-      // Play audio response if call is active
-      if (aiMsg.content && aiMsg.audio) {
-        setTimeout(() => {
-          speak({
-            id: aiMsg.id,
-            message: aiMsg.content,
-            audio: aiMsg.audio,
-          });
-        }, 100);
+        // Create or get voice session from backend
+        const s = await createLiveVoiceSession();
+        if (isMounted) {
+          setSessionId(s.id);
+          setIsInitializing(false);
+        }
+      } catch (err: any) {
+        console.error("[VoiceChat] Init error:", err);
+        if (isMounted) {
+          // Fallback to local session ID if network fails
+          setSessionId(Date.now());
+          setIsInitializing(false);
+        }
       }
-    } catch (err) {
-      console.error("Voice Chat error:", err);
-      setMessages((p) => [
-        ...p,
-        { role: "assistant", content: "Sorry, I had trouble generating a response." },
-      ]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const {
-    isVoiceEnabled,
-    setIsVoiceEnabled,
-    speakingMessageId,
-    isListening,
-    isWaitingToSend,
-    isSpeechSupported,
-    speak,
-    toggleListening,
-    cancelSpeech,
-    cancelAutoSend,
-  } = useVoiceAssistant({
-    setInput: setInputValue,
-    inputRef: textareaRef,
-    onAutoSend: (text) => {
-      void handleSendMessage(text);
-    },
-    autoListenAfterSpeak: true, // Continuous hands-free call mode
-  });
-
-  // Start Call Handler
-  const startCall = async () => {
-    setIsCallActive(true);
-    setIsVoiceEnabled(true);
-    
-    // Fetch last session or create new
-    try {
-      const data = await fetchVoiceChatMessages();
-      if (data.messages && data.messages.length > 0) {
-        const formatted = data.messages.map((m: any) => ({
-          role: m.sender === "ai" ? "assistant" : "user",
-          content: m.message,
-          audio: undefined,
-          id: m.id.toString(),
-        }));
-        setMessages(formatted);
-      }
-    } catch (e) {
-      console.error("Failed to load session history:", e);
     }
 
-    // Trigger Speech Recognition
-    setTimeout(() => {
-      toggleListening();
-    }, 400);
-  };
+    init();
 
-  // End Call Handler
-  const endCall = () => {
-    cancelSpeech();
-    cancelAutoSend();
-    setIsCallActive(false);
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  // 2. Connect WebSocket once session ID is ready
+  useEffect(() => {
+    if (sessionId && !voice.isConnected && voice.connectionStatus === "disconnected") {
+      voice.connect();
+    }
+  }, [sessionId, voice.isConnected, voice.connectionStatus, voice.connect]);
+
+  // 3. Handle leave / end call
+  const handleEndCall = useCallback(() => {
+    voice.endSession();
     navigate("/dashboard");
-  };
-
-  // Status mapping
-  const status = !isCallActive
-    ? "disconnected"
-    : isLoading || isWaitingToSend
-    ? "thinking"
-    : isListening
-    ? "listening"
-    : speakingMessageId
-    ? "speaking"
-    : "idle";
+  }, [voice, navigate]);
 
   return (
-    <DashboardLayout title="Voice Tutor Session" mainClassName="flex-1 flex flex-col min-h-0 relative p-0 overflow-hidden bg-white">
-      {/* Hidden textarea required for useVoiceAssistant focus and triggers */}
-      <textarea ref={textareaRef} value={inputValue} onChange={() => {}} className="hidden" />
-
-      <div className="flex-1 flex flex-col justify-between p-6 bg-gradient-to-tr from-zinc-100 via-white to-zinc-50 relative overflow-hidden select-none">
+    <DashboardLayout title="Voice Tutor — Cloop AI" mainClassName="flex-1 flex flex-col h-full min-h-0 p-0 overflow-hidden">
+      <div className="flex-1 flex flex-col justify-between p-4 sm:p-8 bg-[#090A0F] text-white select-none font-['Inter',sans-serif] relative overflow-hidden h-full">
         
-        {/* Top Header Row */}
-        <div className="flex justify-between items-center max-w-3xl w-full mx-auto z-10">
-          <Button
-            variant="ghost"
-            onClick={endCall}
-            className="text-gray-600 hover:text-black hover:bg-zinc-100 gap-2 shrink-0 cursor-pointer"
-          >
-            <ArrowLeft className="w-4 h-4" /> Exit Call
-          </Button>
+        {/* Ambient background glow */}
+        <div
+          className={`absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] rounded-full blur-3xl pointer-events-none transition-all duration-700 ${
+            voice.isAiSpeaking
+              ? "bg-purple-600/15 scale-125"
+              : voice.isUserSpeaking
+              ? "bg-emerald-600/15 scale-125"
+              : "bg-indigo-600/5 scale-100"
+          }`}
+        />
 
-          <div className="flex items-center gap-2">
-            <span className={`h-2.5 w-2.5 rounded-full ${status !== "disconnected" ? "bg-green-500 animate-pulse" : "bg-red-500"}`} />
-            <span className="text-xs font-semibold tracking-wider text-black uppercase">
-              {status === "disconnected" ? "Offline" : "Live Session"}
-            </span>
+        {/* Top Minimal Bar */}
+        <div className="max-w-3xl mx-auto w-full flex items-center justify-between z-10 shrink-0">
+          <button
+            onClick={handleEndCall}
+            className="w-10 h-10 rounded-full bg-white/5 hover:bg-white/15 border border-white/10 flex items-center justify-center text-zinc-300 hover:text-white transition cursor-pointer backdrop-blur-md"
+            title="Leave Session"
+          >
+            <ArrowLeft className="w-4 h-4" />
+          </button>
+
+          <div className="text-center flex items-center gap-2">
+            <div className="w-6 h-6 rounded-full bg-gradient-to-tr from-purple-600 to-indigo-500 flex items-center justify-center text-white text-xs font-black shadow-xs">
+              C.
+            </div>
+            <h2 className="text-sm sm:text-base font-bold text-white tracking-tight">
+              Cloop AI Tutor
+            </h2>
           </div>
+
+          <button
+            onClick={() => setShowSubtitles((prev) => !prev)}
+            className={`w-10 h-10 rounded-full border flex items-center justify-center transition cursor-pointer backdrop-blur-md ${
+              showSubtitles
+                ? "bg-purple-600/40 border-purple-400 text-white"
+                : "bg-white/5 border-white/10 text-zinc-400 hover:text-white"
+            }`}
+            title="Toggle Subtitles"
+          >
+            <MessageSquare className="w-4 h-4" />
+          </button>
         </div>
 
-        {/* Central visualizer block */}
-        <div className="flex-1 flex flex-col items-center justify-center max-w-3xl w-full mx-auto relative z-10">
-          {status === "disconnected" ? (
-            <div className="text-center bg-white/95 border border-zinc-200 p-10 rounded-[32px] shadow-xl max-w-sm w-full mx-auto animate-in fade-in zoom-in duration-500">
-              <div className="w-20 h-20 bg-zinc-100 rounded-full flex items-center justify-center border border-zinc-200 mb-6 mx-auto">
-                <Headphones className="w-10 h-10 text-black animate-pulse" />
-              </div>
-              <h2 className="text-2xl font-bold text-slate-800 mb-8">Voice-to-Voice AI Tutor</h2>
-              <Button
-                onClick={startCall}
-                className="bg-black hover:bg-zinc-800 text-white font-semibold px-8 py-6 rounded-2xl shadow-lg shadow-zinc-300 hover:scale-105 active:scale-95 transition-all text-base cursor-pointer"
-              >
-                Start Voice Call
-              </Button>
+        {/* Center: Dynamic Animated Waveform Visualizer */}
+        <div className="flex-1 flex flex-col items-center justify-center space-y-8 z-10 py-4 min-h-0">
+          
+          {/* Main Visualizer Stage */}
+          <div className="relative flex items-center justify-center w-64 h-64">
+            
+            {/* Ambient pulsating outer waves */}
+            <div
+              className={`absolute rounded-full transition-all duration-500 pointer-events-none ${
+                voice.isAiSpeaking
+                  ? "w-60 h-60 bg-purple-500/20 animate-ping"
+                  : voice.isUserSpeaking
+                  ? "w-60 h-60 bg-emerald-500/20 animate-ping"
+                  : "w-44 h-44 bg-white/5"
+              }`}
+            />
+
+            {/* Glowing Core Sphere */}
+            <div
+              className={`w-36 h-36 rounded-full flex flex-col items-center justify-center shadow-2xl transition-all duration-300 z-10 ${
+                voice.isAiSpeaking
+                  ? "bg-gradient-to-tr from-purple-700 via-purple-600 to-indigo-500 shadow-purple-500/50 scale-105"
+                  : voice.isUserSpeaking
+                  ? "bg-gradient-to-tr from-emerald-600 via-emerald-500 to-teal-400 shadow-emerald-500/50 scale-105"
+                  : "bg-gradient-to-tr from-zinc-800 to-zinc-900 border border-zinc-700/60 shadow-black/80"
+              }`}
+            >
+              {isInitializing || voice.connectionStatus === "connecting" ? (
+                <Loader2 className="w-9 h-9 text-white animate-spin" />
+              ) : voice.isAiSpeaking ? (
+                <Volume2 className="w-9 h-9 text-white animate-pulse" />
+              ) : (
+                <Mic className={`w-9 h-9 ${voice.isUserSpeaking ? "text-white" : "text-zinc-400"}`} />
+              )}
             </div>
-          ) : (
-            <div className="flex flex-col items-center justify-center w-full">
-              {/* Animated Orb container */}
-              <div className="relative w-48 h-48 flex items-center justify-center">
-                {/* Visualizer ripples */}
-                {status === "listening" && (
-                  <>
-                    <div className="absolute inset-0 rounded-full bg-red-500/5 voice-ripple-1" />
-                    <div className="absolute inset-0 rounded-full bg-red-500/3 voice-ripple-2" />
-                    <div className="absolute inset-0 rounded-full bg-red-500/1 voice-ripple-3" />
-                  </>
-                )}
-                {status === "speaking" && (
-                  <>
-                    <div className="absolute inset-0 rounded-full bg-zinc-800/10 voice-ripple-1" />
-                    <div className="absolute inset-0 rounded-full bg-zinc-800/5 voice-ripple-2" />
-                    <div className="absolute inset-0 rounded-full bg-zinc-800/2 voice-ripple-3" />
-                  </>
-                )}
 
-                {/* Orb itself */}
-                <div
-                  onClick={toggleListening}
-                  className={`relative w-32 h-32 rounded-full flex items-center justify-center cursor-pointer hover:scale-105 active:scale-95 shadow-[0_0_30px_rgba(0,0,0,0.2)] transition-all duration-500 ${
-                    status === "listening"
-                      ? "bg-gradient-to-tr from-red-500 to-orange-500 voice-morph-sphere-fast shadow-[0_0_30px_rgba(239,68,68,0.2)]"
-                      : status === "speaking"
-                      ? "bg-gradient-to-tr from-black via-zinc-800 to-zinc-900 voice-morph-sphere shadow-[0_0_30px_rgba(0,0,0,0.3)]"
-                      : status === "thinking"
-                      ? "bg-gradient-to-tr from-zinc-800 to-black voice-pulse-active shadow-[0_0_30px_rgba(0,0,0,0.2)]"
-                      : "bg-gradient-to-tr from-black to-zinc-800 voice-breathe-glow"
-                  }`}
-                >
-                  <div className="text-center text-white select-none">
-                    {status === "listening" ? (
-                      <Mic className="w-6 h-6 mx-auto text-red-100" />
-                    ) : status === "speaking" ? (
-                      <Volume2 className="w-6 h-6 mx-auto text-zinc-100" />
-                    ) : (
-                      <Headphones className="w-6 h-6 mx-auto text-zinc-300" />
-                    )}
-                  </div>
-                </div>
-              </div>
+            {/* 16 Animated Dynamic Frequency Bars */}
+            <div className="absolute inset-0 flex items-center justify-center gap-1.5 pointer-events-none">
+              {voice.frequencyData.slice(0, 16).map((val, i) => {
+                const active = voice.isAiSpeaking || voice.isUserSpeaking;
+                const height = active ? Math.max(12, val * 120) : 6;
+                return (
+                  <div
+                    key={i}
+                    className={`w-1 rounded-full transition-all duration-75 ${
+                      voice.isAiSpeaking
+                        ? "bg-gradient-to-t from-purple-500 to-indigo-300 shadow-xs shadow-purple-400"
+                        : voice.isUserSpeaking
+                        ? "bg-gradient-to-t from-emerald-500 to-teal-200 shadow-xs shadow-emerald-400"
+                        : "bg-zinc-700"
+                    }`}
+                    style={{
+                      height: `${height}px`,
+                      opacity: active ? 0.9 : 0.25,
+                    }}
+                  />
+                );
+              })}
+            </div>
+          </div>
 
-              {/* Status title */}
-              <div className="mt-4 text-center">
-                <p className="text-lg font-bold text-slate-800 tracking-wide uppercase text-gradient">
-                  {status === "listening"
-                    ? "Listening to you..."
-                    : status === "speaking"
-                    ? "AI Tutor is speaking..."
-                    : status === "thinking"
-                    ? "AI Tutor is processing..."
-                    : "Call Connected"}
-                </p>
-                <p className="text-xs text-zinc-600 mt-1 font-medium">
-                  {!isVoiceEnabled ? "Your voice output is muted" : "Ask or talk about anything"}
-                </p>
-              </div>
+          {/* Clean Status Pill */}
+          <div className="text-center">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-bold tracking-wide backdrop-blur-md">
+              <span
+                className={`w-2 h-2 rounded-full ${
+                  voice.isAiSpeaking
+                    ? "bg-purple-400 animate-pulse"
+                    : voice.isUserSpeaking
+                    ? "bg-emerald-400 animate-pulse"
+                    : "bg-zinc-500"
+                }`}
+              />
+              <span>
+                {isInitializing || voice.connectionStatus === "connecting"
+                  ? "Connecting to Cloop AI..."
+                  : voice.isAiSpeaking
+                  ? "Cloop AI is speaking..."
+                  : voice.isUserSpeaking
+                  ? "Listening to you..."
+                  : "Cloop AI is listening"}
+              </span>
+            </div>
+          </div>
 
-              {/* Live Transcript Display Box */}
-              <div className="mt-4 w-full max-w-md bg-white/80 border border-zinc-200 shadow-[0_4px_20px_rgba(0,0,0,0.02)] backdrop-blur-md rounded-xl p-4 min-h-[70px] max-h-[100px] overflow-y-auto scrollbar-hide text-center flex flex-col justify-center gap-1 animate-in fade-in slide-in-from-bottom-3 duration-300">
-                {messages.length > 0 ? (
-                  (() => {
-                    const lastMsg = messages[messages.length - 1];
-                    return (
-                      <div className="animate-fade-in text-center flex flex-col items-center">
-                        <span className="text-[10px] font-bold text-black uppercase tracking-widest block">
-                          {lastMsg.role === "user" ? "You said" : "AI Tutor"}
-                        </span>
-                        <p className="text-sm font-medium text-slate-700 leading-relaxed max-w-md mx-auto line-clamp-3">
-                          {lastMsg.content}
-                        </p>
-                      </div>
-                    );
-                  })()
-                ) : (
-                  <p className="text-sm text-slate-400 italic">
-                    Start speaking to begin your live session...
-                  </p>
-                )}
-              </div>
+          {/* Clean Live Subtitle Pill */}
+          {showSubtitles && (
+            <div className="w-full max-w-lg min-h-[52px] bg-black/40 border border-white/10 rounded-2xl px-5 py-3 text-center backdrop-blur-md flex items-center justify-center">
+              <p className="text-xs sm:text-sm font-medium text-zinc-200 leading-relaxed">
+                {voice.isAiSpeaking
+                  ? voice.aiTranscript || "..."
+                  : voice.userTranscript
+                  ? `"${voice.userTranscript}"`
+                  : "Ask any question or concept across all subjects..."}
+              </p>
             </div>
           )}
+
         </div>
 
-        {/* Footer controls row */}
-        {status !== "disconnected" && (
-          <div className="pb-2 pt-2 max-w-md w-full mx-auto flex items-center justify-center gap-8 z-10 animate-in fade-in duration-500">
-            {/* Toggle Mic Mute button */}
-            <button
-              onClick={toggleListening}
-              className={`w-14 h-14 rounded-full flex items-center justify-center transition-all cursor-pointer ${
-                isListening
-                  ? "bg-red-500 hover:bg-red-600 text-white shadow-lg shadow-red-500/30 active:scale-95"
-                  : isWaitingToSend
-                  ? "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/30 active:scale-95"
-                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm active:scale-95"
-              }`}
-              title={isListening ? "Mute Microphone" : "Unmute Microphone"}
-            >
-              {isListening ? (
-                <Mic className="w-5 h-5" />
-              ) : (
-                <MicOff className="w-5 h-5" />
-              )}
-            </button>
-
-            {/* End Call / Exit button */}
-            <button
-              onClick={endCall}
-              className="w-14 h-14 rounded-full bg-red-600 hover:bg-red-700 text-white flex items-center justify-center transition-all shadow-lg shadow-red-600/30 hover:scale-105 active:scale-95 cursor-pointer"
-              title="End Voice Call"
-            >
-              <PhoneOff className="w-5 h-5" />
-            </button>
-          </div>
-        )}
+        {/* Bottom Control Bar */}
+        <div className="max-w-md mx-auto w-full flex items-center justify-center gap-4 z-10 shrink-0 pb-2">
+          {/* End Call / Leave */}
+          <button
+            onClick={handleEndCall}
+            className="px-8 h-12 bg-red-600 hover:bg-red-700 active:scale-95 text-white font-extrabold text-xs rounded-full flex items-center justify-center gap-2 shadow-xl shadow-red-600/30 transition-all cursor-pointer"
+          >
+            <PhoneOff className="w-4 h-4" />
+            <span>End Session</span>
+          </button>
+        </div>
 
       </div>
     </DashboardLayout>
