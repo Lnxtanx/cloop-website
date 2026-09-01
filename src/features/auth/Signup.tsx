@@ -77,7 +77,13 @@ const Signup = () => {
             return { ...q, options: data.grades.map((g) => ({ label: g, value: g })) };
           }
           if (q.key === "board") {
-            return { ...q, options: data.boards.map((b) => ({ label: b.name, value: String(b.id) })) };
+            return {
+              ...q,
+              options: data.boards.map((b) => ({
+                label: b.code === "STATE" ? "State Board" : (b.code || b.name),
+                value: String(b.id)
+              }))
+            };
           }
           if (q.key === "subjects") {
             return { ...q, options: data.subjects.map((s) => ({ label: s.name, value: String(s.id) })) };
