@@ -2,7 +2,9 @@ import React from "react";
 
 export function DiffText({ html }: { html: string }) {
   if (!html) return null;
-  const parts = html.replace(/<\/?p>/g, "").split(/(<del>.*?<\/del>|<ins>.*?<\/ins>)/g);
+  const parts = html
+    .replace(/<\/?p>/g, "")
+    .split(/(<del>[\s\S]*?<\/del>|<ins>[\s\S]*?<\/ins>)/g);
   return (
     <span className="correction" style={{ fontSize: 14, lineHeight: 1.6 }}>
       {parts.map((p, i) => {
