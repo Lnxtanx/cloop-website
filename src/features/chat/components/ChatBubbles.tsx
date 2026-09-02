@@ -498,7 +498,7 @@ export function AIBubble({
       )}
 
       {/* 4. Multiple Choice Options (if present) */}
-      {msg.options && msg.options.length > 0 && (
+      {Array.isArray(msg.options) && msg.options.some((o) => o && ((o.value ?? o.text) || "").trim()) ? (
         <div
           style={{
             padding: "10px 14px 12px 14px",
@@ -509,36 +509,38 @@ export function AIBubble({
             gap: 6,
           }}
         >
-          {msg.options.map((o) => (
-            <button
-              key={o.value}
-              onClick={() => onOption(o.value)}
-              style={{
-                textAlign: "left",
-                padding: "10px 14px",
-                borderRadius: 12,
-                border: "1.5px solid #e9d5ff",
-                background: "#faf5ff",
-                fontSize: 14.5,
-                fontWeight: 600,
-                color: "#4c1d95",
-                cursor: "pointer",
-                transition: "all 0.15s ease",
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = "#ede9fe";
-                e.currentTarget.style.borderColor = "#c084fc";
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = "#faf5ff";
-                e.currentTarget.style.borderColor = "#e9d5ff";
-              }}
-            >
-              {o.text}
-            </button>
-          ))}
+          {msg.options
+            .filter((o) => o && ((o.value ?? o.text) || "").trim())
+            .map((o) => (
+              <button
+                key={o.value ?? o.text}
+                onClick={() => onOption(o.value ?? o.text)}
+                style={{
+                  textAlign: "left",
+                  padding: "10px 14px",
+                  borderRadius: 12,
+                  border: "1.5px solid #e9d5ff",
+                  background: "#faf5ff",
+                  fontSize: 14.5,
+                  fontWeight: 600,
+                  color: "#4c1d95",
+                  cursor: "pointer",
+                  transition: "all 0.15s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = "#ede9fe";
+                  e.currentTarget.style.borderColor = "#c084fc";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = "#faf5ff";
+                  e.currentTarget.style.borderColor = "#e9d5ff";
+                }}
+              >
+                {o.text || o.value}
+              </button>
+            ))}
         </div>
-      )}
+      ) : null}
     </div>
   );
 
