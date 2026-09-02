@@ -2,6 +2,37 @@ import React from "react";
 import { Trophy, Star } from "lucide-react";
 import { SessionSummaryData, ScorePrediction } from "@/lib/api/topic-chat";
 
+/* ─── Teaching Arc component types ─── */
+export interface SessionFrameData {
+  concept?: string;
+  why_it_matters?: string;
+  objectives?: string[];
+}
+export interface ExamDefinition {
+  term: string;
+  definition: string;
+  plain_english: string;
+  formula?: string | null;
+  units?: string | null;
+}
+export interface ConceptCardData {
+  concept?: string;
+  one_line_rule?: string;
+  key_terms?: string[];
+  watch_out_for?: string;
+}
+export interface RevisionSheetData {
+  topic?: string;
+  concepts_covered?: string[];
+  definitions?: Array<{ term: string; definition: string }>;
+  formulas?: Array<{ name: string; expression: string; symbols: string }>;
+  key_points?: string[];
+  common_mistakes?: string[];
+  exam_likely_questions?: Array<{ question: string; marks: number; answer_outline: string }>;
+  one_minute_recall?: string[];
+  your_weak_spots?: string[];
+}
+
 /* ─── Legacy SummaryCard (kept for backward compat) ─── */
 export function SummaryCard({ data }: { data: SessionSummaryData }) {
   const score = Number(data.score_percent ?? data.overall_score_percent ?? data.performance_percent ?? 0);
@@ -435,6 +466,227 @@ export function AISummaryCard({ text }: { text: string }) {
         <div style={{ color: "#334155", fontSize: 13.5, lineHeight: 1.6 }}>
           {summaryText}
         </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─── TEACHING ARC: Exam Definition Card (REVEAL phase) ─── */
+export function ExamDefinitionCard({ data }: { data: ExamDefinition }) {
+  if (!data?.term && !data?.definition) return null;
+  return (
+    <div
+      style={{
+        border: "1.5px solid #fbcfe8",
+        borderRadius: 16,
+        padding: 16,
+        background: "#fdf2f8",
+        maxWidth: 440,
+        color: "#1e1b4b",
+        boxShadow: "0 2px 8px rgba(236, 72, 153, 0.08)",
+        margin: "8px 0",
+      }}
+    >
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#db2777", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.4 }}>
+        ✍️ Write this down
+      </div>
+      <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginBottom: 6 }}>{data.term}</div>
+      <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, marginBottom: 10 }}>
+        {data.definition}
+      </div>
+      {data.formula && (
+        <div style={{ background: "#fff", border: "1px solid #fce7f3", borderRadius: 8, padding: "8px 12px", fontSize: 14, fontWeight: 600, color: "#9d174d", marginBottom: 8 }}>
+          {data.formula}
+          {data.units ? <span style={{ color: "#64748b", fontWeight: 400 }}>  ({data.units})</span> : null}
+        </div>
+      )}
+      {data.plain_english && (
+        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+          <span style={{ fontWeight: 600 }}>In plain words: </span>{data.plain_english}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── TEACHING ARC: Concept Card (LOCK phase) ─── */
+export function ConceptCard({ data }: { data: ConceptCardData }) {
+  if (!data?.concept && !data?.one_line_rule) return null;
+  return (
+    <div
+      style={{
+        border: "1.5px solid #c7d2fe",
+        borderRadius: 16,
+        padding: 16,
+        background: "#eef2ff",
+        maxWidth: 440,
+        color: "#1e1b4b",
+        boxShadow: "0 2px 8px rgba(99, 102, 241, 0.08)",
+        margin: "8px 0",
+      }}
+    >
+      <div style={{ fontSize: 12, fontWeight: 700, color: "#4f46e5", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.4 }}>
+        🧠 Rule to remember
+      </div>
+      {data.concept && <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginBottom: 6 }}>{data.concept}</div>}
+      {data.one_line_rule && <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, marginBottom: 10 }}>{data.one_line_rule}</div>}
+      {data.watch_out_for && (
+        <div style={{ background: "#fff", border: "1px solid #e0e7ff", borderRadius: 8, padding: "8px 10px" }}>
+          <span style={{ fontWeight: 700, color: "#db2777" }}>Watch out for: </span>
+          <span style={{ color: "#475569" }}>{data.watch_out_for}</span>
+        </div>
+      )}
+      {data.key_terms?.length > 0 && (
+        <div style={{ marginTop: 8 }}>
+          <div style={{ fontSize: 12, fontWeight: 600, color: "#64748b", marginBottom: 4 }}>Key terms</div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+            {data.key_terms.map((t, i) => (
+              <span key={i} style={{ background: "#c7d2fe", color: "#312e81", fontSize: 12, fontWeight: 600, borderRadius: 12, padding: "2px 10px" }}>
+                {t}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── TEACHING ARC: Revision Sheet Card (WRAP phase) ─── */
+export function RevisionSheetCard({ data }: { data: RevisionSheetData }) {
+  if (!data?.topic && !data?.key_points?.length) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start", margin: "8px 0 16px" }}>
+      <div
+        style={{
+          border: "1.5px solid #cbd5e1",
+          borderRadius: 18,
+          padding: 18,
+          background: "#ffffff",
+          maxWidth: 520,
+          color: "#1e293b",
+          boxShadow: "0 3px 12px rgba(0,0,0,0.06)",
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          📚 Revision Sheet
+        </div>
+        <div style={{ fontSize: 18, fontWeight: 800, color: "#1e1b4b", marginBottom: 12 }}>{data.topic}</div>
+
+        {(data.definitions?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#db2777", marginBottom: 6 }}>📖 Definitions</div>
+            {data.definitions!.map((d, i) => (
+              <div key={i} style={{ marginBottom: 6, fontSize: 13 }}>
+                <strong style={{ color: "#6b40d8" }}>{d.term}:</strong> <span style={{ color: "#334155" }}>{d.definition}</span>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(data.formulas?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#4f46e5", marginBottom: 6 }}>🧮 Formulas</div>
+            {data.formulas!.map((f, i) => (
+              <div key={i} style={{ background: "#eef2ff", border: "1px solid #e0e7ff", borderRadius: 8, padding: "6px 10px", fontSize: 13, marginBottom: 4 }}>
+                <strong>{f.name}:</strong> <span style={{ fontFamily: "monospace" }}>{f.expression}</span>
+                {f.symbols ? <span style={{ color: "#64748b" }}> ({f.symbols})</span> : null}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(data.key_points?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#b45309", marginBottom: 6 }}>🔑 Key Points</div>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {data.key_points!.map((p, i) => <li key={i} style={{ fontSize: 13, color: "#334155", margin: "3px 0" }}>{p}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {(data.common_mistakes?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#dc2626", marginBottom: 6 }}>⚠️ Common Mistakes</div>
+            <ul style={{ margin: 0, paddingLeft: 18 }}>
+              {data.common_mistakes!.map((m, i) => <li key={i} style={{ fontSize: 13, color: "#334155", margin: "3px 0" }}>{m}</li>)}
+            </ul>
+          </div>
+        )}
+
+        {(data.exam_likely_questions?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#166534", marginBottom: 6 }}>📝 Likely Exam Questions</div>
+            {data.exam_likely_questions!.map((q, i) => (
+              <div key={i} style={{ background: "#f0fdf4", border: "1px solid #dcfce7", borderRadius: 8, padding: "8px 10px", marginBottom: 6, fontSize: 13 }}>
+                <div><strong>{i + 1}. {q.question}</strong> {q.marks ? <span style={{ color: "#64748b" }}>({q.marks} marks)</span> : null}</div>
+                {q.answer_outline ? <div style={{ color: "#475569", marginTop: 3 }}>💡 {q.answer_outline}</div> : null}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {(data.one_minute_recall?.length ?? 0) > 0 && (
+          <div style={{ marginBottom: 12 }}>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#7c3aed", marginBottom: 6 }}>⏱️ One-Minute Recall</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {data.one_minute_recall!.map((r, i) => (
+                <span key={i} style={{ background: "#f5f3ff", color: "#6d28d9", fontSize: 12, borderRadius: 14, padding: "2px 10px" }}>
+                  {r}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {(data.your_weak_spots?.length ?? 0) > 0 && (
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: "#be185d", marginBottom: 6 }}>🎯 Revise these again</div>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 6 }}>
+              {data.your_weak_spots!.map((w, i) => (
+                <span key={i} style={{ background: "#fdf2f8", color: "#be185d", fontSize: 12, borderRadius: 14, padding: "2px 10px" }}>
+                  {w}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─── TEACHING ARC: Session Frame Card (FRAME phase) ─── */
+export function SessionFrameCard({ data }: { data: SessionFrameData }) {
+  if (!data?.concept && !data?.objectives?.length) return null;
+  return (
+    <div style={{ display: "flex", justifyContent: "flex-start", margin: "8px 0" }}>
+      <div
+        style={{
+          border: "1.5px solid #a7f3d0",
+          borderRadius: 16,
+          padding: 16,
+          background: "#ecfdf5",
+          maxWidth: 440,
+          color: "#1e1b4b",
+          boxShadow: "0 2px 8px rgba(16, 185, 129, 0.08)",
+        }}
+      >
+        <div style={{ fontSize: 12, fontWeight: 700, color: "#059669", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.4 }}>
+          🎯 By the end, you'll be able to
+        </div>
+        {data.concept && <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginBottom: 6 }}>{data.concept}</div>}
+        {data.why_it_matters && <div style={{ fontSize: 13, color: "#475569", lineHeight: 1.5, marginBottom: 10 }}>{data.why_it_matters}</div>}
+        {(data.objectives?.length ?? 0) > 0 && (
+          <div style={{ display: "grid", gap: 6 }}>
+            {data.objectives!.map((o, i) => (
+              <div key={i} style={{ display: "flex", gap: 8, alignItems: "flex-start" }}>
+                <span style={{ background: "#059669", color: "#fff", borderRadius: 10, fontSize: 11, fontWeight: 700, width: 18, height: 18, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>{i + 1}</span>
+                <span style={{ fontSize: 13, color: "#334155" }}>{o}</span>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

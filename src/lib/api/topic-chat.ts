@@ -24,6 +24,40 @@ export interface TopicChatMessage {
   } | null;
   session_summary?: SessionSummaryData;
   score_prediction?: ScorePrediction;
+  session_frame?: {
+    concept: string;
+    why_it_matters: string;
+    objectives: string[];
+  };
+  hook_prediction?: {
+    scenario: string;
+    student_prediction?: string | null;
+    resolve_in_reveal?: boolean;
+  };
+  exam_definition?: {
+    term: string;
+    definition: string;
+    plain_english: string;
+    formula?: string | null;
+    units?: string | null;
+  };
+  concept_card?: {
+    concept: string;
+    one_line_rule: string;
+    key_terms: string[];
+    watch_out_for: string;
+  };
+  revision_sheet?: {
+    topic: string;
+    concepts_covered: string[];
+    definitions: Array<{ term: string; definition: string }>;
+    formulas: Array<{ name: string; expression: string; symbols: string }>;
+    key_points: string[];
+    common_mistakes: string[];
+    exam_likely_questions: Array<{ question: string; marks: number; answer_outline: string }>;
+    one_minute_recall: string[];
+    your_weak_spots: string[];
+  };
   score_percent?: number;
   overall_score_percent?: number;
   performance_percent?: number;
@@ -293,10 +327,15 @@ export const sendTopicChatMessage = async (
 /**
  * Update time spent on a topic
  * POST /api/topic-chats/:topicId/update-time
+ *
+ * secondsPerTick is the DELTA accrued since the last write for this visit.
+ * action drives the backend session lifecycle: 'heartbeat' (open),
+ * 'pause' (left mid-session), or 'complete' (all goals finished).
  */
 export const updateTopicTime = async (
   topicId: number,
-  timeSpentSeconds: number,
+  secondsPerTick: number,
+  action: "heartbeat" | "pause" | "complete" = "heartbeat",
   options?: FetchOptions
 ): Promise<void> => {
   const token = options?.token || localStorage.getItem("cloop_token");
@@ -312,7 +351,8 @@ export const updateTopicTime = async (
       Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({
-      session_time_seconds: timeSpentSeconds,
+      session_time_seconds: secondsPerTick,
+      action,
     }),
   });
   if (!response.ok) {

@@ -18,7 +18,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments } from "./components/ChatBubbles";
-import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard } from "./components/ChatCards";
+import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ExamDefinitionCard, ConceptCard, RevisionSheetCard, SessionFrameCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -166,6 +166,8 @@ export default function TopicChat() {
   const inputRef = useRef<HTMLInputElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const accumRef = useRef(0);
+  const doneRef = useRef(false);
 
   // Auto-scroll
   const scrollToBottom = useCallback(() => {
@@ -199,18 +201,57 @@ export default function TopicChat() {
     defaultVoiceEnabled: false,
   });
 
-  // Timer
+  // ─── Session timer ────────────────────────────────────────────────
+  // The page keeps a running delta accumulator (`accumRef`) + the wall-clock
+  // seconds since the current tick (`startTimeRef`). Only freshly-accrued
+  // seconds are ever sent to the backend (`sessionDelta()`), avoiding the
+  // double-counting that happened when cumulative `elapsed` was re-sent.
+  const sessionDelta = useCallback(() => {
+    return accumRef.current + Math.floor((Date.now() - startTimeRef.current) / 1000);
+  }, []);
+
+  // Persist accrued seconds and reset the baseline so they aren't sent twice.
+  const saveTime = useCallback(
+    (action: "heartbeat" | "pause" | "complete" = "heartbeat") => {
+      if (!topicId) return;
+      if (doneRef.current && action === "heartbeat") return;
+      const delta = sessionDelta();
+      if (delta <= 0) {
+        if (action === "complete" || action === "pause") {
+          updateTopicTime(topicId, 0, action).catch(() => {});
+        }
+        return;
+      }
+      updateTopicTime(topicId, delta, action)
+        .then(() => {
+          // Reset the running baseline now that these seconds are persisted.
+          accumRef.current = 0;
+          startTimeRef.current = Date.now();
+        })
+        .catch(() => {});
+    },
+    [topicId, sessionDelta]
+  );
+
+  // Timer: update displayed time every second; heartbeat every 30s. Stops when
+  // the topic is completed.
   useEffect(() => {
     startTimeRef.current = Date.now();
-    timerRef.current = setInterval(() => {
-      setElapsed(baseTime + Math.floor((Date.now() - startTimeRef.current) / 1000));
+    const tick = setInterval(() => {
+      if (doneRef.current) return;
+      setElapsed(baseTime + sessionDelta());
     }, 1000);
+    const heartbeat = setInterval(() => {
+      if (!doneRef.current) saveTime("heartbeat");
+    }, 30000);
+    timerRef.current = tick;
     return () => {
-      if (timerRef.current) clearInterval(timerRef.current);
+      if (tick) clearInterval(tick);
+      if (heartbeat) clearInterval(heartbeat);
     };
-  }, [baseTime]);
+  }, [baseTime, saveTime, sessionDelta]);
 
-  // Load chat
+  // ─── Load chat ─────────────────────────────────────────────────────
   const loadChat = useCallback(async () => {
     if (!topicId) {
       setError("No topicId specified.");
@@ -225,7 +266,9 @@ export default function TopicChat() {
       setMessages(combined);
       setGoals(res.goals || []);
       setBaseTime(res.topic?.time_spent_seconds ?? 0);
-      setDone(res.topic?.is_completed ?? false);
+      const alreadyDone = res.topic?.is_completed ?? false;
+      setDone(alreadyDone);
+      doneRef.current = alreadyDone;
     } catch (e: any) {
       setError(e.message || "Failed to load chat.");
     } finally {
@@ -240,18 +283,15 @@ export default function TopicChat() {
     loadChat();
   }, [loadChat]);
 
-  // Save time on unmount / navigate away
-  const saveTime = useCallback(() => {
-    if (!topicId || elapsed <= 0) return;
-    updateTopicTime(topicId, elapsed).catch(() => {});
-  }, [topicId, elapsed]);
-
+  // Pause on unmount / navigate away (stop unless already completed)
   useEffect(() => {
-    const handleUnload = () => saveTime();
+    const handleUnload = () => {
+      if (!doneRef.current) saveTime("pause");
+    };
     window.addEventListener("beforeunload", handleUnload);
     return () => {
       window.removeEventListener("beforeunload", handleUnload);
-      saveTime();
+      if (!doneRef.current) saveTime("pause");
     };
   }, [saveTime]);
 
@@ -275,12 +315,15 @@ export default function TopicChat() {
     try {
       const res: SendMessageResponse = await sendTopicChatMessage(topicId, {
         message: text,
-        session_time_seconds: elapsed,
         voice_enabled: isVoiceEnabled,
       });
 
       if (res.goals) setGoals(res.goals);
-      if (res.all_goals_completed) setDone(true);
+      if (res.all_goals_completed) {
+        saveTime("complete");
+        setDone(true);
+        doneRef.current = true;
+      }
 
       if (res.userCorrection) {
         setMessages((prev) =>
@@ -398,7 +441,8 @@ export default function TopicChat() {
 
             <button
               onClick={() => {
-                saveTime();
+                if (doneRef.current) saveTime("complete");
+                else saveTime("pause");
                 navigate(-1);
               }}
               style={{
@@ -486,6 +530,11 @@ export default function TopicChat() {
                   }
                   if (
                     msg.message_type === "learning_report" ||
+                    msg.message_type === "session_frame" ||
+                    msg.message_type === "hook_prediction" ||
+                    msg.message_type === "exam_definition" ||
+                    msg.message_type === "concept_card" ||
+                    msg.message_type === "revision_sheet" ||
                     (msg.sender === "ai" && (msg.message?.trim().startsWith('{"summary"') || msg.message?.trim().startsWith('{"title"')))
                   ) {
                     flushAiGroup();
@@ -515,7 +564,44 @@ export default function TopicChat() {
                     return null;
                   }
                   if (group.type === "standalone") {
-                    return <AISummaryCard key={group.id} text={group.msg.diff_html || group.msg.message} />;
+                    const stMsg = group.msg;
+                    // Try to resolve the rich data from the attached block OR from diff_html JSON
+                    const resolve = (key: "session_frame" | "exam_definition" | "concept_card" | "revision_sheet") => {
+                      const attached = stMsg[key];
+                      if (attached) return attached;
+                      if (stMsg.diff_html) {
+                        try {
+                          const parsed = JSON.parse(stMsg.diff_html) as Record<string, unknown> | null;
+                          if (parsed && typeof parsed === "object") {
+                            // Case 1: stored as { key: data }
+                            if (parsed[key]) return parsed[key];
+                            // Case 2: stored as the data object directly (has a characteristic field)
+                            if (["term", "concept", "key_points", "topic", "objectives"].some((k) => k in parsed)) {
+                              return parsed;
+                            }
+                          }
+                        } catch { /* ignore parse failures */ }
+                      }
+                      return null;
+                    };
+
+                    if (stMsg.message_type === "session_frame") {
+                      return <SessionFrameCard key={group.id} data={resolve("session_frame") || {}} />;
+                    }
+                    if (stMsg.message_type === "exam_definition") {
+                      return <ExamDefinitionCard key={group.id} data={resolve("exam_definition") || {}} />;
+                    }
+                    if (stMsg.message_type === "concept_card") {
+                      return <ConceptCard key={group.id} data={resolve("concept_card") || {}} />;
+                    }
+                    if (stMsg.message_type === "revision_sheet") {
+                      return <RevisionSheetCard key={group.id} data={resolve("revision_sheet") || {}} />;
+                    }
+                    // hook_prediction & other non-card blocks: no standalone card
+                    if (stMsg.message_type === "hook_prediction") {
+                      return null;
+                    }
+                    return <AISummaryCard key={group.id} text={stMsg.diff_html || stMsg.message} />;
                   }
 
                   // AI Group: Unified Turn with in-bubble visual options & media drawer
