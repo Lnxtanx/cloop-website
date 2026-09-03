@@ -336,6 +336,7 @@ export default function TopicChat() {
                   id: res.userMessage?.id || m.id,
                   message_type: "user_correction",
                   diff_html: res.userCorrection?.diff_html,
+                  complete_answer: res.userCorrection?.complete_answer,
                   emoji: res.userCorrection?.emoji,
                   feedback: res.userCorrection?.feedback,
                 }

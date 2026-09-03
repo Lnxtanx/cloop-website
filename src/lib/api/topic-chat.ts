@@ -12,6 +12,7 @@ export interface TopicChatMessage {
   options?: Array<{ text: string; value: string }>;
   diff_html?: string | null;
   emoji?: string | null;
+  complete_answer?: string | null;
   metadata?: any;
   is_correct?: boolean;
   feedback?: {

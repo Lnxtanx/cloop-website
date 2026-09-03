@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { Volume2, Play, Image as ImageIcon, BarChart2, FileText, Maximize2, ChevronUp, X } from "lucide-react";
 import { TopicChatMessage } from "@/lib/api/topic-chat";
-import { DiffText, stripTags } from "./DiffText";
+import { DiffText } from "./DiffText";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
 import MediaCard from "@/components/MediaCard";
@@ -582,8 +582,10 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   const isMobile = useIsMobile();
   const originalText = msg.message ?? "";
   const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
-  const diffPlain = hasDiff ? stripTags(msg.diff_html!) : "";
-  const diffCoversFullText = hasDiff && originalText.length > 0 ? diffPlain.length >= originalText.length * 0.6 : hasDiff;
+  // The clean corrected answer. Prefer the explicit `complete_answer`; on reload the
+  // backend stores it into `message`, so fall back to that text.
+  const correctedText = msg.complete_answer?.trim()
+    || originalText;
 
   const feedback = msg.feedback;
   const isCorrect = msg.is_correct ?? feedback?.is_correct;
@@ -614,28 +616,29 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
+          {/* Primary: the CORRECTED answer. `complete_answer` (live) or `diff_html`
+              stripped of tags (after reload, message === complete_answer) is the clean
+              answer; the diff is shown as a sub-section beneath it. */}
           {hasDiff ? (
-            diffCoversFullText ? (
-              <DiffText html={msg.diff_html!} />
-            ) : (
-              <>
-                <span style={{ fontSize: 15.5, lineHeight: 1.6 }}>{renderInlineMarkdown(originalText)}</span>
-                <div
-                  style={{
-                    marginTop: 8,
-                    padding: "8px 12px",
-                    background: "#f8fafc",
-                    border: "1px solid #e2e8f0",
-                    borderRadius: 8,
-                  }}
-                >
-                  <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                    Corrections:
-                  </p>
-                  <DiffText html={msg.diff_html!} />
-                </div>
-              </>
-            )
+            <>
+              <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500 }}>
+                {renderInlineMarkdown(correctedText)}
+              </span>
+              <div
+                style={{
+                  marginTop: 8,
+                  padding: "8px 12px",
+                  background: bubbleBackground === "#f0fdf4" ? "#ecfdf5" : "#fff1f2",
+                  border: `1px solid ${isCorrect === true ? "#a7f3d0" : "#fecdd3"}`,
+                  borderRadius: 8,
+                }}
+              >
+                <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                  Corrections:
+                </p>
+                <DiffText html={msg.diff_html!} />
+              </div>
+            </>
           ) : (
             <span style={{ fontSize: 15.5, lineHeight: 1.6 }}>{renderInlineMarkdown(originalText)}</span>
           )}
