@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments, isRawDiagramText } from "./components/ChatBubbles";
-import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ExamDefinitionCard, ConceptCard, RevisionSheetCard, SessionFrameCard } from "./components/ChatCards";
+import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ExamDefinitionCard, ConceptCard, RevisionSheetCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -593,8 +593,11 @@ export default function TopicChat() {
                       return null;
                     };
 
+                    // session_frame: used internally as a phase marker by the backend.
+                    // It is NOT shown as a card — the opening turn stays 2 clean AI
+                    // bubbles (intro + question). Objectives live in the Goals bar.
                     if (stMsg.message_type === "session_frame") {
-                      return <SessionFrameCard key={group.id} data={resolve("session_frame") || {}} />;
+                      return null;
                     }
                     if (stMsg.message_type === "exam_definition") {
                       return <ExamDefinitionCard key={group.id} data={resolve("exam_definition") || {} as any} />;
