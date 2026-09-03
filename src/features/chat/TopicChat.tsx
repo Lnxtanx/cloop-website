@@ -18,7 +18,7 @@ import MediaCard from "@/components/MediaCard";
 import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
-import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments } from "./components/ChatBubbles";
+import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments, isRawDiagramText } from "./components/ChatBubbles";
 import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ExamDefinitionCard, ConceptCard, RevisionSheetCard, SessionFrameCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
@@ -624,7 +624,8 @@ export default function TopicChat() {
                       m.message_type !== "google_image" &&
                       m.message_type !== "score_prediction" &&
                       m.message_type !== "internet_link" &&
-                      m.message_type !== "goal_revision"
+                      m.message_type !== "goal_revision" &&
+                      !isRawDiagramText(m.message || "")
                   );
 
                   // Fallback if all items in this group were media/cards only

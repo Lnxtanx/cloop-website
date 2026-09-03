@@ -68,6 +68,21 @@ function splitNewlines(text: string, startKey: number): React.ReactNode[] {
   return result;
 }
 
+// Detect raw diagram syntax that leaked into a message body (a rendering miss).
+// We never want unparsed mermaid/ASCII arrows shown as garbage text — if the model
+// failed to put the diagram in its structured block, hide it rather than print it.
+export function isRawDiagramText(text: string): boolean {
+  if (!text) return false;
+  // Node statements like [Label] --> B[Label] or flow of --> arrows
+  if (/--[>-]|==>|\.\.->/.test(text) && /\[[^\]]+\]/.test(text)) return true;
+  // Blocks of repeated mermaid-ish tokens (A --> B --> C --> D)
+  const arrows = (text.match(/--[>-]/g) || []).length;
+  if (arrows >= 2) return true;
+  // Unicode arrow chains the renderer can't parse (→)
+  if ((text.match(/→/g) || []).length >= 2 && /\[[^\]]+\]/.test(text)) return true;
+  return false;
+}
+
 export function UserBubble({ msg }: { msg: TopicChatMessage }) {
   const isMobile = useIsMobile();
   return (
@@ -233,7 +248,7 @@ export function AIBubble({
         }}
       >
         <div style={{ flex: 1, color: "#1e1b4b", fontSize: isMobile ? 15 : 16.5, lineHeight: 1.65 }}>
-          {renderInlineMarkdown(msg.message || "")}
+          {isRawDiagramText(msg.message || "") ? null : renderInlineMarkdown(msg.message || "")}
         </div>
 
         {onSpeak && msg.message && msg.message.trim() && (
@@ -580,12 +595,12 @@ export function AIBubble({
 
 export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   const isMobile = useIsMobile();
-  const originalText = msg.message ?? "";
+  const originalText = msg.message?.trim() || "";
   const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
-  // The clean corrected answer. Prefer the explicit `complete_answer`; on reload the
-  // backend stores it into `message`, so fall back to that text.
-  const correctedText = msg.complete_answer?.trim()
-    || originalText;
+  // The clean corrected answer. On live responses it rides on `complete_answer`; it is
+  // only ever shown as an annotation below the user's own words — never as a replacement
+  // for the user's raw text, so the transcript stays trustworthy.
+  const correctedText = msg.complete_answer?.trim() || "";
   // The model emits emoji together with a label (e.g. "😊 correct"), but we want to
   // show ONLY the emoji glyph(s) in the bubble — strip any trailing words.
   const emojiOnly = (msg.emoji || "").match(
@@ -621,31 +636,27 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
-          {/* Primary: the CORRECTED answer. `complete_answer` (live) or `diff_html`
-              stripped of tags (after reload, message === complete_answer) is the clean
-              answer; the diff is shown as a sub-section beneath it. */}
-          {hasDiff ? (
-            <>
-              <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500 }}>
-                {renderInlineMarkdown(correctedText)}
-              </span>
-              <div
-                style={{
-                  marginTop: 8,
-                  padding: "8px 12px",
-                  background: bubbleBackground === "#f0fdf4" ? "#ecfdf5" : "#fff1f2",
-                  border: `1px solid ${isCorrect === true ? "#a7f3d0" : "#fecdd3"}`,
-                  borderRadius: 8,
-                }}
-              >
-                <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                  Corrections:
-                </p>
-                <DiffText html={msg.diff_html!} />
-              </div>
-            </>
-          ) : (
-            <span style={{ fontSize: 15.5, lineHeight: 1.6 }}>{renderInlineMarkdown(originalText)}</span>
+          {/* Primary: the student's ORIGINAL words, verbatim. The AI's rewrite is
+              presented as a clearly-labelled "Corrections" annotation beneath it. */}
+          <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500 }}>
+            {renderInlineMarkdown(originalText || correctedText)}
+          </span>
+
+          {hasDiff && (
+            <div
+              style={{
+                marginTop: 8,
+                padding: "8px 12px",
+                background: bubbleBackground === "#f0fdf4" ? "#ecfdf5" : "#fff1f2",
+                border: `1px solid ${isCorrect === true ? "#a7f3d0" : "#fecdd3"}`,
+                borderRadius: 8,
+              }}
+            >
+              <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
+                Corrections:
+              </p>
+              <DiffText html={msg.diff_html!} />
+            </div>
           )}
         </div>
 
