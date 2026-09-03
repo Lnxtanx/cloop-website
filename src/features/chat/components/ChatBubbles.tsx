@@ -671,13 +671,16 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
   let bubbleBackground = "#ffffff";
   let bubbleBorder = "#e2e8f0";
+  let textColor = "#0f172a";
 
   if (isCorrect === true) {
     bubbleBackground = "#f0fdf4";
     bubbleBorder = "#86efac";
+    textColor = "#14532d";
   } else if (isCorrect === false) {
     bubbleBackground = "#fef2f2";
     bubbleBorder = "#fca5a5";
+    textColor = "#7f1d1d";
   }
 
   return (
@@ -695,7 +698,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
         >
           {/* Primary: the student's ORIGINAL words, verbatim. The AI's rewrite is
               presented as a clearly-labelled "Corrections" annotation beneath it. */}
-          <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500 }}>
+          <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500, color: textColor }}>
             {renderInlineMarkdown(originalText || correctedText)}
           </span>
 

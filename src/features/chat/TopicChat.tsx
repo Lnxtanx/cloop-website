@@ -349,23 +349,23 @@ export default function TopicChat() {
         doneRef.current = true;
       }
 
-      if (res.userCorrection) {
-        setMessages((prev) =>
-          prev.map((m) =>
-            m.id === tempUserMsg.id
-              ? {
-                  ...m,
-                  id: res.userMessage?.id || m.id,
-                  message_type: "user_correction",
-                  diff_html: res.userCorrection?.diff_html,
-                  complete_answer: res.userCorrection?.complete_answer,
-                  emoji: res.userCorrection?.emoji,
-                  feedback: res.userCorrection?.feedback,
-                }
-              : m
-          )
-        );
-      }
+      const userCorrectionData = res.userCorrection;
+      setMessages((prev) =>
+        prev.map((m) =>
+          m.id === tempUserMsg.id
+            ? {
+                ...m,
+                id: res.userMessage?.id || m.id,
+                message_type: userCorrectionData?.message_type || res.userMessage?.message_type || m.message_type,
+                diff_html: userCorrectionData?.diff_html ?? res.userMessage?.diff_html ?? null,
+                complete_answer: userCorrectionData?.complete_answer ?? null,
+                emoji: userCorrectionData?.emoji ?? res.userMessage?.emoji ?? null,
+                feedback: userCorrectionData?.feedback ?? res.feedback ?? null,
+                is_correct: userCorrectionData?.feedback?.is_correct ?? res.feedback?.is_correct ?? undefined,
+              }
+            : m
+        )
+      );
 
       const newAiMsgs = res.aiMessages || res.messages || [];
       if (newAiMsgs.length > 0) {
@@ -543,7 +543,8 @@ export default function TopicChat() {
 
                 messages.forEach((msg, idx) => {
                   const id = msg.id ?? idx;
-                  if (msg.message_type === "user_correction" || (msg.sender === "user" && msg.diff_html)) {
+                  const hasFeedback = !!(msg.feedback || msg.is_correct !== undefined || (msg.emoji && msg.sender === "user"));
+                  if (msg.message_type === "user_correction" || (msg.sender === "user" && (msg.diff_html || hasFeedback))) {
                     flushAiGroup();
                     groups.push({ type: "user_correction", msg, id });
                     return;
