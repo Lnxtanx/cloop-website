@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Trophy, Star } from "lucide-react";
 import { SessionSummaryData, ScorePrediction } from "@/lib/api/topic-chat";
 
@@ -472,37 +472,63 @@ export function AISummaryCard({ text }: { text: string }) {
 }
 
 /* ─── TEACHING ARC: Exam Definition Card (REVEAL phase) ─── */
-export function ExamDefinitionCard({ data }: { data: ExamDefinition }) {
+export function ExamDefinitionCard({ data, defaultOpen = false }: { data: ExamDefinition; defaultOpen?: boolean }) {
+  const [open, setOpen] = useState(defaultOpen);
   if (!data?.term && !data?.definition) return null;
   return (
     <div
       style={{
         border: "1.5px solid #fbcfe8",
         borderRadius: 16,
-        padding: 16,
         background: "#fdf2f8",
         maxWidth: 440,
         color: "#1e1b4b",
         boxShadow: "0 2px 8px rgba(236, 72, 153, 0.08)",
-        margin: "8px 0",
+        margin: "6px 0",
+        overflow: "hidden",
       }}
     >
-      <div style={{ fontSize: 12, fontWeight: 700, color: "#db2777", marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.4 }}>
-        ✍️ Write this down
-      </div>
-      <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginBottom: 6 }}>{data.term}</div>
-      <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, marginBottom: 10 }}>
-        {data.definition}
-      </div>
-      {data.formula && (
-        <div style={{ background: "#fff", border: "1px solid #fce7f3", borderRadius: 8, padding: "8px 12px", fontSize: 14, fontWeight: 600, color: "#9d174d", marginBottom: 8 }}>
-          {data.formula}
-          {data.units ? <span style={{ color: "#64748b", fontWeight: 400 }}>  ({data.units})</span> : null}
-        </div>
-      )}
-      {data.plain_english && (
-        <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
-          <span style={{ fontWeight: 600 }}>In plain words: </span>{data.plain_english}
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        style={{
+          width: "100%",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 8,
+          padding: "10px 14px",
+          background: "transparent",
+          border: "none",
+          cursor: "pointer",
+          textAlign: "left",
+        }}
+        title={open ? "Collapse" : "Expand"}
+      >
+        <span style={{ fontSize: 12, fontWeight: 700, color: "#db2777", textTransform: "uppercase", letterSpacing: 0.4 }}>
+          ✍️ Write this down · {data.term}
+        </span>
+        <span style={{ fontSize: 12, color: "#db2777", transform: open ? "rotate(180deg)" : "none", transition: "transform 0.2s ease", flexShrink: 0 }}>
+          ▾
+        </span>
+      </button>
+      {open && (
+        <div style={{ padding: "2px 14px 14px 14px" }}>
+          <div style={{ fontSize: 16, fontWeight: 800, color: "#1e1b4b", marginBottom: 6 }}>{data.term}</div>
+          <div style={{ fontSize: 14, color: "#334155", lineHeight: 1.6, marginBottom: 10 }}>
+            {data.definition}
+          </div>
+          {data.formula && (
+            <div style={{ background: "#fff", border: "1px solid #fce7f3", borderRadius: 8, padding: "8px 12px", fontSize: 14, fontWeight: 600, color: "#9d174d", marginBottom: 8 }}>
+              {data.formula}
+              {data.units ? <span style={{ color: "#64748b", fontWeight: 400 }}>  ({data.units})</span> : null}
+            </div>
+          )}
+          {data.plain_english && (
+            <div style={{ fontSize: 13, color: "#64748b", lineHeight: 1.5 }}>
+              <span style={{ fontWeight: 600 }}>In plain words: </span>{data.plain_english}
+            </div>
+          )}
         </div>
       )}
     </div>
