@@ -586,6 +586,11 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   // backend stores it into `message`, so fall back to that text.
   const correctedText = msg.complete_answer?.trim()
     || originalText;
+  // The model emits emoji together with a label (e.g. "😊 correct"), but we want to
+  // show ONLY the emoji glyph(s) in the bubble — strip any trailing words.
+  const emojiOnly = (msg.emoji || "").match(
+    /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*|\p{Emoji_Component}(?!\p{Number})|\u200b\u200b?)+/gu
+  )?.join("") || (msg.emoji || "").trim();
 
   const feedback = msg.feedback;
   const isCorrect = msg.is_correct ?? feedback?.is_correct;
@@ -644,7 +649,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
           )}
         </div>
 
-        {msg.emoji && (
+        {emojiOnly && (
           <span
             style={{
               position: "absolute",
@@ -658,7 +663,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
               boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
             }}
           >
-            {msg.emoji}
+            {emojiOnly}
           </span>
         )}
       </div>
