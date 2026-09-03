@@ -187,7 +187,7 @@ export default function TopicChat() {
   const { toast } = useToast();
   const isMobile = useIsMobile();
   const bottomRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
+  const inputRef = useRef<HTMLTextAreaElement>(null);
   const startTimeRef = useRef<number>(Date.now());
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const accumRef = useRef(0);
@@ -771,32 +771,41 @@ export default function TopicChat() {
               }}
               style={{ display: "flex", alignItems: "center", gap: 10 }}
             >
-              <input
+              <textarea
                 ref={inputRef}
-                type="text"
                 value={input}
                 onChange={(e) => {
                   setInput(e.target.value);
                   cancelAutoSend();
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" && !e.shiftKey) {
+                    e.preventDefault();
+                    cancelAutoSend();
+                    handleSend();
+                  }
                 }}
                 placeholder={
                   isWaitingToSend
                     ? "Sending in 1.5s... Click Mic or type to edit"
                     : isListening
                       ? "Listening... Speak now"
-                      : "Type your answer..."
+                      : "Type your answer... (Shift+Enter for new line)"
                 }
                 disabled={sending || loading}
+                rows={1}
                 style={{
                   flex: 1,
-                  height: isMobile ? 44 : 50,
-                  padding: isMobile ? "0 14px" : "0 22px",
+                  maxHeight: 120,
+                  minHeight: isMobile ? 44 : 50,
+                  padding: isMobile ? "12px 14px" : "14px 22px",
                   borderRadius: isMobile ? 22 : 25,
                   border: "1.5px solid #d8b4fe",
                   outline: "none",
                   fontSize: isMobile ? 15 : 16.5,
                   background: "#faf5ff",
                   color: "#1e1b4b",
+                  resize: "none",
                   transition: "border-color 0.2s ease",
                 }}
                 onFocus={(e) => (e.currentTarget.style.borderColor = "#7e22ce")}
