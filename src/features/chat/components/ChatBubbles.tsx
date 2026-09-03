@@ -6,6 +6,7 @@ import { DiffText } from "./DiffText";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
 import MediaCard from "@/components/MediaCard";
+import { ExamDefinitionCard } from "./ChatCards";
 
 /**
  * Lightweight inline markdown renderer for chat messages.
@@ -136,6 +137,14 @@ export interface AIAttachments {
     source?: string;
     trigger?: "correction" | "teaching" | "user_request";
   } | null;
+  examDefinition?: {
+    term: string;
+    definition: string;
+    plain_english?: string;
+    formula?: string | null;
+    units?: string | null;
+    title?: string;
+  } | null;
 }
 
 export function AIBubble({
@@ -210,13 +219,15 @@ export function AIBubble({
   const hasTextDiagram = !!textDiag?.code;
   const hasVideo = !!(video?.url || video?.embedUrl || video?.title || video?.searchQuery);
   const hasImage = !!(image?.url || image?.thumbnail || image?.title || image?.searchQuery);
+  const examDef = attachments?.examDefinition || (msg.metadata?.exam_definition ? msg.metadata.exam_definition : null) || msg.exam_definition;
+  const hasExamDef = !!(examDef?.term && examDef?.definition);
 
-  const hasAnyMedia = hasDiagram || hasVideo || hasImage || hasTextDiagram;
+  const hasAnyMedia = hasDiagram || hasVideo || hasImage || hasTextDiagram || hasExamDef;
 
   // Active media tab state: default to null (hidden by default, expands on user click)
-  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | null>(null);
+  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | "exam_definition" | null>(null);
 
-  const toggleMedia = (tab: "diagram" | "video" | "image" | "text_diagram") => {
+  const toggleMedia = (tab: "diagram" | "video" | "image" | "text_diagram" | "exam_definition") => {
     setActiveMedia((prev) => (prev === tab ? null : tab));
   };
 
@@ -418,6 +429,35 @@ export function AIBubble({
               )}
             </button>
           )}
+
+          {/* Write This Down (Exam Definition) Pill */}
+          {hasExamDef && (
+            <button
+              type="button"
+              onClick={() => toggleMedia("exam_definition")}
+              style={{
+                display: "inline-flex",
+                alignItems: "center",
+                gap: 6,
+                padding: "6px 14px",
+                borderRadius: 20,
+                fontSize: 13,
+                fontWeight: activeMedia === "exam_definition" ? 700 : 600,
+                cursor: "pointer",
+                border: activeMedia === "exam_definition" ? "1.5px solid #db2777" : "1px solid #fbcfe8",
+                background: activeMedia === "exam_definition" ? "#fdf2f8" : "#fdf2f8",
+                color: activeMedia === "exam_definition" ? "#9d174d" : "#db2777",
+                boxShadow: activeMedia === "exam_definition" ? "0 1px 4px rgba(219, 39, 119, 0.15)" : "none",
+                transition: "all 0.15s ease",
+              }}
+              title="Toggle Write This Down"
+            >
+              <span>✍️ Write this down</span>
+              {activeMedia === "exam_definition" && (
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "#9d174d" }} />
+              )}
+            </button>
+          )}
         </div>
       )}
 
@@ -440,6 +480,7 @@ export function AIBubble({
               {activeMedia === "video" && (video?.title || "Video Explanation")}
               {activeMedia === "image" && (image?.title || "Visual Reference")}
               {activeMedia === "text_diagram" && (textDiag?.title || "Quick Reference")}
+              {activeMedia === "exam_definition" && (examDef?.term || "Write this down")}
             </span>
             <button
               type="button"
@@ -510,6 +551,19 @@ export function AIBubble({
               diagramType={textDiag.diagramType || "ascii"}
               trigger={textDiag.trigger || "teaching"}
               hideAvatar={true}
+            />
+          )}
+
+          {activeMedia === "exam_definition" && examDef?.term && examDef?.definition && (
+            <ExamDefinitionCard
+              data={{
+                term: examDef.term,
+                definition: examDef.definition,
+                plain_english: examDef.plain_english || "",
+                formula: examDef.formula || null,
+                units: examDef.units || null,
+              }}
+              defaultOpen
             />
           )}
         </div>
@@ -596,7 +650,10 @@ export function AIBubble({
 export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   const isMobile = useIsMobile();
   const originalText = msg.message?.trim() || "";
-  const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
+  // Only show a "Corrections" annotation when diff_html is a real <del>/<ins>
+  // strikethrough. A plain-text diff_html is grader commentary (e.g. "The student's
+  // answer does not address...") that must NEVER surface in the corrections box.
+  const hasDiff = !!(msg.diff_html && msg.diff_html.trim() && /<del>|<ins>/.test(msg.diff_html));
   // The clean corrected answer. On live responses it rides on `complete_answer`; it is
   // only ever shown as an annotation below the user's own words — never as a replacement
   // for the user's raw text, so the transcript stays trustworthy.

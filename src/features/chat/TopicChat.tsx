@@ -19,7 +19,7 @@ import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
 import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments, isRawDiagramText } from "./components/ChatBubbles";
-import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ExamDefinitionCard, ConceptCard, RevisionSheetCard } from "./components/ChatCards";
+import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ConceptCard, RevisionSheetCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
 function fmt(s: number) {
@@ -96,6 +96,28 @@ function extractAIAttachments(items: TopicChatMessage[]): AIAttachments {
       }
       if (code) {
         attachments.textDiagram = { code, title, diagramType, trigger };
+      }
+    }
+
+    // 2.5 Exam Definition ("Write this down")
+    if (m.message_type === "exam_definition" || m.metadata?.exam_definition || m.exam_definition) {
+      let defData = m.metadata?.exam_definition || m.exam_definition || null;
+      if (!defData && m.diff_html) {
+        try {
+          const parsed = JSON.parse(m.diff_html);
+          if (parsed.term && parsed.definition) defData = parsed;
+          else if (parsed.exam_definition) defData = parsed.exam_definition;
+        } catch { /* ignore */ }
+      }
+      if (defData?.term && defData?.definition) {
+        attachments.examDefinition = {
+          term: defData.term,
+          definition: defData.definition,
+          plain_english: defData.plain_english || "",
+          formula: defData.formula || null,
+          units: defData.units || null,
+          title: defData.term || "Write this down",
+        };
       }
     }
 
@@ -540,7 +562,6 @@ export default function TopicChat() {
                     msg.message_type === "learning_report" ||
                     msg.message_type === "session_frame" ||
                     msg.message_type === "hook_prediction" ||
-                    msg.message_type === "exam_definition" ||
                     msg.message_type === "concept_card" ||
                     msg.message_type === "revision_sheet" ||
                     (msg.sender === "ai" && (msg.message?.trim().startsWith('{"summary"') || msg.message?.trim().startsWith('{"title"')))
@@ -599,9 +620,6 @@ export default function TopicChat() {
                     if (stMsg.message_type === "session_frame") {
                       return null;
                     }
-                    if (stMsg.message_type === "exam_definition") {
-                      return <ExamDefinitionCard key={group.id} data={resolve("exam_definition") || {} as any} />;
-                    }
                     if (stMsg.message_type === "concept_card") {
                       return <ConceptCard key={group.id} data={resolve("concept_card") || {}} />;
                     }
@@ -628,6 +646,7 @@ export default function TopicChat() {
                       m.message_type !== "score_prediction" &&
                       m.message_type !== "internet_link" &&
                       m.message_type !== "goal_revision" &&
+                      m.message_type !== "exam_definition" &&
                       !isRawDiagramText(m.message || "")
                   );
 
