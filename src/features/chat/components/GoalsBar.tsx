@@ -1,6 +1,7 @@
 import React from "react";
 import { ChevronDown, ChevronUp, Trophy, Check } from "lucide-react";
 import { TopicGoal } from "@/lib/api/topic-chat";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 export function goalIsCompleted(g: TopicGoal): boolean {
   return g.chat_goal_progress?.[0]?.is_completed ?? g.is_completed ?? false;
@@ -10,6 +11,7 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
   const doneCount = goals.filter(goalIsCompleted).length;
   const totalCount = goals.length;
   const percentComplete = totalCount > 0 ? Math.round((doneCount / totalCount) * 100) : 0;
+  const isMobile = useIsMobile();
 
   return (
     <div style={{ background: "#ffffff", borderBottom: "1px solid #e9d5ff", flexShrink: 0, boxShadow: "0 1px 3px rgba(0,0,0,0.02)" }}>
@@ -20,8 +22,8 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
           display: "flex",
           alignItems: "center",
           justifyContent: "space-between",
-          padding: "0 20px",
-          height: 44,
+          padding: isMobile ? "0 12px" : "0 20px",
+          height: isMobile ? 38 : 44,
           border: "none",
           background: "transparent",
           cursor: "pointer",
@@ -69,7 +71,7 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
 
       {open && (
         <div style={{ overflowX: "auto", paddingBottom: 14, paddingTop: 2 }}>
-          <div style={{ display: "flex", gap: 10, padding: "0 20px", width: "max-content" }}>
+          <div style={{ display: "flex", gap: isMobile ? 8 : 10, padding: isMobile ? "0 12px" : "0 20px", width: "max-content" }}>
             {goals.map((g, i) => {
               const completed = goalIsCompleted(g);
               const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
@@ -83,9 +85,9 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
                 <div
                   key={g.id}
                   style={{
-                    width: 130,
-                    borderRadius: 14,
-                    padding: 10,
+                    width: isMobile ? 110 : 130,
+                    borderRadius: isMobile ? 12 : 14,
+                    padding: isMobile ? 8 : 10,
                     border: `1.5px solid ${completed ? "#c084fc" : active ? "#7e22ce" : "#e2e8f0"}`,
                     background: completed ? "#faf5ff" : active ? "#ffffff" : "#f8fafc",
                     boxShadow: active ? "0 4px 12px rgba(126, 34, 206, 0.12)" : "0 1px 3px rgba(0,0,0,0.02)",

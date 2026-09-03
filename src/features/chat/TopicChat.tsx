@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Clock, Loader2, Send,
@@ -157,11 +158,12 @@ export default function TopicChat() {
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState("");
-  const [goalsOpen, setGoalsOpen] = useState(true);
+  const [goalsOpen, setGoalsOpen] = useState(false);
   const [baseTime, setBaseTime] = useState(0);
   const [elapsed, setElapsed] = useState(0);
 
   const { toast } = useToast();
+  const isMobile = useIsMobile();
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -377,25 +379,26 @@ export default function TopicChat() {
         {/* Sub-header Bar with Voice Toggle & Timer */}
         <div
           style={{
-            padding: "12px 24px",
+            padding: isMobile ? "8px 12px" : "12px 24px",
             background: "#ffffff",
             borderBottom: "1px solid #e9d5ff",
             display: "flex",
             alignItems: "center",
             justifyContent: "space-between",
+            gap: isMobile ? 8 : 12,
             boxShadow: "0 1px 3px rgba(0, 0, 0, 0.02)",
           }}
         >
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: 12, fontWeight: 800, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.06em" }}>
+          <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
+            <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 800, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {subjectName} {chapterTitle ? `• ${chapterTitle}` : ""}
             </div>
-            <h1 style={{ fontSize: 18.5, fontWeight: 800, color: "#1e1b4b", margin: 0 }} className="truncate">
+            <h1 style={{ fontSize: isMobile ? 15 : 18.5, fontWeight: 800, color: "#1e1b4b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {topicTitle}
             </h1>
           </div>
 
-          <div style={{ display: "flex", alignItems: "center", gap: 12, flexShrink: 0 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: isMobile ? 6 : 12, flexShrink: 0 }}>
             {/* Voice Toggle */}
             <button
               type="button"
@@ -403,21 +406,25 @@ export default function TopicChat() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
+                justifyContent: "center",
+                gap: isMobile ? 0 : 6,
+                padding: isMobile ? "6px" : "6px 14px",
                 borderRadius: 20,
                 fontSize: 13,
                 fontWeight: 700,
                 border: "none",
                 cursor: "pointer",
+                width: isMobile ? 32 : "auto",
+                height: isMobile ? 32 : "auto",
                 background: isVoiceEnabled ? "linear-gradient(135deg, #7c3aed, #9333ea)" : "#f3e8ff",
                 color: isVoiceEnabled ? "#ffffff" : "#6b21a8",
                 boxShadow: isVoiceEnabled ? "0 2px 8px rgba(124, 58, 237, 0.25)" : "none",
                 transition: "all 0.2s ease",
               }}
+              title={isVoiceEnabled ? "Voice On" : "Voice Off"}
             >
               {isVoiceEnabled ? <Volume2 className="w-3.5 h-3.5" /> : <VolumeX className="w-3.5 h-3.5" />}
-              <span>{isVoiceEnabled ? "Voice On" : "Voice Off"}</span>
+              {!isMobile && <span>{isVoiceEnabled ? "Voice On" : "Voice Off"}</span>}
             </button>
 
             {/* Timer */}
@@ -425,17 +432,17 @@ export default function TopicChat() {
               style={{
                 display: "flex",
                 alignItems: "center",
-                gap: 6,
-                padding: "6px 14px",
+                gap: isMobile ? 4 : 6,
+                padding: isMobile ? "4px 10px" : "6px 14px",
                 borderRadius: 20,
                 background: "#f3e8ff",
                 color: "#6b21a8",
-                fontSize: 13,
+                fontSize: isMobile ? 12 : 13,
                 fontWeight: 700,
                 border: "1px solid #e9d5ff",
               }}
             >
-              <Clock style={{ width: 14, height: 14, color: "#7e22ce" }} />
+              <Clock style={{ width: isMobile ? 12 : 14, height: isMobile ? 12 : 14, color: "#7e22ce" }} />
               {fmt(elapsed)}
             </div>
 
@@ -446,8 +453,8 @@ export default function TopicChat() {
                 navigate(-1);
               }}
               style={{
-                width: 34,
-                height: 34,
+                width: isMobile ? 30 : 34,
+                height: isMobile ? 30 : 34,
                 borderRadius: "50%",
                 border: "1px solid #e9d5ff",
                 background: "#ffffff",
@@ -461,7 +468,7 @@ export default function TopicChat() {
               onMouseLeave={(e) => (e.currentTarget.style.background = "#ffffff")}
               title="Exit Chat"
             >
-              <X style={{ width: 16, height: 16, color: "#6b21a8" }} />
+              <X style={{ width: isMobile ? 14 : 16, height: isMobile ? 14 : 16, color: "#6b21a8" }} />
             </button>
           </div>
         </div>
@@ -470,7 +477,7 @@ export default function TopicChat() {
         {!loading && goals.length > 0 && <GoalsBar goals={goals} open={goalsOpen} onToggle={() => setGoalsOpen((p) => !p)} />}
 
         {/* Chat Feed */}
-        <div style={{ flex: 1, overflowY: "auto", padding: "24px 28px" }}>
+        <div style={{ flex: 1, overflowY: "auto", padding: isMobile ? "12px 10px" : "24px 28px" }}>
           {loading ? (
             <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", height: "100%", gap: 12 }}>
               <Loader2 className="w-8 h-8 animate-spin text-purple-700" />
@@ -589,7 +596,7 @@ export default function TopicChat() {
                       return <SessionFrameCard key={group.id} data={resolve("session_frame") || {}} />;
                     }
                     if (stMsg.message_type === "exam_definition") {
-                      return <ExamDefinitionCard key={group.id} data={resolve("exam_definition") || {}} />;
+                      return <ExamDefinitionCard key={group.id} data={resolve("exam_definition") || {} as any} />;
                     }
                     if (stMsg.message_type === "concept_card") {
                       return <ConceptCard key={group.id} data={resolve("concept_card") || {}} />;
@@ -662,7 +669,7 @@ export default function TopicChat() {
                       </div>
 
                       {/* Unified Content Column */}
-                      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: "82%", minWidth: 280, flex: 1 }}>
+                      <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: isMobile ? "calc(100% - 42px)" : "82%", minWidth: isMobile ? 0 : 280, flex: 1 }}>
                         {messagesToRender.map((msg, idx) => {
                           // Attach turn visual aids to the first message (or if msg has its own attachments)
                           const msgAttachments = idx === 0 ? turnAttachments : extractAIAttachments([msg]);
@@ -711,7 +718,7 @@ export default function TopicChat() {
         </div>
 
         {/* Input Bar */}
-        <div style={{ padding: done ? "10px 20px" : "16px 24px", background: "#ffffff", borderTop: "1px solid #e9d5ff", boxShadow: "0 -1px 4px rgba(0,0,0,0.02)" }}>
+        <div style={{ padding: done ? (isMobile ? "8px 10px" : "10px 20px") : (isMobile ? "10px 10px" : "16px 24px"), background: "#ffffff", borderTop: "1px solid #e9d5ff", boxShadow: "0 -1px 4px rgba(0,0,0,0.02)" }}>
           {done ? (
             <div style={{ textAlign: "center", padding: "6px 0" }}>
               <div
@@ -758,12 +765,12 @@ export default function TopicChat() {
                 disabled={sending || loading}
                 style={{
                   flex: 1,
-                  height: 50,
-                  padding: "0 22px",
-                  borderRadius: 25,
+                  height: isMobile ? 44 : 50,
+                  padding: isMobile ? "0 14px" : "0 22px",
+                  borderRadius: isMobile ? 22 : 25,
                   border: "1.5px solid #d8b4fe",
                   outline: "none",
-                  fontSize: 16.5,
+                  fontSize: isMobile ? 15 : 16.5,
                   background: "#faf5ff",
                   color: "#1e1b4b",
                   transition: "border-color 0.2s ease",
@@ -779,8 +786,8 @@ export default function TopicChat() {
                   onClick={toggleListening}
                   disabled={sending}
                   style={{
-                    width: 44,
-                    height: 44,
+                    width: isMobile ? 38 : 44,
+                    height: isMobile ? 38 : 44,
                     borderRadius: "50%",
                     border: "none",
                     background: isWaitingToSend
@@ -813,8 +820,8 @@ export default function TopicChat() {
                 type="submit"
                 disabled={sending || loading || !input.trim()}
                 style={{
-                  width: 44,
-                  height: 44,
+                  width: isMobile ? 38 : 44,
+                  height: isMobile ? 38 : 44,
                   borderRadius: "50%",
                   border: "none",
                   background: "linear-gradient(135deg, #7c3aed, #9333ea)",

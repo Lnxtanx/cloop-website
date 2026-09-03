@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { Volume2, Play, Image as ImageIcon, BarChart2, FileText, Maximize2, ChevronUp, X } from "lucide-react";
 import { TopicChatMessage } from "@/lib/api/topic-chat";
 import { DiffText, stripTags } from "./DiffText";
@@ -68,16 +69,17 @@ function splitNewlines(text: string, startKey: number): React.ReactNode[] {
 }
 
 export function UserBubble({ msg }: { msg: TopicChatMessage }) {
+  const isMobile = useIsMobile();
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 16 }}>
       <div
         style={{
-          maxWidth: "70%",
-          padding: "13px 20px",
+          maxWidth: isMobile ? "85%" : "70%",
+          padding: isMobile ? "10px 14px" : "13px 20px",
           borderRadius: "18px 18px 4px 18px",
           background: "linear-gradient(135deg, #18181b, #27272a)",
           color: "#ffffff",
-          fontSize: 16.5,
+          fontSize: isMobile ? 15 : 16.5,
           lineHeight: 1.62,
           boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
         }}
@@ -136,6 +138,7 @@ export function AIBubble({
   isSpeaking?: boolean;
   hideAvatar?: boolean;
 }) {
+  const isMobile = useIsMobile();
   // Extract all available media options
   const diagram = attachments?.mermaidDiagram || msg.mermaid_diagram || (msg.metadata?.mermaid_diagram?.code ? {
     code: msg.metadata.mermaid_diagram.code,
@@ -205,8 +208,8 @@ export function AIBubble({
   const bubbleCard = (
     <div
       style={{
-        maxWidth: hideAvatar ? "100%" : "85%",
-        minWidth: 280,
+        maxWidth: hideAvatar ? "100%" : (isMobile ? "100%" : "85%"),
+        minWidth: isMobile ? 0 : 280,
         width: "fit-content",
         borderRadius: 18,
         background: "#ffffff",
@@ -221,7 +224,7 @@ export function AIBubble({
       {/* 1. Main Text & TTS Audio Row */}
       <div
         style={{
-          padding: "14px 20px",
+          padding: isMobile ? "10px 12px" : "14px 20px",
           display: "flex",
           alignItems: "flex-start",
           justifyContent: "space-between",
@@ -229,7 +232,7 @@ export function AIBubble({
           background: "#ffffff",
         }}
       >
-        <div style={{ flex: 1, color: "#1e1b4b", fontSize: 16.5, lineHeight: 1.65 }}>
+        <div style={{ flex: 1, color: "#1e1b4b", fontSize: isMobile ? 15 : 16.5, lineHeight: 1.65 }}>
           {renderInlineMarkdown(msg.message || "")}
         </div>
 
@@ -576,6 +579,7 @@ export function AIBubble({
 }
 
 export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
+  const isMobile = useIsMobile();
   const originalText = msg.message ?? "";
   const hasDiff = !!(msg.diff_html && msg.diff_html.trim());
   const diffPlain = hasDiff ? stripTags(msg.diff_html!) : "";
@@ -599,14 +603,14 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 
   return (
     <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: 20 }}>
-      <div style={{ position: "relative", maxWidth: "70%" }}>
+      <div style={{ position: "relative", maxWidth: isMobile ? "85%" : "70%" }}>
         <div
           style={{
             background: bubbleBackground,
             border: `1.5px solid ${bubbleBorder}`,
             borderRadius: "18px 18px 4px 18px",
-            padding: "13px 18px",
-            minWidth: 220,
+            padding: isMobile ? "10px 14px" : "13px 18px",
+            minWidth: isMobile ? 0 : 220,
             boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
           }}
         >
