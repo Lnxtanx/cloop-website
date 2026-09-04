@@ -10,7 +10,6 @@ export default function Feedback() {
   const navigate = useNavigate();
   const [rating, setRating] = useState(0);
   const [feedback, setFeedback] = useState("");
-  const [category, setCategory] = useState("general");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
@@ -42,7 +41,7 @@ export default function Feedback() {
           user_id: getUserId(),
           rating,
           feedback: feedback.trim(),
-          category,
+          category: "improvement",
         }),
       });
 
@@ -74,7 +73,7 @@ export default function Feedback() {
   return (
     <DashboardLayout title="Feedback">
       <div className="max-w-2xl mx-auto py-8 px-4">
-            <div className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6">
+        <div className="bg-white rounded-2xl shadow-sm border border-blue-200 p-6">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">We'd love your feedback!</h2>
           <p className="text-gray-600 mb-6">Help us make Cloop better for everyone.</p>
 
@@ -100,28 +99,15 @@ export default function Feedback() {
               </div>
             </div>
 
-            {/* Category */}
-            <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Category</label>
-              <select
-                value={category}
-                onChange={(e) => setCategory(e.target.value)}
-                className="w-full px-4 py-2.5 rounded-lg border border-blue-300 bg-blue-50 text-gray-900 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none"
-              >
-                <option value="general">💬 General Feedback</option>
-                <option value="feature">✨ Feature Request</option>
-                <option value="bug">🐛 Bug Report</option>
-                <option value="improvement">🔧 Improvement Suggestion</option>
-              </select>
-            </div>
-
             {/* Feedback Text */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">Your Feedback</label>
+              <label className="block text-sm font-semibold text-gray-700 mb-2">
+                Your Feedback <span className="font-normal text-gray-500">(Kindly list the improvements to make Cloop work better for you)</span>
+              </label>
               <textarea
                 value={feedback}
                 onChange={(e) => setFeedback(e.target.value)}
-                placeholder="Tell us what you think..."
+                placeholder="Write here... (Kindly list the improvements to make Cloop work better for you)"
                 rows={5}
                 className="w-full px-4 py-2.5 rounded-lg border border-blue-300 bg-blue-50 text-gray-900 placeholder-gray-400 focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none resize-none"
                 required

@@ -356,12 +356,13 @@ export default function TopicChat() {
             ? {
                 ...m,
                 id: res.userMessage?.id || m.id,
+                message: res.userMessage?.message || m.message,
                 message_type: userCorrectionData?.message_type || res.userMessage?.message_type || m.message_type,
                 diff_html: userCorrectionData?.diff_html ?? res.userMessage?.diff_html ?? null,
                 complete_answer: userCorrectionData?.complete_answer ?? null,
                 emoji: userCorrectionData?.emoji ?? res.userMessage?.emoji ?? null,
-                feedback: userCorrectionData?.feedback ?? res.feedback ?? null,
-                is_correct: userCorrectionData?.feedback?.is_correct ?? res.feedback?.is_correct ?? undefined,
+                feedback: userCorrectionData?.feedback ?? res.userMessage?.feedback ?? null,
+                is_correct: userCorrectionData?.feedback?.is_correct ?? res.userMessage?.is_correct ?? res.userMessage?.feedback?.is_correct ?? undefined,
               }
             : m
         )

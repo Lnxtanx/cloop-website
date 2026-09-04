@@ -1,6 +1,8 @@
 import React, { useState } from "react";
-import { Trophy, Star, Download, Copy, Check } from "lucide-react";
+import { Trophy, Star, Download, Copy, Check, Loader2, FileText } from "lucide-react";
+import { toast } from "sonner";
 import { SessionSummaryData, ScorePrediction } from "@/lib/api/topic-chat";
+import { generateRevisionSheetPdf } from "@/lib/pdf/generateRevisionSheetPdf";
 
 /* ─── Teaching Arc component types ─── */
 export interface SessionFrameData {
@@ -617,6 +619,7 @@ function formatRevisionSheetMarkdown(data: RevisionSheetData): string {
 
 export function RevisionSheetCard({ data }: { data: RevisionSheetData }) {
   const [copied, setCopied] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const concepts = data?.key_concepts?.length ? data.key_concepts : data?.key_points;
 
   if (!data?.topic && !concepts?.length && !data?.definitions?.length) return null;
@@ -626,9 +629,10 @@ export function RevisionSheetCard({ data }: { data: RevisionSheetData }) {
     navigator.clipboard.writeText(text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+    toast.success("Revision sheet copied to clipboard!");
   };
 
-  const handleDownload = () => {
+  const handleDownloadMarkdown = () => {
     const text = formatRevisionSheetMarkdown(data);
     const blob = new Blob([text], { type: "text/markdown;charset=utf-8" });
     const url = URL.createObjectURL(blob);
@@ -643,6 +647,20 @@ export function RevisionSheetCard({ data }: { data: RevisionSheetData }) {
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  };
+
+  const handleDownload = async () => {
+    try {
+      setDownloading(true);
+      await generateRevisionSheetPdf(data);
+      toast.success("Cloop Revision Sheet downloaded as PDF!");
+    } catch (err) {
+      console.error("Failed to generate PDF:", err);
+      toast.error("Could not generate PDF. Downloading Markdown instead.");
+      handleDownloadMarkdown();
+    } finally {
+      setTimeout(() => setDownloading(false), 400);
+    }
   };
 
   const recallTips = data.quick_recall_tips?.length ? data.quick_recall_tips : data.common_mistakes;
@@ -692,24 +710,29 @@ export function RevisionSheetCard({ data }: { data: RevisionSheetData }) {
             <button
               type="button"
               onClick={handleDownload}
-              title="Download Revision Sheet as Markdown"
+              disabled={downloading}
+              title="Download Revision Sheet as PDF with Cloop branding"
               style={{
                 display: "inline-flex",
                 alignItems: "center",
                 gap: 4,
-                background: "#f8fafc",
-                border: "1px solid #cbd5e1",
-                color: "#1e293b",
+                background: downloading ? "#f1f5f9" : "#f5f3ff",
+                border: downloading ? "1px solid #e2e8f0" : "1px solid #ddd6fe",
+                color: downloading ? "#94a3b8" : "#6b40d8",
                 borderRadius: 8,
-                padding: "4px 8px",
+                padding: "4px 9px",
                 fontSize: 11,
-                fontWeight: 600,
-                cursor: "pointer",
+                fontWeight: 700,
+                cursor: downloading ? "wait" : "pointer",
                 transition: "all 0.15s ease",
               }}
             >
-              <Download style={{ width: 12, height: 12 }} />
-              <span>Download</span>
+              {downloading ? (
+                <Loader2 style={{ width: 12, height: 12, animation: "spin 1s linear infinite" }} />
+              ) : (
+                <Download style={{ width: 12, height: 12 }} />
+              )}
+              <span>{downloading ? "Generating..." : "Download PDF"}</span>
             </button>
           </div>
         </div>

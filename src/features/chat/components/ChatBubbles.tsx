@@ -91,13 +91,15 @@ export function UserBubble({ msg }: { msg: TopicChatMessage }) {
       <div
         style={{
           maxWidth: isMobile ? "85%" : "70%",
-          padding: isMobile ? "10px 14px" : "13px 20px",
+          padding: isMobile ? "10px 14px" : "13px 18px",
           borderRadius: "18px 18px 4px 18px",
-          background: "linear-gradient(135deg, #18181b, #27272a)",
-          color: "#ffffff",
-          fontSize: isMobile ? 15 : 16.5,
-          lineHeight: 1.62,
-          boxShadow: "0 2px 8px rgba(0, 0, 0, 0.08)",
+          background: "#ffffff",
+          border: "1.5px solid #7c3aed",
+          color: "#0f172a",
+          fontSize: 15.5,
+          fontWeight: 500,
+          lineHeight: 1.6,
+          boxShadow: "0 2px 8px rgba(124, 58, 237, 0.08)",
         }}
       >
         {renderInlineMarkdown(msg.message || "")}
@@ -582,35 +584,40 @@ export function AIBubble({
           }}
         >
           {msg.options
-            .filter((o) => o && ((o.value ?? o.text) || "").trim())
-            .map((o) => (
-              <button
-                key={o.value ?? o.text}
-                onClick={() => onOption(o.value ?? o.text)}
-                style={{
-                  textAlign: "left",
-                  padding: "10px 14px",
-                  borderRadius: 12,
-                  border: "1.5px solid #e9d5ff",
-                  background: "#faf5ff",
-                  fontSize: 14.5,
-                  fontWeight: 600,
-                  color: "#4c1d95",
-                  cursor: "pointer",
-                  transition: "all 0.15s ease",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = "#ede9fe";
-                  e.currentTarget.style.borderColor = "#c084fc";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = "#faf5ff";
-                  e.currentTarget.style.borderColor = "#e9d5ff";
-                }}
-              >
-                {o.text || o.value}
-              </button>
-            ))}
+            .filter((o) => o && ((o.text ?? o.value) || "").trim())
+            .map((o) => {
+              const optAny = o as any;
+              const optionLabel: string = typeof optAny === "string" ? optAny : (optAny?.text || optAny?.value || "");
+              const optionAnswer = optionLabel.trim();
+              return (
+                <button
+                  key={optionLabel}
+                  onClick={() => onOption(optionAnswer)}
+                  style={{
+                    textAlign: "left",
+                    padding: "10px 14px",
+                    borderRadius: 12,
+                    border: "1.5px solid #e9d5ff",
+                    background: "#faf5ff",
+                    fontSize: 14.5,
+                    fontWeight: 600,
+                    color: "#4c1d95",
+                    cursor: "pointer",
+                    transition: "all 0.15s ease",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = "#ede9fe";
+                    e.currentTarget.style.borderColor = "#c084fc";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = "#faf5ff";
+                    e.currentTarget.style.borderColor = "#e9d5ff";
+                  }}
+                >
+                  {optionLabel}
+                </button>
+              );
+            })}
         </div>
       ) : null}
     </div>
@@ -670,7 +677,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   const feedbackNote = feedback?.content ?? null;
 
   let bubbleBackground = "#ffffff";
-  let bubbleBorder = "#e2e8f0";
+  let bubbleBorder = "#7c3aed";
   let textColor = "#0f172a";
 
   if (isCorrect === true) {
@@ -693,7 +700,10 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
             borderRadius: "18px 18px 4px 18px",
             padding: isMobile ? "10px 14px" : "13px 18px",
             minWidth: isMobile ? 0 : 220,
-            boxShadow: "0 2px 8px rgba(0, 0, 0, 0.04)",
+            boxShadow:
+              isCorrect !== undefined && isCorrect !== null
+                ? "0 2px 8px rgba(0, 0, 0, 0.04)"
+                : "0 2px 8px rgba(124, 58, 237, 0.08)",
           }}
         >
           {/* Primary: the student's ORIGINAL words, verbatim. The AI's rewrite is

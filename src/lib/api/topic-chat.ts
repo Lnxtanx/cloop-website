@@ -66,7 +66,6 @@ export interface TopicChatMessage {
   top_error_types?: Array<{ type: string }>;
   weak_goals?: Array<{ goal_title: string }>;
   has_weak_areas?: boolean;
-  complete_answer?: string;
   completeAnswer?: string;
   mermaid_diagram?: {
     title: string;
