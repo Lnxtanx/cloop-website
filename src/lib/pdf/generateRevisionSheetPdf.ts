@@ -13,20 +13,24 @@ export function getRevisionSheetPdfFilename(topicTitle?: string): string {
 }
 
 /**
- * Load image from URL and convert to Base64 PNG for crisp embedding in jsPDF
+ * Load image from URL, downsample to crisp print resolution (144x144 px), and convert to Base64 PNG.
+ * Downsampling is essential: raw high-res images (e.g. 5044x5044 px favicon) cause jsPDF to embed
+ * a 76MB uncompressed raster bitmap into the PDF stream!
  */
-async function loadLogoBase64(src: string): Promise<string | null> {
+async function loadLogoBase64(src: string, targetPx: number = 144): Promise<string | null> {
   return new Promise((resolve) => {
     const img = new Image();
     img.crossOrigin = "anonymous";
     img.onload = () => {
       try {
         const canvas = document.createElement("canvas");
-        canvas.width = img.naturalWidth || img.width || 80;
-        canvas.height = img.naturalHeight || img.height || 80;
+        canvas.width = targetPx;
+        canvas.height = targetPx;
         const ctx = canvas.getContext("2d");
         if (!ctx) return resolve(null);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+        ctx.drawImage(img, 0, 0, targetPx, targetPx);
         resolve(canvas.toDataURL("image/png"));
       } catch {
         resolve(null);
@@ -45,6 +49,7 @@ export async function generateRevisionSheetPdf(data: RevisionSheetData): Promise
     orientation: "portrait",
     unit: "mm",
     format: "a4",
+    compress: true,
   });
 
   const pageWidth = 210;
@@ -57,8 +62,8 @@ export async function generateRevisionSheetPdf(data: RevisionSheetData): Promise
 
   let currentY = topMargin;
 
-  // Try to load the official Cloop favicon logo
-  const logoDataUrl = await loadLogoBase64("/favicon.ico");
+  // Try to load the official Cloop favicon logo (downsampled to 144x144 px for crisp 300 DPI print quality)
+  const logoDataUrl = await loadLogoBase64("/favicon.ico", 144);
 
   // Helper to ensure vertical space, triggering a page break if needed
   const ensureSpace = (neededHeight: number) => {
@@ -73,7 +78,7 @@ export async function generateRevisionSheetPdf(data: RevisionSheetData): Promise
   const drawSubsequentHeader = () => {
     if (logoDataUrl) {
       try {
-        doc.addImage(logoDataUrl, "PNG", leftMargin, currentY, 6, 6);
+        doc.addImage(logoDataUrl, "PNG", leftMargin, currentY, 6, 6, "cloop-logo", "FAST");
       } catch {
         // Fallback
       }
@@ -108,8 +113,8 @@ export async function generateRevisionSheetPdf(data: RevisionSheetData): Promise
 
     if (logoDataUrl) {
       try {
-        // Embed the authentic Cloop favicon icon
-        doc.addImage(logoDataUrl, "PNG", leftMargin, currentY, logoSize, logoSize);
+        // Embed the authentic Cloop favicon icon (reusing the 'cloop-logo' XObject)
+        doc.addImage(logoDataUrl, "PNG", leftMargin, currentY, logoSize, logoSize, "cloop-logo", "FAST");
       } catch {
         // Vector fallback if image embedding fails
         doc.setFillColor(216, 180, 254);
