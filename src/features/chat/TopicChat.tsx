@@ -7,9 +7,10 @@ import {
 } from "lucide-react";
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
-  TopicChatMessage, TopicGoal, TopicChatResponse,
+  TopicChatMessage, TopicGoal, TopicChatResponse, TopicChatDetails,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
+import { getTopicMedia } from "@/lib/topicMedia";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import MermaidDiagram from "@/components/MermaidDiagram";
@@ -175,6 +176,7 @@ export default function TopicChat() {
 
   const [messages, setMessages] = useState<TopicChatMessage[]>([]);
   const [goals, setGoals] = useState<TopicGoal[]>([]);
+  const [topicDetails, setTopicDetails] = useState<TopicChatDetails | null>(null);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
@@ -183,6 +185,15 @@ export default function TopicChat() {
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [baseTime, setBaseTime] = useState(0);
   const [elapsed, setElapsed] = useState(0);
+
+  // Match educational media (such as local concept animations) for this topic
+  const currentTopicTitle = topicDetails?.title || topicTitle;
+  const topicMedia = getTopicMedia({
+    topicId,
+    topicTitle: currentTopicTitle,
+    chapterTitle,
+    subjectName,
+  });
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
@@ -289,6 +300,7 @@ export default function TopicChat() {
       const combined = mergeMessages(res.messages || [], res.aiMessages || []);
       setMessages(combined);
       setGoals(res.goals || []);
+      setTopicDetails(res.topic || null);
       setBaseTime(res.topic?.time_spent_seconds ?? 0);
       const alreadyDone = res.topic?.is_completed ?? false;
       setDone(alreadyDone);
@@ -577,7 +589,9 @@ export default function TopicChat() {
 
                 flushAiGroup();
 
-                return groups.map((group) => {
+                const firstAiGroupIdx = groups.findIndex((g) => g.type === "ai_group");
+
+                return groups.map((group, groupIdx) => {
                   if (group.type === "user_correction") {
                     return <CorrectionBubble key={group.id} msg={group.msg} />;
                   }
@@ -699,12 +713,14 @@ export default function TopicChat() {
                         {messagesToRender.map((msg, idx) => {
                           // Attach turn visual aids to the first message (or if msg has its own attachments)
                           const msgAttachments = idx === 0 ? turnAttachments : extractAIAttachments([msg]);
+                          const isFirstAiMessage = groupIdx === firstAiGroupIdx && idx === 0;
 
                           return (
                             <AIBubble
                               key={msg.id ?? `ai-msg-${idx}`}
                               msg={msg}
                               attachments={msgAttachments}
+                              topicVideo={isFirstAiMessage ? topicMedia : null}
                               onOption={(optVal) => handleSend(optVal)}
                               onSpeak={() =>
                                 speak({

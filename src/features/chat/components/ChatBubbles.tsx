@@ -7,6 +7,8 @@ import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
 import MediaCard from "@/components/MediaCard";
 import { ExamDefinitionCard } from "./ChatCards";
+import TopicVideoCard from "./TopicVideoCard";
+import { TopicMediaItem } from "@/lib/topicMedia";
 
 /**
  * Lightweight inline markdown renderer for chat messages.
@@ -147,6 +149,7 @@ export interface AIAttachments {
     units?: string | null;
     title?: string;
   } | null;
+  topicVideo?: TopicMediaItem | null;
 }
 
 export function AIBubble({
@@ -156,6 +159,7 @@ export function AIBubble({
   onSpeak,
   isSpeaking,
   hideAvatar = false,
+  topicVideo,
 }: {
   msg: TopicChatMessage;
   attachments?: AIAttachments;
@@ -163,8 +167,10 @@ export function AIBubble({
   onSpeak?: (msg: TopicChatMessage) => void;
   isSpeaking?: boolean;
   hideAvatar?: boolean;
+  topicVideo?: TopicMediaItem | null;
 }) {
   const isMobile = useIsMobile();
+  const currentTopicVideo = topicVideo ?? attachments?.topicVideo ?? null;
   // Extract all available media options
   const diagram = attachments?.mermaidDiagram || msg.mermaid_diagram || (msg.metadata?.mermaid_diagram?.code ? {
     code: msg.metadata.mermaid_diagram.code,
@@ -237,8 +243,8 @@ export function AIBubble({
     <div
       style={{
         maxWidth: hideAvatar ? "100%" : (isMobile ? "100%" : "85%"),
-        minWidth: isMobile ? 0 : 280,
-        width: "fit-content",
+        minWidth: isMobile ? 0 : (currentTopicVideo ? 360 : 280),
+        width: currentTopicVideo ? (isMobile ? "100%" : "100%") : "fit-content",
         borderRadius: 18,
         background: "#ffffff",
         border: "1.5px solid #e9d5ff",
@@ -249,6 +255,11 @@ export function AIBubble({
         transition: "all 0.2s ease",
       }}
     >
+      {/* 0. Dedicated Topic Concept Animation / Video (if matched for this topic) */}
+      {currentTopicVideo && (
+        <TopicVideoCard media={currentTopicVideo} defaultExpanded={true} />
+      )}
+
       {/* 1. Main Text & TTS Audio Row */}
       <div
         style={{
