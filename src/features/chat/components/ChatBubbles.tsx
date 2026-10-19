@@ -114,13 +114,13 @@ export interface AIAttachments {
   mermaidDiagram?: {
     code: string;
     title?: string;
-    trigger?: "correction" | "teaching" | "user_request";
+    trigger?: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   textDiagram?: {
     code: string;
     title?: string;
     diagramType?: "ascii" | "tree" | "arrow" | "table";
-    trigger?: "correction" | "teaching" | "user_request";
+    trigger?: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   youtubeVideo?: {
     title?: string;
@@ -131,7 +131,7 @@ export interface AIAttachments {
     channel?: string;
     duration?: string;
     viewCount?: number | string;
-    trigger?: "correction" | "teaching" | "user_request";
+    trigger?: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   googleImage?: {
     title?: string;
@@ -139,7 +139,7 @@ export interface AIAttachments {
     url?: string;
     thumbnail?: string;
     source?: string;
-    trigger?: "correction" | "teaching" | "user_request";
+    trigger?: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   examDefinition?: {
     term: string;
@@ -232,8 +232,13 @@ export function AIBubble({
 
   const hasAnyMedia = hasDiagram || hasVideo || hasImage || hasTextDiagram || hasExamDef;
 
-  // Active media tab state: default to null (hidden by default, expands on user click)
-  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | "exam_definition" | null>(null);
+  // Active media tab state: default to diagram if triggered for visual explanation
+  const [activeMedia, setActiveMedia] = useState<"diagram" | "video" | "image" | "text_diagram" | "exam_definition" | null>(() => {
+    if (diagram?.trigger === "visual_explanation" || msg.mermaid_diagram?.trigger === "visual_explanation") {
+      return "diagram";
+    }
+    return null;
+  });
 
   const toggleMedia = (tab: "diagram" | "video" | "image" | "text_diagram" | "exam_definition") => {
     setActiveMedia((prev) => (prev === tab ? null : tab));

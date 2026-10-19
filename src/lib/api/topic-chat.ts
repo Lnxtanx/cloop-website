@@ -70,23 +70,23 @@ export interface TopicChatMessage {
   mermaid_diagram?: {
     title: string;
     code: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   text_diagram?: {
     title: string;
     code: string;
     diagram_type: "tree" | "arrow" | "table" | "ascii";
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   youtube_video?: {
     search_query: string;
     title: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   google_image?: {
     search_query: string;
     title: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   videos?: Array<{
     id: string;
@@ -213,23 +213,23 @@ export interface SendMessageResponse {
   mermaid_diagram?: {
     title: string;
     code: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   text_diagram?: {
     title: string;
     code: string;
     diagram_type: "tree" | "arrow" | "table" | "ascii";
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   youtube_video?: {
     search_query: string;
     title: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   google_image?: {
     search_query: string;
     title: string;
-    trigger: "correction" | "teaching" | "user_request";
+    trigger: "correction" | "teaching" | "user_request" | "visual_explanation";
   } | null;
   // Fetched media results
   youtube_results?: Array<{

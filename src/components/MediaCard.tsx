@@ -23,7 +23,7 @@ export interface MediaCardProps {
   type: "youtube" | "image";
   searchQuery?: string;
   title?: string;
-  trigger?: "correction" | "teaching" | "user_request";
+  trigger?: "correction" | "teaching" | "user_request" | "visual_explanation";
   // Pre-fetched data (for persisted messages)
   thumbnail?: string;
   url?: string;
