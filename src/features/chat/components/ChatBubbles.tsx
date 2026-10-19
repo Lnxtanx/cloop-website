@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { Volume2, Play, Image as ImageIcon, BarChart2, FileText, Maximize2, ChevronUp, X } from "lucide-react";
+import { Volume2, Play, Image as ImageIcon, BarChart2, FileText, Maximize2, ChevronUp, ChevronDown, Sparkles, Brain, Check, X } from "lucide-react";
 import { TopicChatMessage } from "@/lib/api/topic-chat";
 import { DiffText } from "./DiffText";
 import MermaidDiagram from "@/components/MermaidDiagram";
@@ -764,18 +764,166 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 }
 
 export function TypingDots() {
+  const [seconds, setSeconds] = useState(0);
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setSeconds((prev) => prev + 1);
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getStatusText = (sec: number) => {
+    if (sec < 2) return "Thinking...";
+    if (sec < 5) return "Analyzing concepts...";
+    if (sec < 8) return "Checking curriculum rules...";
+    return "Formulating response...";
+  };
+
   return (
-    <div className="flex items-end gap-2.5 mb-5">
-      <div className="w-7 h-7 rounded-full bg-gradient-to-br from-purple-700 to-purple-900 flex items-center justify-center text-white text-xs font-bold flex-shrink-0 shadow-sm">
+    <div className="flex items-center gap-2 mb-4 animate-in fade-in duration-300">
+      <div
+        style={{
+          width: 26,
+          height: 26,
+          borderRadius: "50%",
+          flexShrink: 0,
+          background: "linear-gradient(135deg, #7c3aed, #9333ea)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          color: "#fff",
+          fontSize: 10,
+          fontWeight: 800,
+          boxShadow: "0 2px 6px rgba(124, 58, 237, 0.2)",
+        }}
+      >
         C.
       </div>
-      <div className="bg-white rounded-2xl rounded-bl-sm px-4 py-2.5 shadow-sm border border-purple-100">
-        <div className="flex gap-1.5">
-          {[0, 150, 300].map((d, i) => (
-            <div key={i} className="w-2 h-2 rounded-full bg-purple-400 animate-bounce" style={{ animationDelay: `${d}ms` }} />
-          ))}
+      <div
+        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50/95 border border-slate-200/90 text-slate-600 text-xs font-medium shadow-xs"
+        style={{ height: 28 }}
+      >
+        <span className="relative flex h-2 w-2">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+          <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
+        </span>
+        <span className="text-slate-700 font-semibold tracking-tight text-[12px]">
+          {getStatusText(seconds)}
+        </span>
+        <span className="text-slate-400 font-mono text-[11px]">
+          ({seconds}s)
+        </span>
+        <div className="flex gap-1 items-center ml-0.5">
+          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "0ms" }} />
+          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "200ms" }} />
+          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "400ms" }} />
         </div>
       </div>
+    </div>
+  );
+}
+
+export function CompactThoughtBadge({
+  thoughtMeta,
+  attachments,
+}: {
+  thoughtMeta?: {
+    duration_ms?: number;
+    reasoning?: string;
+    phase?: string;
+    tools_called?: string[];
+  } | null;
+  attachments?: AIAttachments | null;
+}) {
+  const [expanded, setExpanded] = useState(false);
+
+  const hasTools = !!(
+    attachments?.mermaidDiagram ||
+    attachments?.textDiagram ||
+    attachments?.youtubeVideo ||
+    attachments?.googleImage ||
+    attachments?.examDefinition ||
+    (thoughtMeta?.tools_called && thoughtMeta.tools_called.length > 0)
+  );
+
+  const durationSec = thoughtMeta?.duration_ms
+    ? (thoughtMeta.duration_ms / 1000).toFixed(1)
+    : null;
+
+  const badgeLabel = durationSec
+    ? `Thought for ${durationSec}s`
+    : hasTools
+    ? "Curriculum tools active"
+    : "Curriculum aligned";
+
+  return (
+    <div className="mb-1 self-start">
+      <button
+        type="button"
+        onClick={() => setExpanded((prev) => !prev)}
+        className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-medium text-slate-500 hover:text-slate-800 bg-slate-100/70 hover:bg-slate-200/70 border border-slate-200/60 transition-colors"
+        style={{ height: 22 }}
+        title="View tutor reasoning and tools"
+      >
+        <Sparkles className="w-3 h-3 text-purple-600" />
+        <span className="font-mono">{badgeLabel}</span>
+        {hasTools && (
+          <span className="inline-block w-1.5 h-1.5 rounded-full bg-emerald-500" />
+        )}
+        <ChevronDown
+          className={`w-3 h-3 text-slate-400 transition-transform duration-200 ${
+            expanded ? "rotate-180" : ""
+          }`}
+        />
+      </button>
+
+      {expanded && (
+        <div className="mt-1.5 p-2.5 rounded-lg bg-slate-50/95 border border-slate-200/80 text-[11.5px] text-slate-600 max-w-md shadow-xs animate-in fade-in duration-150">
+          <div className="flex flex-col gap-1.5 font-mono text-[11px] text-slate-500">
+            {thoughtMeta?.phase && (
+              <div className="flex items-center gap-1.5">
+                <span className="text-slate-400">Phase:</span>
+                <span className="font-semibold text-purple-700">{thoughtMeta.phase}</span>
+              </div>
+            )}
+            <div className="flex items-center gap-1.5">
+              <span className="text-slate-400">Syllabus Grounding:</span>
+              <span className="text-emerald-700">Verified & Grounded</span>
+            </div>
+            {hasTools && (
+              <div className="flex flex-wrap items-center gap-1 mt-0.5">
+                <span className="text-slate-400">Tools:</span>
+                {attachments?.mermaidDiagram && (
+                  <span className="px-1.5 py-0.5 bg-purple-100/80 text-purple-700 rounded text-[10px]">
+                    Concept Diagram
+                  </span>
+                )}
+                {attachments?.youtubeVideo && (
+                  <span className="px-1.5 py-0.5 bg-red-100/80 text-red-700 rounded text-[10px]">
+                    Video Reference
+                  </span>
+                )}
+                {attachments?.googleImage && (
+                  <span className="px-1.5 py-0.5 bg-blue-100/80 text-blue-700 rounded text-[10px]">
+                    Visual Image
+                  </span>
+                )}
+                {attachments?.examDefinition && (
+                  <span className="px-1.5 py-0.5 bg-pink-100/80 text-pink-700 rounded text-[10px]">
+                    Exam Definition
+                  </span>
+                )}
+              </div>
+            )}
+            {thoughtMeta?.reasoning && (
+              <p className="mt-1 text-slate-600 font-sans italic text-[11.5px] border-l-2 border-purple-300 pl-2">
+                "{thoughtMeta.reasoning}"
+              </p>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
