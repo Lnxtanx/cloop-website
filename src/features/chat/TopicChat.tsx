@@ -401,6 +401,10 @@ export default function TopicChat() {
         variant: "destructive",
       });
       setMessages((prev) => prev.filter((m) => m.id !== tempUserMsg.id));
+      // In case the message reached the backend before network timeout, refresh chat after delay
+      setTimeout(() => {
+        loadChat();
+      }, 1500);
     } finally {
       setSending(false);
       setTimeout(() => {
@@ -592,11 +596,12 @@ export default function TopicChat() {
                 const firstAiGroupIdx = groups.findIndex((g) => g.type === "ai_group");
 
                 return groups.map((group, groupIdx) => {
+                  const itemKey = `${group.type}-${group.id}-${groupIdx}`;
                   if (group.type === "user_correction") {
-                    return <CorrectionBubble key={group.id} msg={group.msg} />;
+                    return <CorrectionBubble key={itemKey} msg={group.msg} />;
                   }
                   if (group.type === "user") {
-                    return <UserBubble key={group.id} msg={group.msg} />;
+                    return <UserBubble key={itemKey} msg={group.msg} />;
                   }
                   if (group.type === "session_summary") {
                     let summaryData = (group.msg as any).session_summary;
@@ -604,7 +609,7 @@ export default function TopicChat() {
                       try { summaryData = JSON.parse(group.msg.diff_html); } catch {}
                     }
                     if (summaryData) {
-                      return <SessionSummaryCard key={group.id} data={summaryData} message={group.msg.message} />;
+                      return <SessionSummaryCard key={itemKey} data={summaryData} message={group.msg.message} />;
                     }
                     return null;
                   }
@@ -637,16 +642,16 @@ export default function TopicChat() {
                       return null;
                     }
                     if (stMsg.message_type === "concept_card") {
-                      return <ConceptCard key={group.id} data={resolve("concept_card") || {}} />;
+                      return <ConceptCard key={itemKey} data={resolve("concept_card") || {}} />;
                     }
                     if (stMsg.message_type === "revision_sheet") {
-                      return <RevisionSheetCard key={group.id} data={resolve("revision_sheet") || {}} />;
+                      return <RevisionSheetCard key={itemKey} data={resolve("revision_sheet") || {}} />;
                     }
                     // hook_prediction & other non-card blocks: no standalone card
                     if (stMsg.message_type === "hook_prediction") {
                       return null;
                     }
-                    return <AISummaryCard key={group.id} text={stMsg.diff_html || stMsg.message} />;
+                    return <AISummaryCard key={itemKey} text={stMsg.diff_html || stMsg.message} />;
                   }
 
                   // AI Group: Unified Turn with in-bubble visual options & media drawer
@@ -679,7 +684,7 @@ export default function TopicChat() {
 
                   return (
                     <div
-                      key={group.id}
+                      key={itemKey}
                       style={{
                         display: "flex",
                         alignItems: "flex-start",
@@ -721,7 +726,7 @@ export default function TopicChat() {
 
                           return (
                             <AIBubble
-                              key={msg.id ?? `ai-msg-${idx}`}
+                              key={`${msg.id ?? "ai-msg"}-${groupIdx}-${idx}`}
                               msg={msg}
                               attachments={msgAttachments}
                               topicVideo={isFirstAiMessage ? topicMedia : null}
@@ -741,13 +746,13 @@ export default function TopicChat() {
 
                         {specialCards.map((m, idx) => {
                           if (m.message_type === "score_prediction" && m.metadata?.score_prediction) {
-                            return <ScorePredictionCard key={m.id ?? idx} data={m.metadata.score_prediction} />;
+                            return <ScorePredictionCard key={`score-${m.id ?? idx}-${groupIdx}`} data={m.metadata.score_prediction} />;
                           }
                           if (m.message_type === "internet_link") {
-                            return <InternetLinkCard key={m.id ?? idx} diffHtml={m.diff_html} />;
+                            return <InternetLinkCard key={`link-${m.id ?? idx}-${groupIdx}`} diffHtml={m.diff_html} />;
                           }
                           if (m.message_type === "goal_revision") {
-                            return <GoalRevisionCard key={m.id ?? idx} diffHtml={m.diff_html} />;
+                            return <GoalRevisionCard key={`goal-${m.id ?? idx}-${groupIdx}`} diffHtml={m.diff_html} />;
                           }
                           return null;
                         })}
