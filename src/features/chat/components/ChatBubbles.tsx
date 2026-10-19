@@ -773,12 +773,7 @@ export function TypingDots() {
     return () => clearInterval(timer);
   }, []);
 
-  const getStatusText = (sec: number) => {
-    if (sec < 2) return "Thinking...";
-    if (sec < 5) return "Analyzing concepts...";
-    if (sec < 8) return "Checking curriculum rules...";
-    return "Formulating response...";
-  };
+  const getStatusText = () => "Thinking...";
 
   return (
     <div className="flex items-center gap-2 mb-4 animate-in fade-in duration-300">
@@ -809,7 +804,7 @@ export function TypingDots() {
           <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
         </span>
         <span className="text-slate-700 font-semibold tracking-tight text-[12px]">
-          {getStatusText(seconds)}
+          Thinking...
         </span>
         <span className="text-slate-400 font-mono text-[11px]">
           ({seconds}s)
@@ -853,9 +848,7 @@ export function CompactThoughtBadge({
 
   const badgeLabel = durationSec
     ? `Thought for ${durationSec}s`
-    : hasTools
-    ? "Curriculum tools active"
-    : "Curriculum aligned";
+    : "Thinking";
 
   return (
     <div className="mb-1 self-start">
