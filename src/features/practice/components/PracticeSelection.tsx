@@ -70,18 +70,20 @@ export const PracticeSelection = ({
               return (
                 <Card
                   key={exam.id}
-                  className="rounded-2xl sm:rounded-3xl border-zinc-200 hover:shadow-2xl hover:border-black transition-all cursor-pointer bg-gradient-to-br from-zinc-100 to-zinc-50 group h-full flex flex-col"
-                  onClick={() => onExamSelect(exam)}
+                  className="rounded-2xl sm:rounded-3xl border-zinc-200 transition-all bg-gradient-to-br from-zinc-100 to-zinc-50 group h-full flex flex-col opacity-90 select-none cursor-default"
                 >
                   <CardContent className="p-4 sm:p-6 flex flex-col h-full">
-                    <div className="mb-3 sm:mb-4">
+                    <div className="flex items-center justify-between mb-3 sm:mb-4">
                       <span className="text-[9px] sm:text-[10px] font-black uppercase tracking-[0.1em] sm:tracking-[0.15em] text-zinc-800 bg-zinc-200/60 rounded-full px-2.5 sm:px-3 py-1">
                         Competitive Exam
+                      </span>
+                      <span className="text-[9px] sm:text-[10px] font-bold text-purple-700 bg-purple-50 border border-purple-200 rounded-full px-2.5 py-0.5">
+                        Coming Soon
                       </span>
                     </div>
 
                     <div className="flex-1">
-                      <h4 className="text-base sm:text-lg font-black text-gray-900 group-hover:text-black transition-colors leading-tight">
+                      <h4 className="text-base sm:text-lg font-black text-gray-900 leading-tight">
                         {content.name}
                       </h4>
                       <p className="text-[10px] sm:text-[11px] text-gray-500 mt-1.5 sm:mt-2 line-clamp-2 font-medium leading-relaxed">
@@ -90,8 +92,15 @@ export const PracticeSelection = ({
                     </div>
 
                     <div className="flex items-center justify-between mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-zinc-200/50">
-                      <span className="text-[9px] sm:text-[10px] font-black text-black uppercase tracking-wider sm:tracking-widest">Start Practice</span>
-                      <ChevronRight className="w-4 h-4 text-black group-hover:translate-x-0.5 transition-transform" />
+                      <span className="text-[9px] sm:text-[10px] font-bold text-zinc-400 uppercase tracking-wider sm:tracking-widest">Start Test Prep</span>
+                      <Button
+                        disabled
+                        variant="secondary"
+                        size="sm"
+                        className="h-7 px-3 text-[10px] font-bold bg-zinc-200 text-zinc-500 cursor-not-allowed"
+                      >
+                        Coming Soon
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
@@ -189,13 +198,11 @@ export const PracticeSelection = ({
           </Card>
 
             <Button
-              disabled={selectedChapters.length === 0}
-              className="w-full h-12 sm:h-14 lg:h-16 text-base sm:text-lg font-black bg-black hover:bg-zinc-800 text-white shadow-xl shadow-zinc-300 rounded-2xl sm:rounded-[20px] gap-2 sm:gap-3 transition-all active:scale-[0.98]"
-              onClick={onStartTest}
+              disabled
+              className="w-full h-12 sm:h-14 lg:h-16 text-base sm:text-lg font-black bg-zinc-200 text-zinc-500 rounded-2xl sm:rounded-[20px] gap-2 sm:gap-3 cursor-not-allowed"
             >
-            Generate Practice Session
-            <Zap className="w-4 h-4 sm:w-5 sm:h-5 fill-current text-yellow-300" />
-          </Button>
+              Start Test Prep - Coming Soon
+            </Button>
         </div>
       );
   }

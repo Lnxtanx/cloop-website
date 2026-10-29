@@ -450,7 +450,9 @@ const Signup = () => {
                     
                     let isComingSoon = false;
                     if (currentQuestion.key === "board") {
-                      isComingSoon = opt.value === "3" || opt.label.toLowerCase().includes("state");
+                      // Only CBSE board is active, all other boards are disabled with "Coming Soon"
+                      const isCbse = opt.label.toUpperCase().includes("CBSE");
+                      isComingSoon = !isCbse;
                     } else if (currentQuestion.key === "preferred_language") {
                       isComingSoon = opt.value !== "2" && !opt.label.toLowerCase().startsWith("english");
                     }

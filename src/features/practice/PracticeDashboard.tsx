@@ -125,10 +125,10 @@ const PracticeDashboard = () => {
             </p>
           </div>
             <Button
-            onClick={() => navigate("/dashboard/test-your-self")}
-            className="bg-black hover:bg-zinc-800 text-white font-black px-10 h-14 rounded-2xl gap-3 shadow-xl shadow-zinc-300 transition-all active:scale-95 text-lg"
+            disabled
+            className="bg-zinc-200 text-zinc-500 font-bold px-8 h-12 rounded-2xl gap-2 cursor-not-allowed text-base shadow-sm border border-zinc-300"
           >
-            <Play className="w-5 h-5 fill-current" /> Start Practice
+            <Clock className="w-4 h-4" /> Coming Soon
           </Button>
         </div>
 

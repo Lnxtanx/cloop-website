@@ -4,7 +4,7 @@ import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { Button } from "@/components/ui/button";
-import { BookmarkPlus, BookmarkCheck, Play, ArrowLeft } from "lucide-react";
+import { BookmarkPlus, BookmarkCheck, Play, ArrowLeft, AudioLines } from "lucide-react";
 import { fetchTopics, saveTopic, unsaveTopic, fetchSavedTopics } from "@/lib/api/chapters";
 
 interface Topic {
@@ -131,6 +131,12 @@ const Topics = () => {
   const handleTopicPress = (topic: Topic) => {
     navigate(
       `/topic-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(topic.title)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
+    );
+  };
+
+  const handleTopicVoicePress = (topic: Topic) => {
+    navigate(
+      `/dashboard/voice-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(topic.title)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
     );
   };
 
@@ -271,6 +277,21 @@ const Topics = () => {
                     ) : (
                       <BookmarkPlus className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-muted-foreground" />
                     )}
+                  </Button>
+
+                  {/* Voice Button */}
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="border-purple-200 hover:border-purple-500 hover:bg-purple-50 text-purple-700 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-2.5 flex items-center gap-1 rounded-lg transition-all shadow-xs"
+                    title="Start Voice Session"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleTopicVoicePress(topic);
+                    }}
+                  >
+                    <AudioLines className="w-3.5 h-3.5 text-purple-600" />
+                    <span className="font-medium">Voice</span>
                   </Button>
 
                   {/* Play Button */}
