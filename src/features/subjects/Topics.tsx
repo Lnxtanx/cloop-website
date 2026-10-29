@@ -283,15 +283,15 @@ const Topics = () => {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="border-purple-200 hover:border-purple-500 hover:bg-purple-50 text-purple-700 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-2.5 flex items-center gap-1 rounded-lg transition-all shadow-xs"
+                    className="border-purple-300 bg-purple-50 hover:bg-purple-100 hover:border-purple-600 text-purple-700 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-2.5 flex items-center gap-1 rounded-lg transition-all shadow-xs shrink-0"
                     title="Start Voice Session"
                     onClick={(e) => {
                       e.stopPropagation();
                       handleTopicVoicePress(topic);
                     }}
                   >
-                    <AudioLines className="w-3.5 h-3.5 text-purple-600" />
-                    <span className="font-medium">Voice</span>
+                    <AudioLines className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 animate-pulse shrink-0" />
+                    <span className="font-semibold">Voice</span>
                   </Button>
 
                   {/* Play Button */}

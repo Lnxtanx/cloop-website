@@ -19,7 +19,7 @@ import MediaCard from "@/components/MediaCard";
 import { useToast } from "@/hooks/use-toast";
 
 // Sub-components
-import { UserBubble, AIBubble, CorrectionBubble, TypingDots, CompactThoughtBadge, AIAttachments, isRawDiagramText } from "./components/ChatBubbles";
+import { UserBubble, AIBubble, CorrectionBubble, TypingDots, AIAttachments, isRawDiagramText } from "./components/ChatBubbles";
 import { SummaryCard, SessionSummaryCard, ScorePredictionCard, InternetLinkCard, GoalRevisionCard, LearningReportCard, AISummaryCard, ConceptCard, RevisionSheetCard } from "./components/ChatCards";
 import { GoalsBar } from "./components/GoalsBar";
 
@@ -715,10 +715,6 @@ export default function TopicChat() {
 
                       {/* Unified Content Column */}
                       <div style={{ display: "flex", flexDirection: "column", gap: 10, maxWidth: isMobile ? "calc(100% - 42px)" : "82%", minWidth: isMobile ? 0 : 280, flex: 1 }}>
-                        <CompactThoughtBadge
-                          thoughtMeta={group.items[0]?.metadata?.thought_meta || null}
-                          attachments={turnAttachments}
-                        />
                         {messagesToRender.map((msg, idx) => {
                           // Attach turn visual aids to the first message (or if msg has its own attachments)
                           const msgAttachments = idx === 0 ? turnAttachments : extractAIAttachments([msg]);
