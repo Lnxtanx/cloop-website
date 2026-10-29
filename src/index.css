@@ -266,3 +266,18 @@
   font-weight: 600;
 }
 
+/* Typing Indicator Waving Dots Animation */
+@keyframes typingWave {
+  0%, 60%, 100% {
+    transform: translateY(0);
+    opacity: 0.35;
+  }
+  30% {
+    transform: translateY(-6px);
+    opacity: 1;
+  }
+}
+
+.typing-dot-wave {
+  animation: typingWave 1.3s ease-in-out infinite;
+}

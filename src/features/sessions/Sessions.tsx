@@ -181,16 +181,16 @@ export default function Sessions() {
   };
 
   return (
-    <DashboardLayout title="Sessions">
+    <DashboardLayout title="Past Learnings">
       <div className="max-w-5xl mx-auto space-y-8 animate-fade-in pb-12">
         
         {/* Header */}
         <div>
           <h2 className="text-2xl lg:text-3xl font-extrabold text-gray-900 tracking-tight">
-            Learning Sessions & Concept Tracking
+            Past Learnings
           </h2>
-          <p className="text-base text-black font-bold mt-1.5 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-black" /> Monitor your progress and master every concept
+          <p className="text-base text-gray-700 font-medium mt-1.5 flex items-center gap-2">
+            <Sparkles className="w-4 h-4 text-purple-600" /> Review your past learning sessions and concept progress
           </p>
         </div>
 

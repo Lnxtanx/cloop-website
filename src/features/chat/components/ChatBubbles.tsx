@@ -769,23 +769,13 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
 }
 
 export function TypingDots() {
-  const [seconds, setSeconds] = useState(0);
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setSeconds((prev) => prev + 1);
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const getStatusText = () => "Thinking...";
-
   return (
-    <div className="flex items-center gap-2 mb-4 animate-in fade-in duration-300">
+    <div className="flex items-end gap-2.5 mb-4 animate-in fade-in duration-300">
+      {/* Cloop AI Avatar */}
       <div
         style={{
-          width: 26,
-          height: 26,
+          width: 28,
+          height: 28,
           borderRadius: "50%",
           flexShrink: 0,
           background: "linear-gradient(135deg, #7c3aed, #9333ea)",
@@ -793,32 +783,34 @@ export function TypingDots() {
           alignItems: "center",
           justifyContent: "center",
           color: "#fff",
-          fontSize: 10,
+          fontSize: 11,
           fontWeight: 800,
           boxShadow: "0 2px 6px rgba(124, 58, 237, 0.2)",
+          marginBottom: 2,
         }}
       >
         C.
       </div>
+
+      {/* Typing Bubble with 3 Waving Dots */}
       <div
-        className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-slate-50/95 border border-slate-200/90 text-slate-600 text-xs font-medium shadow-xs"
-        style={{ height: 28 }}
+        className="inline-flex items-center gap-1.5 px-4 py-3 rounded-2xl rounded-bl-sm bg-white border border-purple-200/80 shadow-xs"
+        style={{
+          minHeight: 38,
+        }}
       >
-        <span className="relative flex h-2 w-2">
-          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-          <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600"></span>
-        </span>
-        <span className="text-slate-700 font-semibold tracking-tight text-[12px]">
-          Thinking...
-        </span>
-        <span className="text-slate-400 font-mono text-[11px]">
-          ({seconds}s)
-        </span>
-        <div className="flex gap-1 items-center ml-0.5">
-          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "0ms" }} />
-          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "200ms" }} />
-          <span className="w-1 h-1 rounded-full bg-purple-500 animate-pulse" style={{ animationDelay: "400ms" }} />
-        </div>
+        <span
+          className="typing-dot-wave inline-block w-2 h-2 rounded-full bg-purple-600"
+          style={{ animationDelay: "0ms" }}
+        />
+        <span
+          className="typing-dot-wave inline-block w-2 h-2 rounded-full bg-purple-600"
+          style={{ animationDelay: "180ms" }}
+        />
+        <span
+          className="typing-dot-wave inline-block w-2 h-2 rounded-full bg-purple-600"
+          style={{ animationDelay: "360ms" }}
+        />
       </div>
     </div>
   );

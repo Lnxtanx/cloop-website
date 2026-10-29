@@ -22,11 +22,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { title: "Home", url: "/dashboard", icon: Home },
-  { title: "Session Progress", url: "/dashboard/sessions", icon: Video },
+  { title: "Past Learnings", url: "/dashboard/sessions", icon: Video },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
-  { title: "Chat with AI Tutor", url: "/dashboard/chat", icon: MessageCircle },
   { title: "Voice Tutor", url: "/dashboard/voice-chat", icon: Headphones },
-  { title: "AI Avatar", url: "/dashboard/avatar", icon: Sparkles },
   { title: "Profile", url: "/dashboard/profile", icon: User },
   { title: "Notifications", url: "/dashboard/notifications", icon: Bell },
   { title: "Feedback", url: "/feedback", icon: MessageSquare },

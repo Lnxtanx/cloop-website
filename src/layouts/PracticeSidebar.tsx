@@ -25,7 +25,6 @@ const practiceNavItems = [
   { title: "Test Preparation", url: "/dashboard/test-your-self", icon: BookOpen },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
   { title: "History", url: "/dashboard/test-your-self?tab=history", icon: History },
-  { title: "Chat with AI Tutor", url: "/dashboard/chat", icon: MessageSquare },
 ];
 
 export function PracticeSidebar() {
