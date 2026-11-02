@@ -431,6 +431,68 @@ export async function generateRevisionSheetPdf(data: RevisionSheetData): Promise
   }
 
   // ─────────────────────────────────────────────────────────────
+  // 7b. RECOMMENDED VIDEO LESSONS (Clickable links in PDF)
+  // ─────────────────────────────────────────────────────────────
+  if (data.recommended_videos && data.recommended_videos.length > 0) {
+    ensureSpace(14);
+
+    // Section Title: Recommended Video Lessons (#4338CA)
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(11);
+    doc.setTextColor(67, 56, 202); // #4338CA
+    doc.text("Recommended Video Lessons", leftMargin, currentY + 3);
+    currentY += 7;
+
+    data.recommended_videos.forEach((video) => {
+      ensureSpace(12);
+
+      // Play icon circle
+      doc.setFillColor(239, 68, 68); // Red #EF4444
+      doc.circle(leftMargin + 2.5, currentY + 2.2, 1.4, "F");
+
+      // Draw white triangle inside play circle
+      doc.setFillColor(255, 255, 255);
+      doc.triangle(
+        leftMargin + 2.1, currentY + 1.2,
+        leftMargin + 2.1, currentY + 3.2,
+        leftMargin + 3.3, currentY + 2.2,
+        "F"
+      );
+
+      // Video title as clickable link in Indigo (#4F46E5)
+      doc.setFont("helvetica", "bold");
+      doc.setFontSize(9.5);
+      doc.setTextColor(79, 70, 229); // #4F46E5
+
+      const titleLines: string[] = doc.splitTextToSize(video.title, contentWidth - 12);
+      titleLines.forEach((line: string, lineIdx: number) => {
+        const textY = currentY + 3 + lineIdx * 4.2;
+        doc.text(line, leftMargin + 6, textY);
+        // Add PDF hyperlink to URL
+        if (video.url) {
+          const textWidth = doc.getTextWidth(line);
+          doc.link(leftMargin + 6, textY - 3, textWidth, 4.2, { url: video.url });
+        }
+      });
+
+      const titleHeight = titleLines.length * 4.2;
+
+      // Channel & Duration below title
+      if (video.channel || video.duration) {
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(8);
+        doc.setTextColor(100, 116, 139); // Slate-500
+        const details = [video.channel, video.duration].filter(Boolean).join("  •  ");
+        doc.text(details, leftMargin + 6, currentY + 3 + titleHeight);
+      }
+
+      currentY += titleHeight + 6;
+    });
+
+    currentY += 2;
+  }
+
+  // ─────────────────────────────────────────────────────────────
   // 8. RUNNING FOOTER ON EVERY PAGE
   // ─────────────────────────────────────────────────────────────
   const totalPages = doc.getNumberOfPages();
