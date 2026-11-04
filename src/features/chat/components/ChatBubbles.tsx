@@ -682,18 +682,25 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   // only ever shown as an annotation below the user's own words — never as a replacement
   // for the user's raw text, so the transcript stays trustworthy.
   const correctedText = msg.complete_answer?.trim() || "";
-  // The model emits emoji together with a label (e.g. "😊 correct"), but we want to
-  // show ONLY the emoji glyph(s) in the bubble — strip any trailing words.
-  const emojiOnly = (msg.emoji || "").match(
-    /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*|\p{Emoji_Component}(?!\p{Number})|\u200b\u200b?)+/gu
-  )?.join("") || (msg.emoji || "").trim();
-
-  const effectiveEmoji = emojiOnly || (isCorrect === true ? "😊" : isCorrect === false ? "😅" : null);
-
   const feedback = msg.feedback;
   const isCorrect = msg.is_correct ?? feedback?.is_correct;
   const scorePct = feedback?.score_percent ?? msg.score_percent;
   const feedbackNote = feedback?.content ?? null;
+
+  // The model emits emoji together with a label (e.g. "😊 correct"), but we want to
+  // show ONLY the emoji glyph(s) in the bubble — strip any trailing words.
+  let emojiOnly = (msg.emoji || "").match(
+    /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*|\p{Emoji_Component}(?!\p{Number})|\u200b\u200b?)+/gu
+  )?.join("") || (msg.emoji || "").trim();
+
+  // For incorrect answers, ensure a crying emoji is shown instead of laughing/sweat (e.g. 😅 or 😂)
+  if (isCorrect === false) {
+    if (!emojiOnly || emojiOnly === "😅" || emojiOnly === "😂" || emojiOnly === "😆" || emojiOnly === "😄" || emojiOnly === "🙂" || emojiOnly === "😊") {
+      emojiOnly = "😢";
+    }
+  }
+
+  const effectiveEmoji = emojiOnly || (isCorrect === true ? "😊" : isCorrect === false ? "😢" : null);
 
   let bubbleBackground = "#ffffff";
   let bubbleBorder = "#7c3aed";
