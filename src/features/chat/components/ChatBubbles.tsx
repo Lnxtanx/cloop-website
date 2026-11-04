@@ -720,9 +720,34 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   // The clean corrected answer. On live responses it rides on `complete_answer`; it is
   // only ever shown as an annotation below the user's own words — never as a replacement
   // for the user's raw text, so the transcript stays trustworthy.
-  const correctedText = msg.complete_answer?.trim() || "";
+  const correctedText = (
+    msg.complete_answer?.trim() ||
+    (msg.feedback as any)?.complete_answer?.trim() ||
+    (msg.feedback as any)?.corrected_answer?.trim() ||
+    ""
+  );
   const feedback = msg.feedback;
-  const isCorrect = msg.is_correct ?? feedback?.is_correct;
+
+  // Robustly determine isCorrect with fallbacks across DB fields, feedback, and emojis
+  let isCorrect: boolean | undefined = undefined;
+  if (typeof msg.is_correct === "boolean") {
+    isCorrect = msg.is_correct;
+  } else if (typeof feedback?.is_correct === "boolean") {
+    isCorrect = feedback.is_correct;
+  } else if (feedback?.bubble_color === "green") {
+    isCorrect = true;
+  } else if (feedback?.bubble_color === "red") {
+    isCorrect = false;
+  } else if (msg.emoji === "😊" || msg.emoji?.includes("😊")) {
+    isCorrect = true;
+  } else if (msg.emoji === "😢" || msg.emoji === "😓" || msg.emoji === "😔" || msg.emoji?.includes("😢")) {
+    isCorrect = false;
+  } else if (typeof msg.score_percent === "number") {
+    isCorrect = msg.score_percent >= 50;
+  } else if (typeof feedback?.score_percent === "number") {
+    isCorrect = feedback.score_percent >= 50;
+  }
+
   const scorePct = feedback?.score_percent ?? msg.score_percent;
   const feedbackNote = feedback?.content ?? null;
 
@@ -736,6 +761,10 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   if (isCorrect === false) {
     if (!emojiOnly || emojiOnly === "😅" || emojiOnly === "😂" || emojiOnly === "😆" || emojiOnly === "😄" || emojiOnly === "🙂" || emojiOnly === "😊") {
       emojiOnly = "😢";
+    }
+  } else if (isCorrect === true) {
+    if (!emojiOnly || emojiOnly === "😢" || emojiOnly === "😓" || emojiOnly === "😔") {
+      emojiOnly = "😊";
     }
   }
 

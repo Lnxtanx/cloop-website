@@ -40,12 +40,21 @@ function mergeMessages(userMsgs: TopicChatMessage[], aiMsgs: TopicChatMessage[])
       m.set(id, x);
     } else {
       const existing = m.get(id)!;
-      const xScore = (x.diff_html ? 2 : 0) + (x.sender ? 1 : 0) + (x.message_type ? 1 : 0);
-      const existingScore = (existing.diff_html ? 2 : 0) + (existing.sender ? 1 : 0) + (existing.message_type ? 1 : 0);
-
-      if (xScore >= existingScore) {
-        m.set(id, x);
-      }
+      // Merge attributes so no rich field is lost
+      const merged: TopicChatMessage = {
+        ...existing,
+        ...x,
+        diff_html: x.diff_html || existing.diff_html || null,
+        complete_answer: x.complete_answer || existing.complete_answer || null,
+        emoji: x.emoji || existing.emoji || null,
+        is_correct: x.is_correct ?? existing.is_correct,
+        score_percent: x.score_percent ?? existing.score_percent,
+        feedback: x.feedback || existing.feedback || null,
+        message_type: (x.message_type === "user_correction" || existing.message_type === "user_correction")
+          ? "user_correction"
+          : (x.message_type || existing.message_type),
+      };
+      m.set(id, merged);
     }
   });
 
@@ -366,7 +375,8 @@ export default function TopicChat() {
                 message: res.userMessage?.message || m.message,
                 message_type: userCorrectionData?.message_type || res.userMessage?.message_type || m.message_type,
                 diff_html: userCorrectionData?.diff_html ?? res.userMessage?.diff_html ?? null,
-                complete_answer: userCorrectionData?.complete_answer ?? null,
+                complete_answer: userCorrectionData?.complete_answer ?? res.userMessage?.complete_answer ?? null,
+                score_percent: userCorrectionData?.feedback?.score_percent ?? res.userMessage?.score_percent ?? undefined,
                 emoji: userCorrectionData?.emoji ?? res.userMessage?.emoji ?? null,
                 feedback: userCorrectionData?.feedback ?? res.userMessage?.feedback ?? null,
                 is_correct: userCorrectionData?.feedback?.is_correct ?? res.userMessage?.is_correct ?? res.userMessage?.feedback?.is_correct ?? undefined,
