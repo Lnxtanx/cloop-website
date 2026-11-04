@@ -332,6 +332,36 @@ export const sendTopicChatMessage = async (
  * action drives the backend session lifecycle: 'heartbeat' (open),
  * 'pause' (left mid-session), or 'complete' (all goals finished).
  */
+/**
+ * Fetch progressive wrap cards for a completed topic
+ * POST /api/topic-chats/:topicId/wrap
+ */
+export const fetchTopicChatWrap = async (
+  topicId: number,
+  options?: FetchOptions
+): Promise<SendMessageResponse> => {
+  const token = options?.token || localStorage.getItem("cloop_token");
+
+  if (!token) {
+    throw new Error("Authentication required");
+  }
+
+  const response = await fetch(`${API_BASE_URL}/api/topic-chats/${topicId}/wrap`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({ error: "Failed to fetch session wrap" }));
+    throw new Error(error.error || "Failed to fetch session wrap");
+  }
+
+  return response.json();
+};
+
 export const updateTopicTime = async (
   topicId: number,
   secondsPerTick: number,

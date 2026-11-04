@@ -6,7 +6,7 @@ import {
   X, Mic, MicOff, Volume2, VolumeX,
 } from "lucide-react";
 import {
-  fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime,
+  fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime, fetchTopicChatWrap,
   TopicChatMessage, TopicGoal, TopicChatResponse, TopicChatDetails,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
@@ -181,6 +181,7 @@ export default function TopicChat() {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [done, setDone] = useState(false);
+  const [isWrapping, setIsWrapping] = useState(false);
   const [error, setError] = useState("");
   const [goalsOpen, setGoalsOpen] = useState(false);
   const [baseTime, setBaseTime] = useState(0);
@@ -355,12 +356,6 @@ export default function TopicChat() {
       });
 
       if (res.goals) setGoals(res.goals);
-      if (res.all_goals_completed) {
-        saveTime("complete");
-        setDone(true);
-        doneRef.current = true;
-      }
-
       const userCorrectionData = res.userCorrection;
       setMessages((prev) =>
         prev.map((m) =>
@@ -392,6 +387,37 @@ export default function TopicChat() {
             message: firstTextMsg.message,
             message_type: firstTextMsg.message_type,
           });
+        }
+      }
+    
+      // If all goals completed, immediately render the final feedback bubble,
+      // then trigger progressive wrap so the student never experiences a 30s freeze!
+      if (res.all_goals_completed) {
+        saveTime("complete");
+        setIsWrapping(true);
+        try {
+          const wrapRes = await fetchTopicChatWrap(topicId);
+          const wrapMsgs = wrapRes.aiMessages || wrapRes.messages || [];
+          if (wrapMsgs.length > 0) {
+            setMessages((prev) => [...prev, ...wrapMsgs]);
+
+            if (isVoiceEnabled) {
+              const greeting = wrapMsgs.find((m) => m.message_type === "text" && m.emoji === "🎉");
+              if (greeting?.message) {
+                speak({
+                  id: greeting.id,
+                  message: greeting.message,
+                  message_type: "text",
+                });
+              }
+            }
+          }
+        } catch (wrapErr) {
+          console.error("Failed to load session wrap:", wrapErr);
+        } finally {
+          setIsWrapping(false);
+          setDone(true);
+          doneRef.current = true;
         }
       }
     } catch (e: any) {
@@ -759,6 +785,28 @@ export default function TopicChat() {
               })()}
 
               {sending && <TypingDots />}
+              {isWrapping && (
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    gap: 10,
+                    margin: "12px 0 18px",
+                    padding: "10px 16px",
+                    background: "linear-gradient(135deg, #f5f3ff, #faf5ff)",
+                    borderRadius: 14,
+                    border: "1.5px solid #ddd6fe",
+                    color: "#6b21a8",
+                    fontSize: 13,
+                    fontWeight: 600,
+                    boxShadow: "0 2px 6px rgba(124, 58, 237, 0.06)",
+                    maxWidth: "max-content",
+                  }}
+                >
+                  <Loader2 className="w-4 h-4 animate-spin text-purple-600 flex-shrink-0" />
+                  <span>🎉 Topic complete! Preparing your scorecard & revision sheet...</span>
+                </div>
+              )}
               <div ref={bottomRef} />
             </div>
           )}
