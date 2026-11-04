@@ -671,6 +671,45 @@ export function AIBubble({
   );
 }
 
+function applyDiffToUserMessage(originalText: string, diffHtml: string | undefined): string {
+  if (!diffHtml || !originalText) return originalText || diffHtml || "";
+  
+  const typoPairs: Array<{ bad: string; good: string }> = [];
+  const regex = /<del>([\s\S]*?)<\/del>\s*<ins>([\s\S]*?)<\/ins>/gi;
+  let match;
+  while ((match = regex.exec(diffHtml)) !== null) {
+    const bad = match[1].trim();
+    const good = match[2].trim();
+    if (bad && good) {
+      typoPairs.push({ bad, good });
+    }
+  }
+
+  if (typoPairs.length === 0) return diffHtml;
+
+  const plainDiff = diffHtml.replace(/<[^>]+>/g, "").trim();
+  const origWords = originalText.trim().split(/\s+/).filter(Boolean);
+  if (origWords.length > 3 && origWords.every((w) => plainDiff.toLowerCase().includes(w.toLowerCase()))) {
+    return diffHtml;
+  }
+
+  let result = originalText;
+  for (const { bad, good } of typoPairs) {
+    const escapedBad = bad.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const wordPattern = new RegExp(`\\b${escapedBad}\\b`, "gi");
+    if (wordPattern.test(result)) {
+      result = result.replace(wordPattern, `<del>${bad}</del> <ins>${good}</ins>`);
+    } else {
+      const loosePattern = new RegExp(escapedBad, "gi");
+      if (loosePattern.test(result)) {
+        result = result.replace(loosePattern, `<del>${bad}</del> <ins>${good}</ins>`);
+      }
+    }
+  }
+
+  return result;
+}
+
 export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
   const isMobile = useIsMobile();
   const originalText = msg.message?.trim() || "";
@@ -735,20 +774,20 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
           {/* Primary: the student's message with inline diff highlighting if corrections exist */}
           <div style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500, color: textColor }}>
             {hasDiff ? (
-              <DiffText html={msg.diff_html!} />
+              <DiffText html={applyDiffToUserMessage(originalText, msg.diff_html!)} />
             ) : (
               <RichMathMarkdown content={originalText || correctedText} />
             )}
           </div>
 
-          {/* AI's Complete/Verified Correct Answer Container */}
+          {/* AI's Complete/Verified Correct Answer Container — Always positive green */}
           {correctedText && (
             <div
               style={{
                 marginTop: 10,
                 padding: isMobile ? "8px 12px" : "10px 14px",
-                background: isCorrect ? "#ecfdf5" : "#fff1f2",
-                border: `1.5px solid ${isCorrect ? "#a7f3d0" : "#fecdd3"}`,
+                background: "#f0fdf4",
+                border: "1.5px solid #86efac",
                 borderRadius: 12,
               }}
             >
@@ -764,7 +803,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
                   style={{
                     fontSize: 11,
                     fontWeight: 700,
-                    color: isCorrect ? "#047857" : "#b91c1c",
+                    color: "#15803d",
                     textTransform: "uppercase",
                     letterSpacing: "0.05em",
                   }}
@@ -772,7 +811,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
                   {isCorrect ? "Verified Answer" : "Correct Answer"}:
                 </span>
               </div>
-              <div style={{ fontSize: 14.5, color: isCorrect ? "#065f46" : "#991b1b", lineHeight: 1.55 }}>
+              <div style={{ fontSize: 14.5, color: "#14532d", lineHeight: 1.55 }}>
                 <RichMathMarkdown content={correctedText} />
               </div>
             </div>
