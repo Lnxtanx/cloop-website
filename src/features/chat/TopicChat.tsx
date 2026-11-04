@@ -409,7 +409,21 @@ export default function TopicChat() {
           const wrapRes = await fetchTopicChatWrap(topicId);
           const wrapMsgs = wrapRes.aiMessages || wrapRes.messages || [];
           if (wrapMsgs.length > 0) {
-            setMessages((prev) => [...prev, ...wrapMsgs]);
+            setMessages((prev) => {
+              const existingIds = new Set(prev.map((m) => m.id));
+              const existingTypes = new Set(prev.map((m) => m.message_type));
+              const newItems = wrapMsgs.filter((m: any) => {
+                if (m.id && existingIds.has(m.id)) return false;
+                if (
+                  (m.message_type === "session_summary" || m.message_type === "revision_sheet") &&
+                  existingTypes.has(m.message_type)
+                ) {
+                  return false;
+                }
+                return true;
+              });
+              return [...prev, ...newItems];
+            });
 
             if (isVoiceEnabled) {
               const greeting = wrapMsgs.find((m) => m.message_type === "text" && m.emoji === "🎉");
