@@ -3,6 +3,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { Volume2, Play, Image as ImageIcon, BarChart2, FileText, Maximize2, ChevronUp, ChevronDown, Sparkles, Brain, Check, X } from "lucide-react";
 import { TopicChatMessage } from "@/lib/api/topic-chat";
 import { DiffText } from "./DiffText";
+import { RichMathMarkdown } from "./RichMathMarkdown";
 import MermaidDiagram from "@/components/MermaidDiagram";
 import TextDiagram from "@/components/TextDiagram";
 import MediaCard from "@/components/MediaCard";
@@ -104,7 +105,7 @@ export function UserBubble({ msg }: { msg: TopicChatMessage }) {
           boxShadow: "0 2px 8px rgba(124, 58, 237, 0.08)",
         }}
       >
-        {renderInlineMarkdown(msg.message || "")}
+        <RichMathMarkdown content={msg.message || ""} />
       </div>
     </div>
   );
@@ -277,7 +278,7 @@ export function AIBubble({
         }}
       >
         <div style={{ flex: 1, color: "#1e1b4b", fontSize: isMobile ? 15 : 16.5, lineHeight: 1.65 }}>
-          {isRawDiagramText(msg.message || "") ? null : renderInlineMarkdown(msg.message || "")}
+          {isRawDiagramText(msg.message || "") ? null : <RichMathMarkdown content={msg.message || ""} />}
         </div>
 
         {onSpeak && msg.message && msg.message.trim() && (
@@ -687,6 +688,8 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
     /(?:\p{Regional_Indicator}{2}|\p{Extended_Pictographic}(?:\u200d\p{Extended_Pictographic})*|\p{Emoji_Component}(?!\p{Number})|\u200b\u200b?)+/gu
   )?.join("") || (msg.emoji || "").trim();
 
+  const effectiveEmoji = emojiOnly || (isCorrect === true ? "😊" : isCorrect === false ? "😅" : null);
+
   const feedback = msg.feedback;
   const isCorrect = msg.is_correct ?? feedback?.is_correct;
   const scorePct = feedback?.score_percent ?? msg.score_percent;
@@ -722,31 +725,54 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
                 : "0 2px 8px rgba(124, 58, 237, 0.08)",
           }}
         >
-          {/* Primary: the student's ORIGINAL words, verbatim. The AI's rewrite is
-              presented as a clearly-labelled "Corrections" annotation beneath it. */}
-          <span style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500, color: textColor }}>
-            {renderInlineMarkdown(originalText || correctedText)}
-          </span>
+          {/* Primary: the student's message with inline diff highlighting if corrections exist */}
+          <div style={{ fontSize: 15.5, lineHeight: 1.6, fontWeight: 500, color: textColor }}>
+            {hasDiff ? (
+              <DiffText html={msg.diff_html!} />
+            ) : (
+              <RichMathMarkdown content={originalText || correctedText} />
+            )}
+          </div>
 
-          {hasDiff && (
+          {/* AI's Complete/Verified Correct Answer Container */}
+          {correctedText && (
             <div
               style={{
-                marginTop: 8,
-                padding: "8px 12px",
-                background: bubbleBackground === "#f0fdf4" ? "#ecfdf5" : "#fff1f2",
-                border: `1px solid ${isCorrect === true ? "#a7f3d0" : "#fecdd3"}`,
-                borderRadius: 8,
+                marginTop: 10,
+                padding: isMobile ? "8px 12px" : "10px 14px",
+                background: isCorrect ? "#ecfdf5" : "#fff1f2",
+                border: `1.5px solid ${isCorrect ? "#a7f3d0" : "#fecdd3"}`,
+                borderRadius: 12,
               }}
             >
-              <p style={{ fontSize: 11, fontWeight: 700, color: "#64748b", marginBottom: 4, textTransform: "uppercase", letterSpacing: "0.05em" }}>
-                Corrections:
-              </p>
-              <DiffText html={msg.diff_html!} />
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 6,
+                  marginBottom: 3,
+                }}
+              >
+                <span
+                  style={{
+                    fontSize: 11,
+                    fontWeight: 700,
+                    color: isCorrect ? "#047857" : "#b91c1c",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                  }}
+                >
+                  {isCorrect ? "Verified Answer" : "Correct Answer"}:
+                </span>
+              </div>
+              <div style={{ fontSize: 14.5, color: isCorrect ? "#065f46" : "#991b1b", lineHeight: 1.55 }}>
+                <RichMathMarkdown content={correctedText} />
+              </div>
             </div>
           )}
         </div>
 
-        {emojiOnly && (
+        {effectiveEmoji && (
           <span
             style={{
               position: "absolute",
@@ -760,7 +786,7 @@ export function CorrectionBubble({ msg }: { msg: TopicChatMessage }) {
               boxShadow: "0 1px 4px rgba(0,0,0,0.1)",
             }}
           >
-            {emojiOnly}
+            {effectiveEmoji}
           </span>
         )}
       </div>
