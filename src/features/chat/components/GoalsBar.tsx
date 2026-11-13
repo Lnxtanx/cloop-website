@@ -3,6 +3,11 @@ import { ChevronDown, ChevronUp, Trophy, Check } from "lucide-react";
 import { TopicGoal } from "@/lib/api/topic-chat";
 import { useIsMobile } from "@/hooks/use-mobile";
 
+export function cleanGoalTitle(title: string): string {
+  if (!title) return "";
+  return title.replace(/^Goal\s*\d+\s*:\s*/i, "").trim();
+}
+
 export function goalIsCompleted(g: TopicGoal): boolean {
   return g.chat_goal_progress?.[0]?.is_completed ?? g.is_completed ?? false;
 }
@@ -78,59 +83,89 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
               const progress = g.chat_goal_progress?.[0];
               const numQ: number = progress?.num_questions ?? 0;
               const phase: "concept" | "exam" | null = active ? (numQ >= 2 ? "exam" : "concept") : null;
+              const goalText = cleanGoalTitle(g.title || g.description);
 
               return (
                 <div
                   key={g.id}
                   style={{
-                    width: isMobile ? 110 : 130,
-                    borderRadius: isMobile ? 12 : 14,
-                    padding: isMobile ? 8 : 10,
-                    border: `1.5px solid ${completed ? "#c084fc" : active ? "#7e22ce" : "#e2e8f0"}`,
+                    width: isMobile ? 150 : 180,
+                    minWidth: isMobile ? 150 : 180,
+                    borderRadius: 14,
+                    padding: isMobile ? "10px 12px" : "12px 14px",
+                    border: `1.5px solid ${completed ? "#e9d5ff" : active ? "#7c3aed" : "#e2e8f0"}`,
                     background: completed ? "#faf5ff" : active ? "#ffffff" : "#f8fafc",
-                    boxShadow: active ? "0 4px 12px rgba(126, 34, 206, 0.12)" : "0 1px 3px rgba(0,0,0,0.02)",
-                    transition: "all 0.2s ease",
+                    boxShadow: active
+                      ? "0 4px 16px rgba(124, 58, 237, 0.14)"
+                      : completed
+                      ? "0 1px 3px rgba(124, 58, 237, 0.05)"
+                      : "0 1px 2px rgba(0,0,0,0.02)",
+                    transition: "all 0.25s ease",
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
                   }}
                 >
-                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
-                    <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
+                  {/* Top Row: Milestone Indicator + Status Pill */}
+                  <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+                    <div style={{ display: "flex", alignItems: "center", gap: 7 }}>
                       {completed ? (
                         <div
                           style={{
-                            width: 18,
-                            height: 18,
+                            width: 20,
+                            height: 20,
                             borderRadius: "50%",
                             background: "linear-gradient(135deg, #7c3aed, #9333ea)",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
                             color: "#fff",
+                            flexShrink: 0,
                           }}
                         >
-                          <Check style={{ width: 11, height: 11, strokeWidth: 3 }} />
+                          <Check style={{ width: 12, height: 12, strokeWidth: 3 }} />
                         </div>
                       ) : active ? (
                         <div
                           style={{
-                            width: 18,
-                            height: 18,
+                            width: 20,
+                            height: 20,
                             borderRadius: "50%",
-                            border: "2px solid #7e22ce",
+                            border: "2px solid #7c3aed",
+                            background: "#f5f3ff",
                             display: "flex",
                             alignItems: "center",
                             justifyContent: "center",
+                            flexShrink: 0,
                           }}
                         >
-                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7e22ce" }} />
+                          <div style={{ width: 6, height: 6, borderRadius: "50%", background: "#7c3aed" }} />
                         </div>
                       ) : (
-                        <div style={{ width: 18, height: 18, borderRadius: "50%", border: "1.5px solid #cbd5e1" }} />
+                        <div
+                          style={{
+                            width: 20,
+                            height: 20,
+                            borderRadius: "50%",
+                            border: "1.5px solid #cbd5e1",
+                            background: "#f1f5f9",
+                            display: "flex",
+                            alignItems: "center",
+                            justifyContent: "center",
+                            fontSize: 10,
+                            fontWeight: 700,
+                            color: "#94a3b8",
+                            flexShrink: 0,
+                          }}
+                        >
+                          {i + 1}
+                        </div>
                       )}
                       <span
                         style={{
-                          fontSize: 12,
+                          fontSize: 12.5,
                           fontWeight: 800,
-                          color: completed ? "#6b21a8" : active ? "#581c87" : "#94a3b8",
+                          color: completed ? "#6b21a8" : active ? "#4c1d95" : "#64748b",
                         }}
                       >
                         Goal {i + 1}
@@ -140,72 +175,79 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
                     {completed ? (
                       <span
                         style={{
-                          fontSize: 8.5,
+                          fontSize: 9,
                           fontWeight: 800,
-                          borderRadius: 6,
-                          padding: "2px 6px",
+                          borderRadius: 8,
+                          padding: "2px 7px",
                           background: "#f3e8ff",
-                          color: "#6b21a8",
-                          letterSpacing: "0.04em",
+                          color: "#7e22ce",
+                          letterSpacing: "0.03em",
                         }}
                       >
-                        COMPLETED
+                        Done
                       </span>
                     ) : active ? (
                       <span
                         style={{
-                          fontSize: 8.5,
+                          fontSize: 9,
                           fontWeight: 800,
-                          borderRadius: 6,
-                          padding: "2px 6px",
-                          background: phase === "exam" ? "#fef3c7" : "#dcfce7",
-                          color: phase === "exam" ? "#b45309" : "#15803d",
-                          letterSpacing: "0.04em",
+                          borderRadius: 8,
+                          padding: "2px 7px",
+                          background: phase === "exam" ? "#fef3c7" : "#ede9fe",
+                          color: phase === "exam" ? "#b45309" : "#6d28d9",
+                          letterSpacing: "0.03em",
                         }}
                       >
-                        {phase === "exam" ? "EXAM" : "IN PROGRESS"}
+                        {phase === "exam" ? "Exam" : "Active"}
                       </span>
                     ) : (
                       <span
                         style={{
-                          fontSize: 8.5,
-                          fontWeight: 700,
-                          borderRadius: 6,
+                          fontSize: 9,
+                          fontWeight: 600,
+                          borderRadius: 8,
                           padding: "2px 6px",
                           background: "#f1f5f9",
                           color: "#94a3b8",
-                          letterSpacing: "0.04em",
+                          letterSpacing: "0.03em",
                         }}
                       >
-                        UPCOMING
+                        Next
                       </span>
                     )}
                   </div>
 
+                  {/* Body: Clean Goal Description (no redundant 'Goal N:') */}
                   <p
                     style={{
-                      fontSize: 12,
+                      fontSize: 12.5,
                       fontWeight: 600,
-                      color: completed ? "#4c1d95" : active ? "#1e1b4b" : "#64748b",
-                      lineHeight: 1.4,
+                      color: completed ? "#4c1d95" : active ? "#0f172a" : "#64748b",
+                      lineHeight: 1.45,
                       display: "-webkit-box",
                       WebkitLineClamp: 2,
                       WebkitBoxOrient: "vertical",
                       overflow: "hidden",
                       margin: 0,
+                      minHeight: 36,
                     }}
                     title={g.title || g.description}
                   >
-                    {g.title || g.description}
+                    {goalText}
                   </p>
 
-                  <div style={{ marginTop: 8 }}>
-                    <div style={{ height: 4, background: "#f1f5f9", borderRadius: 2, overflow: "hidden" }}>
+                  {/* Footer: Status line */}
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ height: 3.5, background: "#f1f5f9", borderRadius: 2, overflow: "hidden" }}>
                       <div
                         style={{
                           height: "100%",
-                          width: completed ? "100%" : active ? "60%" : "0%",
-                          background: completed ? "linear-gradient(90deg, #7c3aed, #9333ea)" : active ? "#a855f7" : "transparent",
+                          width: completed ? "100%" : active ? "50%" : "0%",
+                          background: completed
+                            ? "linear-gradient(90deg, #7c3aed, #9333ea)"
+                            : active
+                            ? "#a855f7"
+                            : "transparent",
                           borderRadius: 2,
                           transition: "width 0.4s ease",
                         }}

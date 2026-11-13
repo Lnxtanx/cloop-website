@@ -27,6 +27,11 @@ function fmt(s: number) {
   return `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, "0")}`;
 }
 
+export function cleanTopicTitle(title: string): string {
+  if (!title) return "";
+  return title.replace(/^Topic\s*\d+\s*:\s*/i, "").trim();
+}
+
 function mergeMessages(userMsgs: TopicChatMessage[], aiMsgs: TopicChatMessage[]) {
   const m = new Map<string | number, TopicChatMessage>();
   const all = [...(userMsgs || []), ...(aiMsgs || [])];
@@ -463,8 +468,10 @@ export default function TopicChat() {
     }
   };
 
+  const displayTopicTitle = cleanTopicTitle(currentTopicTitle || topicTitle);
+
   return (
-    <DashboardLayout title={topicTitle} mainClassName="flex-1 flex flex-col min-h-0 relative p-0 overflow-hidden bg-slate-50">
+    <DashboardLayout title={displayTopicTitle} mainClassName="flex-1 flex flex-col min-h-0 relative p-0 overflow-hidden bg-slate-50">
       <div style={{ display: "flex", flexDirection: "column", height: "100%", background: "#f8fafc" }}>
         {/* Sub-header Bar with Voice Toggle & Timer */}
         <div
@@ -484,7 +491,7 @@ export default function TopicChat() {
               {subjectName} {chapterTitle ? `• ${chapterTitle}` : ""}
             </div>
             <h1 style={{ fontSize: isMobile ? 15 : 18.5, fontWeight: 800, color: "#1e1b4b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {topicTitle}
+              {displayTopicTitle}
             </h1>
           </div>
 

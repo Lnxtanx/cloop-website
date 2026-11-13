@@ -7,6 +7,11 @@ import { Button } from "@/components/ui/button";
 import { BookmarkPlus, BookmarkCheck, Play, ArrowLeft, AudioLines } from "lucide-react";
 import { fetchTopics, saveTopic, unsaveTopic, fetchSavedTopics } from "@/lib/api/chapters";
 
+export function cleanTopicTitle(title: string): string {
+  if (!title) return "";
+  return title.replace(/^Topic\s*\d+\s*:\s*/i, "").trim();
+}
+
 interface Topic {
   id: number;
   title: string;
@@ -235,7 +240,7 @@ const Topics = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
                      <h4 className={`font-semibold text-xs sm:text-sm truncate ${topic.is_completed ? "text-black font-bold" : ""}`}>
-                      {topic.title}
+                      {cleanTopicTitle(topic.title)}
                     </h4>
                     {topic.is_completed && <span className="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-zinc-200 text-black font-bold rounded-full">Done</span>}
                   </div>

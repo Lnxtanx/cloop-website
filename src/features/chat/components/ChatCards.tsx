@@ -61,9 +61,8 @@ export function SummaryCard({ data }: { data: SessionSummaryData }) {
           <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${low ? "text-red-500" : "text-green-600"}`} />
           <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Predicted Score</p>
           <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-green-700"}`}>
-            {data.total_questions ? `${data.correct_answers} / ${data.total_questions} Marks` : `${score}%`}
+            {data.total_questions ? `${data.correct_answers} / ${data.total_questions} Marks` : `${score}`}
           </p>
-          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-green-500"}`}>({score}% • Predicted {predicted}%)</p>
         </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
@@ -120,66 +119,61 @@ export function SessionSummaryCard({ data, message }: { data: SessionSummaryData
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
         }}
       >
-        {/* Header: Predicted Score as Marks (e.g. 6 / 10 Marks) */}
+        {/* Header: Stars at Top + Predicted Score as Marks (e.g. 12 / 15 Marks, No Percentage) */}
         <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <div style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+          {/* Stars at Top */}
+          <div style={{ display: "flex", justifyContent: "center", gap: 3, marginBottom: 8 }}>
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Star
+                key={i}
+                style={{
+                  width: 18,
+                  height: 18,
+                  fill: i < stars ? "#f59e0b" : "none",
+                  color: i < stars ? "#f59e0b" : "#d1d5db",
+                }}
+              />
+            ))}
+          </div>
+
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 8 }}>
             Predicted Score
           </div>
+
           <div
             style={{
               display: "inline-flex",
-              flexDirection: "column",
-              alignItems: "center",
+              alignItems: "baseline",
+              gap: 8,
               background: scoreBg,
               border: `1.5px solid ${scoreBorder}`,
-              borderRadius: 14,
-              padding: "8px 24px",
-              marginBottom: 8,
+              borderRadius: 16,
+              padding: "10px 26px",
+              marginBottom: 10,
             }}
           >
-            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
-              <span style={{ fontSize: 32, fontWeight: 900, color: scoreColor }}>
-                {data.total_questions ? `${data.correct_answers} / ${data.total_questions}` : `${score}%`}
-              </span>
-              {data.total_questions ? (
-                <span style={{ fontSize: 14, fontWeight: 700, color: scoreColor }}>
-                  Marks
-                </span>
-              ) : null}
-            </div>
-            {data.total_questions ? (
-              <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor, opacity: 0.85 }}>
-                ({score}%)
-              </span>
-            ) : null}
+            <span style={{ fontSize: 34, fontWeight: 900, color: scoreColor }}>
+              {data.total_questions ? `${data.correct_answers} / ${data.total_questions}` : `${score}`}
+            </span>
+            <span style={{ fontSize: 15, fontWeight: 700, color: scoreColor }}>
+              Marks
+            </span>
           </div>
-          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 2 }}>
+
+          <div>
             <span
               style={{
                 display: "inline-block",
                 background: levelBg,
                 borderRadius: 20,
-                padding: "3px 14px",
-                fontSize: 12,
+                padding: "4px 16px",
+                fontSize: 12.5,
                 fontWeight: 700,
                 color: scoreColor,
               }}
             >
               {level}
             </span>
-            <div style={{ display: "flex", gap: 2 }}>
-              {Array.from({ length: 5 }).map((_, i) => (
-                <Star
-                  key={i}
-                  style={{
-                    width: 14,
-                    height: 14,
-                    fill: i < stars ? "#f59e0b" : "none",
-                    color: i < stars ? "#f59e0b" : "#d1d5db",
-                  }}
-                />
-              ))}
-            </div>
           </div>
         </div>
 
