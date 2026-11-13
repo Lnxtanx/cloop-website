@@ -59,8 +59,11 @@ export function SummaryCard({ data }: { data: SessionSummaryData }) {
       <div className={`rounded-2xl p-5 w-72 ${low ? "bg-red-50" : "bg-green-50"}`}>
         <div className="text-center mb-4">
           <Trophy className={`w-9 h-9 mx-auto mb-1.5 ${low ? "text-red-500" : "text-green-600"}`} />
-          <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-green-700"}`}>Score — {score}</p>
-          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-green-500"}`}>Predicted — {predicted}</p>
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Predicted Score</p>
+          <p className={`text-2xl font-extrabold ${low ? "text-red-600" : "text-green-700"}`}>
+            {data.total_questions ? `${data.correct_answers} / ${data.total_questions} Marks` : `${score}%`}
+          </p>
+          <p className={`text-sm font-semibold ${low ? "text-red-400" : "text-green-500"}`}>({score}% • Predicted {predicted}%)</p>
         </div>
         <div className="grid grid-cols-3 gap-2 mb-3">
           {[
@@ -117,45 +120,66 @@ export function SessionSummaryCard({ data, message }: { data: SessionSummaryData
           boxShadow: "0 2px 12px rgba(0,0,0,0.06)",
         }}
       >
-        {/* Header: Trophy + Score */}
+        {/* Header: Predicted Score as Marks (e.g. 6 / 10 Marks) */}
         <div style={{ textAlign: "center", marginBottom: 16 }}>
-          <div style={{ display: "flex", justifyContent: "center", gap: 2, marginBottom: 6 }}>
-            {Array.from({ length: 5 }).map((_, i) => (
-              <Star
-                key={i}
-                style={{
-                  width: 18,
-                  height: 18,
-                  fill: i < stars ? "#f59e0b" : "none",
-                  color: i < stars ? "#f59e0b" : "#d1d5db",
-                }}
-              />
-            ))}
+          <div style={{ fontSize: 12, fontWeight: 800, color: "#64748b", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: 6 }}>
+            Predicted Score
           </div>
           <div
             style={{
-              display: "inline-block",
+              display: "inline-flex",
+              flexDirection: "column",
+              alignItems: "center",
               background: scoreBg,
-              borderRadius: 12,
-              padding: "8px 20px",
-              marginBottom: 6,
+              border: `1.5px solid ${scoreBorder}`,
+              borderRadius: 14,
+              padding: "8px 24px",
+              marginBottom: 8,
             }}
           >
-            <span style={{ fontSize: 32, fontWeight: 800, color: scoreColor }}>{score}%</span>
+            <div style={{ display: "flex", alignItems: "baseline", gap: 6 }}>
+              <span style={{ fontSize: 32, fontWeight: 900, color: scoreColor }}>
+                {data.total_questions ? `${data.correct_answers} / ${data.total_questions}` : `${score}%`}
+              </span>
+              {data.total_questions ? (
+                <span style={{ fontSize: 14, fontWeight: 700, color: scoreColor }}>
+                  Marks
+                </span>
+              ) : null}
+            </div>
+            {data.total_questions ? (
+              <span style={{ fontSize: 12, fontWeight: 700, color: scoreColor, opacity: 0.85 }}>
+                ({score}%)
+              </span>
+            ) : null}
           </div>
-          <div
-            style={{
-              display: "inline-block",
-              background: levelBg,
-              borderRadius: 20,
-              padding: "3px 14px",
-              fontSize: 12,
-              fontWeight: 700,
-              color: scoreColor,
-              marginLeft: 8,
-            }}
-          >
-            {level}
+          <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 8, marginTop: 2 }}>
+            <span
+              style={{
+                display: "inline-block",
+                background: levelBg,
+                borderRadius: 20,
+                padding: "3px 14px",
+                fontSize: 12,
+                fontWeight: 700,
+                color: scoreColor,
+              }}
+            >
+              {level}
+            </span>
+            <div style={{ display: "flex", gap: 2 }}>
+              {Array.from({ length: 5 }).map((_, i) => (
+                <Star
+                  key={i}
+                  style={{
+                    width: 14,
+                    height: 14,
+                    fill: i < stars ? "#f59e0b" : "none",
+                    color: i < stars ? "#f59e0b" : "#d1d5db",
+                  }}
+                />
+              ))}
+            </div>
           </div>
         </div>
 
@@ -262,8 +286,8 @@ export function ScorePredictionCard({ data }: { data: ScorePrediction }) {
           <span className="text-sm font-bold text-gray-800">{data.goal_title ? `Goal: ${data.goal_title}` : "Goal Complete"}</span>
         </div>
         <div className="text-center mb-3">
+          <p className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-1">Predicted Score</p>
           <span className={`text-3xl font-extrabold ${color}`}>{pred}%</span>
-          <p className="text-xs text-gray-500 mt-1">Predicted Score</p>
         </div>
         <div className="grid grid-cols-2 gap-2">
           {[

@@ -77,8 +77,6 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
               const active = !completed && (i === 0 || goalIsCompleted(goals[i - 1]));
               const progress = g.chat_goal_progress?.[0];
               const numQ: number = progress?.num_questions ?? 0;
-              const numC: number = progress?.num_correct ?? 0;
-              const score = progress?.score_percent ?? (numQ > 0 ? Math.round((numC / numQ) * 100) : 0);
               const phase: "concept" | "exam" | null = active ? (numQ >= 2 ? "exam" : "concept") : null;
 
               return (
@@ -139,19 +137,47 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
                       </span>
                     </div>
 
-                    {phase && (
+                    {completed ? (
                       <span
                         style={{
                           fontSize: 8.5,
                           fontWeight: 800,
                           borderRadius: 6,
-                          padding: "1px 5px",
+                          padding: "2px 6px",
+                          background: "#f3e8ff",
+                          color: "#6b21a8",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        COMPLETED
+                      </span>
+                    ) : active ? (
+                      <span
+                        style={{
+                          fontSize: 8.5,
+                          fontWeight: 800,
+                          borderRadius: 6,
+                          padding: "2px 6px",
                           background: phase === "exam" ? "#fef3c7" : "#dcfce7",
                           color: phase === "exam" ? "#b45309" : "#15803d",
                           letterSpacing: "0.04em",
                         }}
                       >
-                        {phase === "exam" ? "EXAM" : "CONCEPT"}
+                        {phase === "exam" ? "EXAM" : "IN PROGRESS"}
+                      </span>
+                    ) : (
+                      <span
+                        style={{
+                          fontSize: 8.5,
+                          fontWeight: 700,
+                          borderRadius: 6,
+                          padding: "2px 6px",
+                          background: "#f1f5f9",
+                          color: "#94a3b8",
+                          letterSpacing: "0.04em",
+                        }}
+                      >
+                        UPCOMING
                       </span>
                     )}
                   </div>
@@ -173,24 +199,19 @@ export function GoalsBar({ goals, open, onToggle }: { goals: TopicGoal[]; open: 
                     {g.title || g.description}
                   </p>
 
-                  {score > 0 && (
-                    <div style={{ marginTop: 8 }}>
-                      <div style={{ height: 4, background: "#f1f5f9", borderRadius: 2, overflow: "hidden", marginBottom: 2 }}>
-                        <div
-                          style={{
-                            height: "100%",
-                            width: `${score}%`,
-                            background: completed ? "linear-gradient(90deg, #7c3aed, #a855f7)" : "#7e22ce",
-                            borderRadius: 2,
-                            transition: "width 0.4s ease",
-                          }}
-                        />
-                      </div>
-                      <div style={{ display: "flex", justifyContent: "flex-end" }}>
-                        <span style={{ fontSize: 9, fontWeight: 700, color: "#6b7280" }}>{score}%</span>
-                      </div>
+                  <div style={{ marginTop: 8 }}>
+                    <div style={{ height: 4, background: "#f1f5f9", borderRadius: 2, overflow: "hidden" }}>
+                      <div
+                        style={{
+                          height: "100%",
+                          width: completed ? "100%" : active ? "60%" : "0%",
+                          background: completed ? "linear-gradient(90deg, #7c3aed, #9333ea)" : active ? "#a855f7" : "transparent",
+                          borderRadius: 2,
+                          transition: "width 0.4s ease",
+                        }}
+                      />
                     </div>
-                  )}
+                  </div>
                 </div>
               );
             })}
