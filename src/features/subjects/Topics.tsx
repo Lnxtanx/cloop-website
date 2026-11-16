@@ -7,9 +7,25 @@ import { Button } from "@/components/ui/button";
 import { BookmarkPlus, BookmarkCheck, Play, ArrowLeft, AudioLines } from "lucide-react";
 import { fetchTopics, saveTopic, unsaveTopic, fetchSavedTopics } from "@/lib/api/chapters";
 
+export function formatConceptTitle(title: string, index?: number): string {
+  if (!title) return "";
+  if (/^Concept\s*\d+\s*:\s*/i.test(title)) {
+    return title.trim();
+  }
+  const cleaned = title.replace(/^(?:Topic|Concept)\s*\d+\s*:\s*/i, "").trim();
+  if (typeof index === "number") {
+    return `Concept ${index}: ${cleaned}`;
+  }
+  const match = title.match(/^(?:Topic|Concept)\s*(\d+)\s*:\s*/i);
+  if (match) {
+    return `Concept ${match[1]}: ${cleaned}`;
+  }
+  return cleaned;
+}
+
 export function cleanTopicTitle(title: string): string {
   if (!title) return "";
-  return title.replace(/^Topic\s*\d+\s*:\s*/i, "").trim();
+  return title.replace(/^(?:Topic|Concept)\s*\d+\s*:\s*/i, "").trim();
 }
 
 interface Topic {
@@ -133,15 +149,17 @@ const Topics = () => {
     }
   };
 
-  const handleTopicPress = (topic: Topic) => {
+  const handleTopicPress = (topic: Topic, index?: number) => {
+    const formattedTitle = formatConceptTitle(topic.title, typeof index === "number" ? index + 1 : undefined);
     navigate(
-      `/topic-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(topic.title)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
+      `/topic-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(formattedTitle)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
     );
   };
 
-  const handleTopicVoicePress = (topic: Topic) => {
+  const handleTopicVoicePress = (topic: Topic, index?: number) => {
+    const formattedTitle = formatConceptTitle(topic.title, typeof index === "number" ? index + 1 : undefined);
     navigate(
-      `/dashboard/voice-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(topic.title)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
+      `/dashboard/voice-chat?topicId=${topic.id}&topicTitle=${encodeURIComponent(formattedTitle)}&chapterTitle=${encodeURIComponent(chapterTitle || "")}&subjectName=${encodeURIComponent(subjectName || "")}`
     );
   };
 
@@ -206,7 +224,7 @@ const Topics = () => {
                   </div>
                   <Progress value={computedPercent} className="h-1.5 sm:h-2" />
                   <p className="text-[10px] sm:text-xs text-muted-foreground">
-                    {completedCount} of {totalCount} topics completed
+                    {completedCount} of {totalCount} concepts completed
                   </p>
                 </div>
               </CardContent>
@@ -222,7 +240,7 @@ const Topics = () => {
               className={`border-gray-200 hover:border-black transition-all hover:shadow-md cursor-pointer ${
                 topic.is_completed ? "bg-zinc-100/60" : "bg-white"
               }`}
-              onClick={() => handleTopicPress(topic)}
+              onClick={() => handleTopicPress(topic, index)}
             >
               <CardContent className="p-3 sm:p-4 flex items-center gap-3 sm:gap-4">
                 {/* Status Icon */}
@@ -240,7 +258,7 @@ const Topics = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5 sm:mb-1 flex-wrap">
                      <h4 className={`font-semibold text-xs sm:text-sm truncate ${topic.is_completed ? "text-black font-bold" : ""}`}>
-                      {cleanTopicTitle(topic.title)}
+                      {formatConceptTitle(topic.title, index + 1)}
                     </h4>
                     {topic.is_completed && <span className="px-1.5 sm:px-2 py-0.5 text-[9px] sm:text-[10px] bg-zinc-200 text-black font-bold rounded-full">Done</span>}
                   </div>
@@ -292,7 +310,7 @@ const Topics = () => {
                     title="Start Voice Session"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleTopicVoicePress(topic);
+                      handleTopicVoicePress(topic, index);
                     }}
                   >
                     <AudioLines className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600 animate-pulse shrink-0" />
@@ -306,7 +324,7 @@ const Topics = () => {
                     className="bg-black hover:bg-zinc-800 text-white border-0 text-[10px] sm:text-xs h-7 sm:h-8 px-2 sm:px-3"
                     onClick={(e) => {
                       e.stopPropagation();
-                      handleTopicPress(topic);
+                      handleTopicPress(topic, index);
                     }}
                   >
                     <Play className="w-3 h-3 sm:w-3.5 sm:h-3.5 mr-0.5 sm:mr-1" /> Start
@@ -317,7 +335,7 @@ const Topics = () => {
           ))}
 
           {topics.length === 0 && (
-            <div className="p-6 sm:p-8 text-center text-muted-foreground text-sm">No topics found for this chapter</div>
+            <div className="p-6 sm:p-8 text-center text-muted-foreground text-sm">No concepts found for this chapter</div>
           )}
         </div>
       </div>

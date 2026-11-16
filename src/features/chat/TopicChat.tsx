@@ -29,7 +29,13 @@ function fmt(s: number) {
 
 export function cleanTopicTitle(title: string): string {
   if (!title) return "";
-  return title.replace(/^Topic\s*\d+\s*:\s*/i, "").trim();
+  if (/^Concept\s*\d+\s*:\s*/i.test(title)) {
+    return title.trim();
+  }
+  if (/^Topic\s*(\d+)\s*:\s*/i.test(title)) {
+    return title.replace(/^Topic\s*(\d+)\s*:\s*/i, "Concept $1: ").trim();
+  }
+  return title.trim();
 }
 
 function mergeMessages(userMsgs: TopicChatMessage[], aiMsgs: TopicChatMessage[]) {
