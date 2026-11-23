@@ -16,6 +16,7 @@ import Dashboard from "./features/dashboard/Dashboard";
 import Chapters from "./features/subjects/Chapters";
 import Topics from "./features/subjects/Topics";
 import TopicChat from "./features/chat/TopicChat";
+import DemoLauncher from "./features/demo/DemoLauncher";
 import Sessions from "./features/sessions/Sessions";
 import Statistics from "./features/statistics/Statistics";
 import Chat from "./features/chat/Chat";
@@ -65,6 +66,8 @@ const App = () => {
               <Route path="/chapters" element={<Chapters />} />
               <Route path="/topics" element={<Topics />} />
               <Route path="/topic-chat" element={<TopicChat />} />
+              <Route path="/demo" element={<DemoLauncher />} />
+              <Route path="/demo/force" element={<DemoLauncher />} />
               <Route path="/dashboard/sessions" element={<Sessions />} />
               <Route path="/dashboard/statistics" element={<Statistics />} />
               <Route path="/dashboard/chat" element={<Chat />} />

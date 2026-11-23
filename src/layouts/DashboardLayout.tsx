@@ -135,7 +135,13 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
   useEffect(() => {
     try {
       const token = localStorage.getItem("cloop_token");
+      const isDemoParam = new URLSearchParams(window.location.search).get("demo") === "true";
+
       if (!token) {
+        if (isDemoParam) {
+          navigate("/demo", { replace: true });
+          return;
+        }
         navigate("/");
         return;
       }
@@ -145,6 +151,10 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
       if (payload.exp && payload.exp * 1000 < Date.now()) {
         localStorage.removeItem("cloop_token");
         localStorage.removeItem("cloop_user");
+        if (isDemoParam) {
+          navigate("/demo", { replace: true });
+          return;
+        }
         navigate("/", { replace: true });
         return;
       }

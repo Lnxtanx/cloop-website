@@ -3,13 +3,14 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   Clock, Loader2, Send,
-  X, Mic, MicOff, Volume2, VolumeX,
+  X, Mic, MicOff, Volume2, VolumeX, RotateCcw,
 } from "lucide-react";
 import {
   fetchTopicChatMessages, sendTopicChatMessage, updateTopicTime, fetchTopicChatWrap,
   TopicChatMessage, TopicGoal, TopicChatResponse, TopicChatDetails,
   SendMessageResponse, SessionSummaryData, ScorePrediction,
 } from "@/lib/api/topic-chat";
+import { createDemoSession } from "@/lib/api/demo";
 import { getTopicMedia } from "@/lib/topicMedia";
 import { useVoiceAssistant } from "@/hooks/useVoiceAssistant";
 import DashboardLayout from "@/layouts/DashboardLayout";
@@ -218,6 +219,50 @@ export default function TopicChat() {
 
   const { toast } = useToast();
   const isMobile = useIsMobile();
+
+  // Demo Showcase state
+  const isDemo = searchParams.get("demo") === "true" || localStorage.getItem("cloop_is_demo") === "true";
+  const [isRestartingDemo, setIsRestartingDemo] = useState(false);
+
+  const handleRestartDemo = async () => {
+    if (isRestartingDemo) return;
+    try {
+      setIsRestartingDemo(true);
+      toast({
+        title: "Starting New Demo...",
+        description: "Generating a fresh user ID and resetting chat.",
+      });
+
+      // Request fresh demo session with isolated user ID
+      await createDemoSession();
+
+      // Reset state for a fresh interactive session
+      setMessages([]);
+      setGoals([]);
+      setDone(false);
+      doneRef.current = false;
+      accumRef.current = 0;
+      startTimeRef.current = Date.now();
+      setBaseTime(0);
+      setElapsed(0);
+
+      // Reload chat with new user ID
+      await loadChat();
+
+      toast({
+        title: "Fresh Demo Ready! 🎉",
+        description: "You are now chatting in an independent showcase session.",
+      });
+    } catch (err: any) {
+      toast({
+        title: "Could not restart demo",
+        description: err.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsRestartingDemo(false);
+    }
+  };
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -317,6 +362,12 @@ export default function TopicChat() {
     try {
       setLoading(true);
       setError("");
+
+      // If opening in demo mode without an active token, provision one instantly
+      if (isDemo && !localStorage.getItem("cloop_token")) {
+        await createDemoSession();
+      }
+
       const res: TopicChatResponse = await fetchTopicChatMessages(topicId);
       const combined = mergeMessages(res.messages || [], res.aiMessages || []);
       setMessages(combined);
@@ -493,8 +544,13 @@ export default function TopicChat() {
           }}
         >
           <div style={{ flex: 1, minWidth: 0, overflow: "hidden" }}>
-            <div style={{ fontSize: isMobile ? 10 : 12, fontWeight: 800, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
-              {subjectName} {chapterTitle ? `• ${chapterTitle}` : ""}
+            <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: isMobile ? 10 : 12, fontWeight: 800, color: "#7e22ce", textTransform: "uppercase", letterSpacing: "0.06em", whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
+              {isDemo && (
+                <span style={{ background: "linear-gradient(135deg, #7c3aed, #4f46e5)", color: "#ffffff", padding: "2px 8px", borderRadius: 12, fontSize: 10, fontWeight: 800, textTransform: "uppercase", letterSpacing: "0.05em", display: "inline-flex", alignItems: "center", gap: 4 }}>
+                  Demo
+                </span>
+              )}
+              <span>{subjectName} {chapterTitle ? `• ${chapterTitle}` : ""}</span>
             </div>
             <h1 style={{ fontSize: isMobile ? 15 : 18.5, fontWeight: 800, color: "#1e1b4b", margin: 0, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" }}>
               {displayTopicTitle}
@@ -549,11 +605,44 @@ export default function TopicChat() {
               {fmt(elapsed)}
             </div>
 
+            {/* Restart Demo Button */}
+            {isDemo && (
+              <button
+                type="button"
+                onClick={handleRestartDemo}
+                disabled={isRestartingDemo || loading}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: isMobile ? 4 : 6,
+                  padding: isMobile ? "4px 10px" : "6px 14px",
+                  borderRadius: 20,
+                  background: "linear-gradient(135deg, #6366f1, #8b5cf6)",
+                  color: "#ffffff",
+                  fontSize: isMobile ? 12 : 13,
+                  fontWeight: 700,
+                  border: "none",
+                  cursor: isRestartingDemo ? "wait" : "pointer",
+                  boxShadow: "0 2px 6px rgba(99, 102, 241, 0.25)",
+                  transition: "all 0.15s ease",
+                  opacity: isRestartingDemo ? 0.7 : 1,
+                }}
+                title="Start a fresh demo chat with a new user ID"
+              >
+                <RotateCcw className={`w-3.5 h-3.5 ${isRestartingDemo ? "animate-spin" : ""}`} />
+                {!isMobile && <span>{isRestartingDemo ? "Resetting..." : "Restart Demo"}</span>}
+              </button>
+            )}
+
             <button
               onClick={() => {
                 if (doneRef.current) saveTime("complete");
                 else saveTime("pause");
-                navigate(-1);
+                if (isDemo) {
+                  navigate("/demo");
+                } else {
+                  navigate(-1);
+                }
               }}
               style={{
                 width: isMobile ? 30 : 34,
