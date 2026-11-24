@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import DashboardLayout from "@/layouts/DashboardLayout";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { BookOpen, Play, Loader2 } from "lucide-react";
+import { BookOpen, Play, Loader2, Sparkles, Video, Zap } from "lucide-react";
 import { usePracticeMode } from "@/contexts/PracticeModeContext";
 import PracticeDashboard from "@/features/practice/PracticeDashboard";
 
@@ -138,13 +138,73 @@ const Dashboard = () => {
             <h3 className="text-lg sm:text-xl lg:text-2xl font-extrabold text-gray-900">Learning Progress Overview</h3>
           </div>
 
-          {subjects.length === 0 ? (
-            <div className="text-center py-12 sm:py-20 bg-zinc-50 rounded-2xl sm:rounded-3xl border border-zinc-200">
-              <p className="text-base sm:text-lg text-gray-500 font-medium">No subjects enrolled yet.</p>
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
-              {subjects.map((item: UserSubject) => {
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+            {/* ── SEPARATE DEMO SESSION CARD ── */}
+            <Card
+              className="rounded-2xl sm:rounded-3xl transition-all duration-300 flex flex-col h-full overflow-hidden group border-purple-500/40 hover:border-purple-400 hover:shadow-2xl hover:shadow-purple-900/30 cursor-pointer bg-gradient-to-br from-purple-950 via-zinc-900 to-black text-white relative ring-1 ring-purple-500/30"
+              onClick={() => {
+                navigate(
+                  `/topic-chat?topicId=3474&topicTitle=${encodeURIComponent(
+                    "Concept 1: What Is a Force: Push and Pull"
+                  )}&chapterTitle=${encodeURIComponent(
+                    "Chapter 5: Exploring Forces"
+                  )}&subjectName=Science&demo=true`
+                );
+              }}
+            >
+              <CardContent className="p-5 sm:p-7 flex flex-col justify-between flex-1 space-y-6">
+                <div>
+                  {/* Demo Header Info */}
+                  <div className="flex items-center justify-between gap-2 mb-3">
+                    <span className="text-[10px] sm:text-[11px] font-extrabold uppercase tracking-widest text-white bg-gradient-to-r from-purple-600 to-indigo-600 px-2.5 sm:px-3 py-1 rounded-full shadow-sm flex items-center gap-1.5">
+                      <Sparkles className="w-3 h-3 text-amber-300 fill-amber-300" />
+                      Demo Session
+                    </span>
+                    <span className="text-[10px] sm:text-[11px] font-bold text-purple-300 bg-purple-900/50 border border-purple-700/50 px-2 py-0.5 rounded-full">
+                      Class 8 CBSE
+                    </span>
+                  </div>
+
+                  {/* Demo Title */}
+                  <h4 className="text-xl sm:text-2xl font-black text-white group-hover:text-purple-200 transition-colors leading-tight">
+                    Science • Exploring Forces
+                  </h4>
+                  <p className="text-xs sm:text-sm text-zinc-300 font-medium mt-1">
+                    Concept 1: What Is a Force: Push and Pull
+                  </p>
+
+                  {/* Highlights */}
+                  <div className="mt-5 space-y-2">
+                    <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300 bg-white/5 rounded-xl px-3 py-2 border border-white/5">
+                      <Video className="w-3.5 h-3.5 text-purple-400 shrink-0" />
+                      <span>🎬 3D Concept Animation Video</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-xs font-semibold text-zinc-300 bg-white/5 rounded-xl px-3 py-2 border border-white/5">
+                      <Zap className="w-3.5 h-3.5 text-amber-400 shrink-0" />
+                      <span>🤖 Interactive AI Tutor Dialogue</span>
+                    </div>
+                  </div>
+
+                  {/* Topic & Status */}
+                  <div className="mt-4 flex items-center justify-between text-xs sm:text-sm">
+                    <span className="font-bold text-zinc-400 uppercase tracking-tighter text-[11px]">Topic:</span>
+                    <span className="font-bold text-purple-300">Chapter 5 • Ready to Try</span>
+                  </div>
+                </div>
+
+                {/* CTA Button */}
+                <div className="pt-2">
+                  <Button
+                    className="w-full bg-gradient-to-r from-purple-500 to-indigo-600 hover:from-purple-600 hover:to-indigo-700 text-white font-black text-xs sm:text-sm h-11 sm:h-12 rounded-xl sm:rounded-2xl gap-2 shadow-lg shadow-purple-900/40 transition-all group-hover:scale-[1.02] border-0"
+                  >
+                    <Play className="w-3.5 h-3.5 sm:w-4 sm:h-4 fill-current" /> Start Demo Session
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Standard Subject Cards */}
+            {subjects.map((item: UserSubject) => {
                 const safeSubjectId = String(item.subject_id).split(":")[0];
                 const pct = Math.round(item.completion_percent || 0);
                 const isNotStarted = pct === 0;
@@ -211,7 +271,6 @@ const Dashboard = () => {
                 );
               })}
             </div>
-          )}
         </div>
       </div>
     </DashboardLayout>

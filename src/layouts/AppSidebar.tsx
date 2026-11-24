@@ -22,6 +22,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
   { title: "Home", url: "/dashboard", icon: Home },
+  { title: "Demo Session", url: "/demo", icon: Sparkles },
   { title: "Past Learnings", url: "/dashboard/sessions", icon: Video },
   { title: "Dashboard", url: "/dashboard/statistics", icon: BarChart3 },
   { title: "Voice Tutor", url: "/dashboard/voice-chat", icon: Headphones },
