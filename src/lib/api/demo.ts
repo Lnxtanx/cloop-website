@@ -24,16 +24,21 @@ export interface DemoSessionResponse {
 }
 
 /**
- * Creates a fresh, isolated guest user account and returns a valid JWT token
- * pre-configured for the Class 8 Science "Force & Motion" tutor demo showcase.
+ * Connects to the demo session endpoint.
+ * By default, loads the master demo showcase session (GUEST-52233).
+ * If { fresh: true } is passed, creates a new isolated guest session for fresh chatting.
  */
-export const createDemoSession = async (name?: string): Promise<DemoSessionResponse> => {
+export const createDemoSession = async (
+  options?: string | { name?: string; fresh?: boolean }
+): Promise<DemoSessionResponse> => {
+  const payload = typeof options === "string" ? { name: options } : options || {};
+
   const response = await fetch(`${API_BASE_URL}/api/demo/session`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ name }),
+    body: JSON.stringify(payload),
   });
 
   if (!response.ok) {

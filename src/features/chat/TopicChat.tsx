@@ -233,8 +233,8 @@ export default function TopicChat() {
         description: "Generating a fresh user ID and resetting chat.",
       });
 
-      // Request fresh demo session with isolated user ID
-      await createDemoSession();
+      // Request fresh interactive demo session with isolated user ID
+      await createDemoSession({ fresh: true });
 
       // Reset state for a fresh interactive session
       setMessages([]);

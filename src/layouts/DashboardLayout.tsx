@@ -135,7 +135,9 @@ const DashboardLayout = ({ children, title, mainClassName, hideHeader }: Props) 
   useEffect(() => {
     try {
       const token = localStorage.getItem("cloop_token");
-      const isDemoParam = new URLSearchParams(window.location.search).get("demo") === "true";
+      const isDemoParam =
+        new URLSearchParams(window.location.search).get("demo") === "true" ||
+        window.location.search.includes("topicId=3474");
 
       if (!token) {
         if (isDemoParam) {
