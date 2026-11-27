@@ -3,10 +3,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { LandingNavbar } from "./sections/DownloadAppSection";
 import { HeroSection } from "./sections/HeroSection";
 import { HowItWorksSection } from "./sections/HowItWorksSection";
-import { StudentsSection } from "./sections/StudentsSection";
-import { ParentsSection } from "./sections/ParentsSection";
+import { ResearchSection } from "./sections/ResearchSection";
+import { CriticalThinkingSection } from "./sections/CriticalThinkingSection";
+import { StudentsParentsSection } from "./sections/StudentsParentsSection";
 import { TeachersSection } from "./sections/TeachersSection";
 import { GetAppSection } from "./sections/GetAppSection";
+import { SourcesSection } from "./sections/SourcesSection";
 import { SignInModal } from "./sections/SignInModal";
 import { Footer } from "./sections/Footer";
 
@@ -23,7 +25,7 @@ const Index = () => {
     }
   }, [navigate]);
 
-  // Support deep links like /#how-it-works, /#for-parents, or /?signin=1
+  // Support deep links like /#mastery, /#research, /#students, /#teachers, /#lesson, or /?signin=1
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     if (params.get("signin") === "1") {
@@ -52,13 +54,15 @@ const Index = () => {
       <main className="flex-1">
         <HeroSection onOpenSignIn={() => setSignInOpen(true)} />
         <HowItWorksSection />
-        <StudentsSection />
-        <ParentsSection />
+        <ResearchSection />
+        <CriticalThinkingSection />
+        <StudentsParentsSection />
         <TeachersSection />
         <GetAppSection onOpenSignIn={() => setSignInOpen(true)} />
+        <SourcesSection />
       </main>
 
-      <div className="bg-white border-t border-zinc-200/80">
+      <div className="bg-white border-t border-zinc-200">
         <Footer />
       </div>
 

@@ -130,7 +130,7 @@ export const SignInModal = ({ open, onOpenChange }: SignInModalProps): JSX.Eleme
             id="login-btn"
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-xl text-sm transition-colors disabled:opacity-70"
+            className="w-full py-3 bg-black hover:bg-zinc-800 text-white font-semibold rounded-full text-sm transition-colors disabled:opacity-70"
           >
             {isLoading ? "Signing in…" : "Continue Learning"}
           </button>

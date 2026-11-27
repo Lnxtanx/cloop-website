@@ -6,11 +6,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { SignInModal } from "./SignInModal";
 
 const navItems = [
-  { label: "How it works", hash: "how-it-works" },
-  { label: "For students", hash: "for-students" },
-  { label: "For parents", hash: "for-parents" },
-  { label: "For teachers", hash: "for-teachers" },
-  { label: "Get the app", hash: "get-the-app" },
+  { label: "Concept mastery", hash: "mastery" },
+  { label: "Research", hash: "research" },
+  { label: "Critical thinking", hash: "thinking" },
+  { label: "Students & parents", hash: "students" },
+  { label: "For teachers", hash: "teachers" },
 ];
 
 interface LandingNavbarProps {
@@ -31,7 +31,7 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
     }
   };
 
-  const handleNavClick = (hash: string) => {
+  const handleHashClick = (hash: string) => {
     setMobileMenuOpen(false);
     if (location.pathname === "/") {
       const el = document.getElementById(hash);
@@ -46,52 +46,52 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
 
   return (
     <>
-      <header className="sticky top-0 z-40 w-full bg-white/90 backdrop-blur-md border-b border-zinc-200/80">
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-md border-b border-zinc-200/80">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-4">
-          {/* Brand */}
+          {/* Brand with Purple Cloop Logo on White */}
           <button
             type="button"
-            onClick={() => navigate("/")}
-            className="flex items-center gap-2.5 text-left focus:outline-none"
+            onClick={() => handleHashClick("top")}
+            className="flex items-center gap-2.5 text-left focus:outline-none shrink-0"
           >
             <img
               src="/favicon.ico"
               alt="Cloop logo"
-              className="w-8 h-8 rounded-lg object-cover border border-zinc-200"
+              className="w-9 h-9 rounded-xl shadow-sm object-cover border border-purple-100"
             />
-            <span className="text-zinc-950 font-bold text-lg tracking-tight">Cloop</span>
+            <span className="text-zinc-950 font-extrabold text-xl tracking-tight">Cloop</span>
           </button>
 
           {/* Desktop Section Navigation */}
-          <nav aria-label="Primary" className="hidden lg:flex items-center gap-7">
+          <nav aria-label="Primary" className="hidden lg:flex items-center gap-6">
             {navItems.map((item) => (
               <button
                 key={item.hash}
                 type="button"
-                onClick={() => handleNavClick(item.hash)}
-                className="text-sm font-medium text-zinc-600 hover:text-zinc-950 transition-colors whitespace-nowrap"
+                onClick={() => handleHashClick(item.hash)}
+                className="text-sm font-medium text-zinc-600 hover:text-purple-700 transition-colors whitespace-nowrap"
               >
                 {item.label}
               </button>
             ))}
           </nav>
 
-          {/* Actions + Mobile Trigger */}
-          <div className="flex items-center gap-2 sm:gap-3">
+          {/* Right Actions + Mobile Trigger */}
+          <div className="flex items-center gap-2.5">
             <button
               type="button"
               onClick={openSignIn}
-              className="hidden sm:inline-flex text-sm font-medium text-zinc-700 hover:text-zinc-950 px-3 py-2 rounded-lg hover:bg-zinc-100 transition-colors whitespace-nowrap"
+              className="hidden sm:inline-flex text-sm font-medium text-zinc-700 hover:text-zinc-950 px-3 py-1.5 rounded-full hover:bg-zinc-100 transition-colors whitespace-nowrap"
             >
               Sign in
             </button>
 
             <Button
               type="button"
-              onClick={() => navigate("/signup")}
-              className="h-9 px-4 bg-zinc-950 hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold rounded-lg shadow-sm whitespace-nowrap"
+              onClick={() => handleHashClick("get")}
+              className="h-9 px-4 bg-black hover:bg-zinc-800 text-white text-xs sm:text-sm font-semibold rounded-full shadow-sm whitespace-nowrap"
             >
-              Try Cloop free
+              Get the app
             </Button>
 
             {/* Mobile Nav Drawer */}
@@ -100,18 +100,18 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
                 <button
                   type="button"
                   aria-label="Open navigation menu"
-                  className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-lg border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors"
+                  className="lg:hidden inline-flex items-center justify-center w-9 h-9 rounded-full border border-zinc-200 text-zinc-700 hover:bg-zinc-100 transition-colors"
                 >
                   <Menu className="w-4 h-4" />
                 </button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-72 bg-white">
+              <SheetContent side="right" className="w-72 bg-white border-zinc-200 text-zinc-950">
                 <SheetHeader className="text-left border-b border-zinc-100 pb-4">
-                  <SheetTitle className="flex items-center gap-2 text-base font-bold text-zinc-950">
+                  <SheetTitle className="flex items-center gap-2 text-lg font-extrabold text-zinc-950">
                     <img
                       src="/favicon.ico"
                       alt="Cloop logo"
-                      className="w-6 h-6 rounded-md object-cover border border-zinc-200"
+                      className="w-7 h-7 rounded-lg object-cover border border-purple-100"
                     />
                     Cloop
                   </SheetTitle>
@@ -121,8 +121,8 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
                     <button
                       key={item.hash}
                       type="button"
-                      onClick={() => handleNavClick(item.hash)}
-                      className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-700 hover:bg-zinc-100 hover:text-zinc-950 transition-colors"
+                      onClick={() => handleHashClick(item.hash)}
+                      className="w-full text-left px-3 py-2.5 rounded-lg text-sm font-medium text-zinc-700 hover:bg-purple-50 hover:text-purple-700 transition-colors"
                     >
                       {item.label}
                     </button>
@@ -140,13 +140,10 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
                   </button>
                   <Button
                     type="button"
-                    onClick={() => {
-                      setMobileMenuOpen(false);
-                      navigate("/signup");
-                    }}
-                    className="mt-2 w-full bg-zinc-950 hover:bg-zinc-800 text-white text-sm font-semibold rounded-lg"
+                    onClick={() => handleHashClick("get")}
+                    className="mt-2 w-full bg-black hover:bg-zinc-800 text-white text-sm font-semibold rounded-full"
                   >
-                    Try Cloop free for 7 days
+                    Get the app
                   </Button>
                 </div>
               </SheetContent>
@@ -162,5 +159,5 @@ export const LandingNavbar = ({ onOpenSignIn }: LandingNavbarProps): JSX.Element
   );
 };
 
-// Re-export under existing component name so /about, /contact, /privacy, /support, /terms stay consistent
+// Re-export under existing component name for subpages (/about, /contact, /privacy, /support, /terms)
 export const DownloadAppSection = LandingNavbar;

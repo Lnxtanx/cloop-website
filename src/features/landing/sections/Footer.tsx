@@ -2,11 +2,12 @@ import { Separator } from "@/components/ui/separator";
 import { Link } from "react-router-dom";
 
 const exploreLinks = [
-  { label: "How it works", href: "/#how-it-works" },
-  { label: "For students", href: "/#for-students" },
-  { label: "For parents", href: "/#for-parents" },
-  { label: "For teachers", href: "/#for-teachers" },
-  { label: "See a lesson", href: "/demo" },
+  { label: "Concept mastery", href: "/#mastery" },
+  { label: "Research", href: "/#research" },
+  { label: "Critical thinking", href: "/#thinking" },
+  { label: "Students & parents", href: "/#students" },
+  { label: "For teachers", href: "/#teachers" },
+  { label: "See a live lesson", href: "/demo" },
 ];
 
 const companyLinks = [
@@ -28,11 +29,11 @@ export const Footer = (): JSX.Element => {
               alt="Cloop logo"
               className="w-9 h-9 rounded-lg object-cover border border-zinc-200"
             />
-            <span className="text-zinc-950 font-bold text-xl tracking-tight">Cloop</span>
+            <span className="text-zinc-950 font-extrabold text-xl tracking-tight">Cloop</span>
           </div>
           <p className="text-sm text-zinc-600 leading-relaxed">
-            The AI tutor that turns each chapter into a Socratic conversation — helping students
-            question answers, explain why an idea works, and apply it independently.
+            The Socratic AI tutor that turns school learning into everyday conversations — mapped to
+            CBSE, ICSE, IB and IGCSE chapters, Classes 5–10.
           </p>
         </div>
 
@@ -73,7 +74,7 @@ export const Footer = (): JSX.Element => {
 
       <div className="flex flex-col sm:flex-row justify-between items-center gap-3 text-xs text-zinc-500">
         <p>© 2026 Cloop. All rights reserved.</p>
-        <p>Privacy by design · Anonymised learning insights</p>
+        <p>Privacy by design · Evidence-based concept mastery</p>
       </div>
     </footer>
   );
