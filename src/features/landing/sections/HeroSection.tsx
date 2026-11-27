@@ -1,84 +1,136 @@
-import { Footer } from "./Footer";
-import { Button } from "@/components/ui/button";
+import { ArrowRight, PlayCircle, RotateCcw } from "lucide-react";
 import { useNavigate } from "react-router-dom";
-import { Monitor } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-export const HeroSection = (): JSX.Element => {
+interface HeroSectionProps {
+  onOpenSignIn: () => void;
+}
+
+export const HeroSection = ({ onOpenSignIn }: HeroSectionProps): JSX.Element => {
   const navigate = useNavigate();
 
   return (
-    <section id="pricing" className="flex flex-col items-center w-full bg-white">
-      <div className="w-full max-w-[1440px] px-5 lg:px-20 py-20 bg-[linear-gradient(137deg,#09090b_0%,#18181b_60%,#000000_100%)] rounded-b-[40px] shadow-xl text-center text-white">
-        <h1 className="text-4xl lg:text-6xl font-bold mb-10 leading-tight">
-          Join 10,000+ students who are improving their grades with Cloop&apos;s Score Predictor.
-        </h1>
+    <section className="w-full bg-white border-b border-zinc-200/80">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-14 sm:py-20 lg:py-24">
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center">
+          {/* Left Column: Editorial Headline + Subcopy + CTAs */}
+          <div className="lg:col-span-6 text-left">
+            <h1 className="text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold text-zinc-950 tracking-tight leading-[1.12]">
+              The AI tutor that helps your child think for themselves
+            </h1>
 
-        <p className="text-xl lg:text-2xl mb-12 max-w-[800px] mx-auto opacity-90">
-          Choose a plan that fits your needs. Start with a 7-day free trial and explore all the features.
-        </p>
+            <p className="mt-5 text-base sm:text-lg text-zinc-600 leading-relaxed max-w-xl">
+              Cloop turns each chapter into a conversation. Your child learns to question an
+              answer, explain why it works and apply the idea independently. That’s the kind of
+              judgement they’ll need in a world of AI-generated answers.
+            </p>
 
-        <div className="flex flex-wrap justify-center gap-6 mb-16">
-          <a
-            href="https://play.google.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative w-[200px] h-[59px] bg-black rounded-[7.4px] overflow-hidden border-[1.48px] border-solid border-[#a6a6a6] block hover:scale-105 transition-transform"
-          >
-            <img
-              className="absolute w-[62.80%] h-[42.58%] top-[42.62%] left-[30.40%]"
-              alt="Google play"
-              src="/figmaAssets/google-play.svg"
-            />
-            <img
-              className="absolute w-[28.78%] h-[15.67%] top-[16.91%] left-[30.56%]"
-              alt="Get it on"
-              src="/figmaAssets/get-it-on-3.svg"
-            />
-            <img
-              className="absolute top-[11px] left-[15px] w-[34px] h-[38px]"
-              alt="Google play logo"
-              src="/figmaAssets/google-play-logo-1.png"
-            />
-          </a>
-          <a
-            href="https://apple.com"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="relative w-[185px] h-[59px] bg-[#0c0d10] rounded-[10.37px] border-[1.48px] border-solid border-[#a6a6a6] block hover:scale-105 transition-transform"
-          >
-            <img
-              className="absolute w-[62.56%] h-[39.30%] top-[44.43%] left-[28.71%]"
-              alt="App store"
-              src="/figmaAssets/app-store-2.svg"
-            />
-            <img
-              className="absolute w-[57.63%] h-[15.93%] top-[21.04%] left-[29.71%]"
-              alt="Download on the"
-              src="/figmaAssets/download-on-the-2.svg"
-            />
-            <img
-              className="absolute w-[14.76%] h-[54.44%] top-[21.80%] left-[8.31%]"
-              alt="Apple logo"
-              src="/figmaAssets/apple-logo.svg"
-            />
-          </a>
+            <div className="mt-8 flex flex-wrap items-center gap-3.5">
+              <Button
+                type="button"
+                onClick={() => navigate("/signup")}
+                className="h-12 px-6 bg-zinc-950 hover:bg-zinc-800 text-white text-sm sm:text-base font-semibold rounded-xl shadow-sm gap-2"
+              >
+                Try Cloop free for 7 days
+                <ArrowRight className="w-4 h-4" />
+              </Button>
 
-          <Button 
-            onClick={() => {
-              navigate("/");
-              setTimeout(() => {
-                document.getElementById("guest-id")?.focus();
-                document.getElementById("login-card")?.scrollIntoView({ behavior: "smooth" });
-              }, 100);
-            }}
-            className="h-[59px] min-w-[200px] bg-white text-black hover:bg-zinc-100 rounded-[10.37px] border-2 border-white font-black text-lg gap-3 shadow-lg transition-transform hover:scale-105"
-          >
-            <Monitor className="w-5 h-5" /> Try Web Version
-          </Button>
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => navigate("/demo")}
+                className="h-12 px-5 border-zinc-300 bg-white hover:bg-zinc-50 text-zinc-900 text-sm sm:text-base font-semibold rounded-xl gap-2"
+              >
+                <PlayCircle className="w-4 h-4 text-zinc-700" />
+                See a lesson
+              </Button>
+            </div>
+
+            <p className="mt-4 text-xs sm:text-sm text-zinc-500">
+              Already have a Guest ID or account?{" "}
+              <button
+                type="button"
+                onClick={onOpenSignIn}
+                className="font-semibold text-zinc-900 underline underline-offset-4 hover:text-zinc-700"
+              >
+                Sign in
+              </button>
+            </p>
+          </div>
+
+          {/* Right Column: Anonymised Cloop chat where a follow-up prompts rethinking */}
+          <div className="lg:col-span-6">
+            <div
+              aria-label="Anonymised Cloop tutoring conversation example"
+              className="rounded-2xl border border-zinc-200 bg-[#F7F8FB] shadow-sm overflow-hidden"
+            >
+              {/* Chat Chrome Header */}
+              <div className="bg-white border-b border-zinc-200/80 px-5 py-3.5 flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-zinc-400">
+                    Anonymised Lesson Excerpt
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-900">
+                    Class 8 Science · Force &amp; Pressure
+                  </p>
+                </div>
+                <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-zinc-100 text-zinc-700 text-xs font-medium">
+                  1-on-1 chat
+                </span>
+              </div>
+
+              {/* Conversation Body */}
+              <div className="p-5 space-y-4 text-left">
+                {/* Turn 1: Student initial answer */}
+                <div className="flex flex-col items-end">
+                  <span className="text-[11px] font-medium text-zinc-400 mb-1 px-1">Student</span>
+                  <div className="max-w-[85%] rounded-2xl rounded-tr-sm bg-zinc-900 text-white px-4 py-3 text-sm leading-relaxed shadow-xs">
+                    A wider schoolbag strap feels lighter because the bag weighs less on wider
+                    straps.
+                  </div>
+                </div>
+
+                {/* Turn 2: Cloop follow-up prompting student to rethink */}
+                <div className="flex flex-col items-start">
+                  <span className="text-[11px] font-semibold text-zinc-600 mb-1 px-1 flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 rounded-full bg-zinc-950" />
+                    Cloop · Follow-up question
+                  </span>
+                  <div className="max-w-[92%] rounded-2xl rounded-tl-sm bg-white border border-amber-200 px-4 py-3.5 text-sm text-zinc-800 leading-relaxed shadow-xs">
+                    Wait — if the same books stay inside the bag, does its weight change when you
+                    swap the strap? Think about what else changed on your shoulder, and{" "}
+                    <span className="font-semibold text-zinc-950">explain why it hurts less</span>.
+                  </div>
+                </div>
+
+                {/* Turn 3: Student rethinks & explains why */}
+                <div className="flex flex-col items-end">
+                  <span className="text-[11px] font-medium text-emerald-700 mb-1 px-1 flex items-center gap-1">
+                    <RotateCcw className="w-3 h-3" />
+                    Student · Rethought explanation
+                  </span>
+                  <div className="max-w-[88%] rounded-2xl rounded-tr-sm bg-emerald-50 border border-emerald-200 text-zinc-900 px-4 py-3 text-sm leading-relaxed">
+                    Oh — the weight stays the same! A wider strap spreads that same force over a
+                    larger area, so the pressure on my shoulder is smaller.
+                  </div>
+                </div>
+              </div>
+
+              {/* Subtle Interactive Prompt Footer */}
+              <div className="bg-white border-t border-zinc-200/80 px-5 py-3 flex items-center justify-between text-xs text-zinc-500">
+                <span>Prompted to rethink &amp; justify in own words</span>
+                <button
+                  type="button"
+                  onClick={() => navigate("/demo")}
+                  className="font-semibold text-zinc-950 hover:underline whitespace-nowrap"
+                >
+                  See a live lesson →
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
-
-      <Footer />
     </section>
   );
 };

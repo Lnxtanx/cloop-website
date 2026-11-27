@@ -27,9 +27,7 @@ export default function Contact() {
     return (
         <div className="min-h-screen bg-white flex flex-col justify-between">
             <div>
-                <div className="sticky top-0 z-50 bg-white/80 backdrop-blur-md border-b">
-                    <DownloadAppSection />
-                </div>
+                <DownloadAppSection />
                 <div className="py-20 px-5 lg:px-20">
                     <div className="max-w-xl mx-auto">
                         <h1 className="text-4xl lg:text-5xl font-extrabold mb-4 text-center text-black">
